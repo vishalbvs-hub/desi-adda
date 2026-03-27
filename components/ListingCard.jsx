@@ -36,9 +36,11 @@ export default function ListingCard({ item, cat }) {
               <StarRating rating={item.rating} reviews={item.reviews} />
             </div>
           )}
-          <p style={{ fontSize: "14px", color: "#5A4A3F", margin: "0 0 10px", lineHeight: 1.5 }}>
-            {item.desc}
-          </p>
+          {(item.description || item.desc) && (
+            <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 8px", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {(() => { const d = item.description || item.desc; return d.length > 100 ? d.slice(0, 100) + "…" : d; })()}
+            </p>
+          )}
           {item.badges?.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "10px" }}>
               {item.badges.map(b => <Badge key={b} name={b} />)}
