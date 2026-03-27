@@ -37,8 +37,8 @@ export default function ListingCard({ item, cat }) {
             </div>
           )}
           {(item.description || item.desc) && (
-            <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 8px", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {(() => { const d = item.description || item.desc; return d.length > 100 ? d.slice(0, 100) + "…" : d; })()}
+            <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 8px", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+              {item.description || item.desc}
             </p>
           )}
           {item.badges?.length > 0 && (
