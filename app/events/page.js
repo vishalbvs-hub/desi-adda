@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
