@@ -10,17 +10,19 @@ import ListingCard from "@/components/ListingCard";
 import Badge from "@/components/Badge";
 
 export default function CategoryPage() {
-  const [_data, _setData] = useState(null);
-  useEffect(() => { fetchAllData().then(_setData); }, []);
-  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
-  const { CATEGORIES, EVENTS, REMITTANCE_COMPARISON } = _data;
-
   const { id } = useParams();
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("q") || "";
   const { culture } = useApp();
+
+  const [_data, _setData] = useState(null);
+  useEffect(() => { fetchAllData().then(_setData); }, []);
+
   const [activeSubs, setActiveSubs] = useState([]);
   const [catSearch, setCatSearch] = useState(initialSearch);
+
+  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+  const { CATEGORIES, EVENTS, REMITTANCE_COMPARISON } = _data;
 
   const cat = CATEGORIES.find(c => c.id === id);
   if (!cat) {
@@ -77,6 +79,7 @@ export default function CategoryPage() {
   };
 
   const data = filterData();
+
 
   return (
     <>

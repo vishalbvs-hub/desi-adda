@@ -6,11 +6,6 @@ import { fetchClassifieds } from "@/lib/data";
 import SponsoredCard from "@/components/SponsoredCard";
 
 export default function CommunityPage() {
-  const [_data, _setData] = useState(null);
-  useEffect(() => { fetchClassifieds().then(_setData); }, []);
-  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
-  const CLASSIFIEDS_POSTS = _data;
-
   const [boardFilter, setBoardFilter] = useState("all");
   const filtered = boardFilter === "all"
     ? CLASSIFIEDS_POSTS
@@ -25,6 +20,11 @@ export default function CommunityPage() {
     transition: "all 0.2s", whiteSpace: "nowrap",
     display: "flex", alignItems: "center", gap: "5px",
   });
+
+  const [_data, _setData] = useState(null);
+  useEffect(() => { fetchClassifieds().then(_setData); }, []);
+  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+  const CLASSIFIEDS_POSTS = _data;
 
   return (
     <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>

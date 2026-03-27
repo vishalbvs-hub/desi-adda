@@ -8,11 +8,6 @@ import { fetchBlogArticles } from "@/lib/data";
 import NewsletterSignup from "@/components/NewsletterSignup";
 
 export default function ArticlePage() {
-  const [_data, _setData] = useState(null);
-  useEffect(() => { fetchBlogArticles().then(_setData); }, []);
-  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
-  const BLOG_ARTICLES = _data;
-
   const { slug } = useParams();
   const a = BLOG_ARTICLES.find(article => article.slug === slug);
 
@@ -26,6 +21,11 @@ export default function ArticlePage() {
       </div>
     );
   }
+
+  const [_data, _setData] = useState(null);
+  useEffect(() => { fetchBlogArticles().then(_setData); }, []);
+  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+  const BLOG_ARTICLES = _data;
 
   return (
     <>
