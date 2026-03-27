@@ -292,7 +292,7 @@ async function main() {
   logMsg("=".repeat(60));
 
   // Step 1: Refresh Google Places data for all listing tables
-  const tables = ["restaurants", "groceries", "temples", "wedding_vendors", "kids", "professionals"];
+  const tables = ["restaurants", "groceries", "temples", "wedding_vendors", "kids", "professionals", "event_halls"];
   let totalUpdated = 0;
   for (const table of tables) {
     totalUpdated += await refreshTable(table);
