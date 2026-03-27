@@ -37,7 +37,7 @@ export default function ListingCard({ item, cat }) {
             </div>
           )}
           {(item.description || item.desc) && (
-            <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 8px", lineHeight: 1.4, maxWidth: "420px" }}>
+            <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 8px", lineHeight: 1.4, maxWidth: "370px" }}>
               {item.description || item.desc}
             </p>
           )}
