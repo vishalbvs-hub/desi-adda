@@ -22,3 +22,31 @@ a {
 nav div::-webkit-scrollbar {
   display: none;
 }
+
+
+/* ——— Rangoli-inspired subtle pattern for hero ——— */
+.rangoli-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(circle at 20% 50%, #C2185B 1px, transparent 1px),
+    radial-gradient(circle at 80% 50%, #E8A317 1px, transparent 1px),
+    radial-gradient(circle at 50% 20%, #00796B 1px, transparent 1px),
+    radial-gradient(circle at 50% 80%, #C2185B 1px, transparent 1px),
+    radial-gradient(circle at 35% 35%, #E8A317 0.5px, transparent 0.5px),
+    radial-gradient(circle at 65% 65%, #00796B 0.5px, transparent 0.5px),
+    radial-gradient(circle at 35% 65%, #C2185B 0.5px, transparent 0.5px),
+    radial-gradient(circle at 65% 35%, #E8A317 0.5px, transparent 0.5px);
+  background-size: 120px 120px;
+}
+
+/* ——— Smooth scrollbar ——— */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D4C5B5; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #B8A898; }

@@ -56,10 +56,10 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section style={{
-        background: "linear-gradient(170deg, #FFFBF5 0%, #FFF0E6 40%, #FCE4EC 100%)",
+      <section style={{ position: "relative", overflow: "hidden", background: "linear-gradient(170deg, #FFFBF5 0%, #FFF0E6 40%, #FCE4EC 100%)",
         padding: "60px 20px 50px", textAlign: "center", position: "relative", overflow: "hidden",
       }}>
+        <div className="rangoli-pattern" />
         <div style={{
           position: "absolute", top: "-40px", right: "-60px", width: "200px", height: "200px",
           borderRadius: "50%", background: `${marigold}10`, pointerEvents: "none",
