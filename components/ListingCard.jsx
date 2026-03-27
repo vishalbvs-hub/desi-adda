@@ -1,5 +1,5 @@
 "use client";
-import { MapPin, Clock, ExternalLink, Navigation } from "lucide-react";
+import { MapPin, Phone, ExternalLink, Navigation } from "lucide-react";
 import { FONTS } from "@/lib/constants";
 import Badge from "./Badge";
 import StarRating from "./StarRating";
@@ -25,9 +25,9 @@ export default function ListingCard({ item, cat }) {
                 <MapPin size={13} />{item.city}
               </span>
             )}
-            {item.hours && (
+            {item.phone && (
               <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <Clock size={13} />{item.hours}
+                <Phone size={13} />{item.phone}
               </span>
             )}
           </div>
