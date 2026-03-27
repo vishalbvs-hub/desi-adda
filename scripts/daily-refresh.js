@@ -68,10 +68,23 @@ async function refreshTable(tableName) {
     }
     updates.updated_at = new Date().toISOString();
 
-    const { error: updateError } = await supabase
+    // Try the update; if a column doesn't exist, retry without it
+    let { error: updateError } = await supabase
       .from(tableName)
       .update(updates)
       .eq("id", listing.id);
+
+    if (updateError && updateError.message.includes("does not exist")) {
+      const missingCol = updateError.message.match(/column (\w+)\.(\w+)/)?.[2];
+      if (missingCol && updates[missingCol] !== undefined) {
+        logMsg(`  ⚠️ Column "${missingCol}" missing in ${tableName}, skipping it`);
+        delete updates[missingCol];
+        ({ error: updateError } = await supabase
+          .from(tableName)
+          .update(updates)
+          .eq("id", listing.id));
+      }
+    }
 
     if (updateError) {
       logMsg(`  ❌ Error updating ${listing.name}: ${updateError.message}`);
