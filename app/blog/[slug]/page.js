@@ -3,10 +3,15 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
-import { BLOG_ARTICLES } from "@/lib/data";
+import { fetchBlogArticles } from "@/lib/data";
 import NewsletterSignup from "@/components/NewsletterSignup";
 
 export default function ArticlePage() {
+  const [_data, _setData] = useState(null);
+  useEffect(() => { fetchBlogArticles().then(_setData); }, []);
+  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+  const BLOG_ARTICLES = _data;
+
   const { slug } = useParams();
   const a = BLOG_ARTICLES.find(article => article.slug === slug);
 

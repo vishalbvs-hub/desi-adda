@@ -1,23 +1,33 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search, ArrowRight, TrendingUp, Clock, MapPin,
   MessageSquare, BookOpen, Send,
 } from "lucide-react";
-import { FONTS, COLORS, TRENDING, SPONSORED_HOME } from "@/lib/constants";
-import { CATEGORIES, EVENTS, BLOG_ARTICLES, CLASSIFIEDS_POSTS, CLASSIFIEDS_CATEGORIES } from "@/lib/data";
+import { FONTS, COLORS, TRENDING, SPONSORED_HOME, CLASSIFIEDS_CATEGORIES } from "@/lib/constants";
+import { fetchAllData } from "@/lib/data";
 import CategoryCard from "@/components/CategoryCard";
 import SponsoredCard from "@/components/SponsoredCard";
 import NewsletterSignup from "@/components/NewsletterSignup";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetchAllData().then(setData);
+  }, []);
+
+
   const router = useRouter();
   const ff = FONTS.heading;
   const fb = FONTS.body;
   const { primary, marigold, teal } = COLORS;
+
+  if (!data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+  const { CATEGORIES, EVENTS, BLOG_ARTICLES, CLASSIFIEDS_POSTS } = data;
 
   const handleSearch = () => {
     if (!searchQuery.trim()) return;

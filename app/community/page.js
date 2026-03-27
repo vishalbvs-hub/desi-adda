@@ -1,11 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, User, MessageSquare } from "lucide-react";
 import { FONTS, COLORS, CLASSIFIEDS_CATEGORIES, SPONSORED_HOME } from "@/lib/constants";
-import { CLASSIFIEDS_POSTS } from "@/lib/data";
+import { fetchClassifieds } from "@/lib/data";
 import SponsoredCard from "@/components/SponsoredCard";
 
 export default function CommunityPage() {
+  const [_data, _setData] = useState(null);
+  useEffect(() => { fetchClassifieds().then(_setData); }, []);
+  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+  const CLASSIFIEDS_POSTS = _data;
+
   const [boardFilter, setBoardFilter] = useState("all");
   const filtered = boardFilter === "all"
     ? CLASSIFIEDS_POSTS

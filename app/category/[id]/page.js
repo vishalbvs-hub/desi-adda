@@ -1,15 +1,20 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search, ArrowLeft, X, Calendar, MapPin } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
-import { CATEGORIES, EVENTS, REMITTANCE_COMPARISON } from "@/lib/data";
+import { fetchAllData } from "@/lib/data";
 import { useApp } from "@/lib/context";
 import ListingCard from "@/components/ListingCard";
 import Badge from "@/components/Badge";
 
 export default function CategoryPage() {
+  const [_data, _setData] = useState(null);
+  useEffect(() => { fetchAllData().then(_setData); }, []);
+  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+  const { CATEGORIES, EVENTS, REMITTANCE_COMPARISON } = _data;
+
   const { id } = useParams();
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("q") || "";

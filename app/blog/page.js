@@ -1,10 +1,15 @@
 "use client";
 import Link from "next/link";
 import { FONTS, SPONSORED_HOME } from "@/lib/constants";
-import { BLOG_ARTICLES } from "@/lib/data";
+import { fetchBlogArticles } from "@/lib/data";
 import SponsoredCard from "@/components/SponsoredCard";
 
 export default function BlogPage() {
+  const [_data, _setData] = useState(null);
+  useEffect(() => { fetchBlogArticles().then(_setData); }, []);
+  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+  const BLOG_ARTICLES = _data;
+
   return (
     <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
       <h1 style={{ fontFamily: FONTS.heading, fontSize: "32px", fontWeight: 700, margin: "0 0 4px" }}>
