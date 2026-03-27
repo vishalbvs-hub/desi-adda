@@ -7,9 +7,6 @@ import SponsoredCard from "@/components/SponsoredCard";
 
 export default function CommunityPage() {
   const [boardFilter, setBoardFilter] = useState("all");
-  const filtered = boardFilter === "all"
-    ? CLASSIFIEDS_POSTS
-    : CLASSIFIEDS_POSTS.filter(p => p.cat === boardFilter);
 
   const pill = (active) => ({
     padding: "6px 16px", borderRadius: "999px", fontSize: "13px",
@@ -23,8 +20,11 @@ export default function CommunityPage() {
 
   const [_data, _setData] = useState(null);
   useEffect(() => { fetchClassifieds().then(_setData); }, []);
+
+
   if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
   const CLASSIFIEDS_POSTS = _data;
+  const filtered = boardFilter === "all" ? CLASSIFIEDS_POSTS : CLASSIFIEDS_POSTS.filter(p => p.cat === boardFilter);
 
   return (
     <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>

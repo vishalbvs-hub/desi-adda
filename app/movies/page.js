@@ -8,6 +8,8 @@ import { fetchMovies } from "@/lib/data";
 export default function MoviesPage() {
   const [_data, _setData] = useState(null);
   useEffect(() => { fetchMovies().then(_setData); }, []);
+
+
   if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
   const MOVIES = _data;
 

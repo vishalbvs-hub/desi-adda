@@ -8,6 +8,8 @@ import { fetchEvents } from "@/lib/data";
 export default function EventsPage() {
   const [_data, _setData] = useState(null);
   useEffect(() => { fetchEvents().then(_setData); }, []);
+
+
   if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
   const EVENTS = _data;
 

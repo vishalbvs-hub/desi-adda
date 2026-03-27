@@ -8,6 +8,8 @@ import SponsoredCard from "@/components/SponsoredCard";
 export default function BlogPage() {
   const [_data, _setData] = useState(null);
   useEffect(() => { fetchBlogArticles().then(_setData); }, []);
+
+
   if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
   const BLOG_ARTICLES = _data;
 
