@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { MapPin, Phone, Globe, Languages, Search, UserCheck } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { fetchProfessionals } from "@/lib/data";
@@ -234,16 +235,14 @@ function ProfessionalCard({ p }) {
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-          <a
-            href={p.website ? (p.website.startsWith("http") ? p.website : `https://${p.website}`) : "#"}
-            target="_blank" rel="noopener noreferrer"
+          <Link
+            href={`/claim/${p.id}`}
             style={{
               padding: "8px 18px", borderRadius: "10px", background: "#37474F",
               color: "white", fontFamily: FONTS.body, fontWeight: 600, fontSize: "13px",
               textDecoration: "none", display: "flex", alignItems: "center", gap: "5px",
-              opacity: p.website ? 1 : 0.4, pointerEvents: p.website ? "auto" : "none",
             }}
-          >Claim Your Profile</a>
+          >Claim Your Profile</Link>
         </div>
       </div>
     </div>

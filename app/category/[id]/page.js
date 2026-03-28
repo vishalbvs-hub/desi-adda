@@ -2,12 +2,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search, ArrowLeft, X, Calendar, MapPin } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Search, ArrowLeft, X, Calendar, MapPin, Map, List } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { fetchAllData } from "@/lib/data";
 import { useApp } from "@/lib/context";
 import ListingCard from "@/components/ListingCard";
 import Badge from "@/components/Badge";
+
+const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 export default function CategoryPage() {
   const { id } = useParams();
@@ -20,6 +23,7 @@ export default function CategoryPage() {
 
   const [activeSubs, setActiveSubs] = useState([]);
   const [catSearch, setCatSearch] = useState(initialSearch);
+  const [viewMode, setViewMode] = useState("list");
 
   if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
   const { CATEGORIES, EVENTS, REMITTANCE_COMPARISON } = _data;
@@ -147,6 +151,38 @@ export default function CategoryPage() {
       </div>
 
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
+        {/* View mode toggle */}
+        {cat.data && (
+          <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+            <button
+              onClick={() => setViewMode("list")}
+              style={{
+                padding: "8px 18px", borderRadius: "999px", fontSize: "13px",
+                fontFamily: FONTS.body, fontWeight: 500, cursor: "pointer",
+                border: viewMode === "list" ? `2px solid ${cat.color}` : "2px solid #E8E0D8",
+                background: viewMode === "list" ? `${cat.color}18` : "white",
+                color: viewMode === "list" ? cat.color : "#5A4A3F",
+                transition: "all 0.2s", display: "flex", alignItems: "center", gap: "6px",
+              }}
+            >
+              <List size={14} /> List View
+            </button>
+            <button
+              onClick={() => setViewMode("map")}
+              style={{
+                padding: "8px 18px", borderRadius: "999px", fontSize: "13px",
+                fontFamily: FONTS.body, fontWeight: 500, cursor: "pointer",
+                border: viewMode === "map" ? `2px solid ${cat.color}` : "2px solid #E8E0D8",
+                background: viewMode === "map" ? `${cat.color}18` : "white",
+                color: viewMode === "map" ? cat.color : "#5A4A3F",
+                transition: "all 0.2s", display: "flex", alignItems: "center", gap: "6px",
+              }}
+            >
+              <Map size={14} /> Map View
+            </button>
+          </div>
+        )}
+
         {/* Remittance table for Travel category */}
         {cat.id === "travel" && (activeSubs.length === 0 || activeSubs.some(s => ["Bank Transfer", "Cash Pickup"].includes(s))) && (
           <div style={{ marginBottom: "30px" }}>
@@ -192,16 +228,22 @@ export default function CategoryPage() {
         )}
 
         {/* Listings */}
-        {data.length > 0 && (
-          <div style={{ display: "grid", gap: "14px" }}>
-            {data.map((item, i) => <ListingCard key={i} item={item} cat={cat} />)}
-          </div>
-        )}
+        {viewMode === "map" && cat.data ? (
+          <MapView listings={data} color={cat.color} catName={cat.name} />
+        ) : (
+          <>
+            {data.length > 0 && (
+              <div style={{ display: "grid", gap: "14px" }}>
+                {data.map((item, i) => <ListingCard key={i} item={item} cat={cat} />)}
+              </div>
+            )}
 
-        {data.length === 0 && (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}>
-            <p style={{ fontFamily: FONTS.heading, fontSize: "20px" }}>No results found</p>
-          </div>
+            {data.length === 0 && (
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}>
+                <p style={{ fontFamily: FONTS.heading, fontSize: "20px" }}>No results found</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </>

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Calendar, MapPin } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Plus } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { fetchEvents } from "@/lib/data";
 
@@ -46,6 +46,16 @@ export default function EventsPage() {
       </div>
 
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
+          <Link href="/events/submit" style={{
+            display: "inline-flex", alignItems: "center", gap: "6px",
+            padding: "10px 20px", borderRadius: "12px", background: COLORS.primary,
+            color: "white", fontFamily: FONTS.body, fontWeight: 600,
+            fontSize: "14px", textDecoration: "none",
+          }}>
+            <Plus size={16} /> Submit Event
+          </Link>
+        </div>
         <div style={{ display: "grid", gap: "14px" }}>
           {EVENTS.map((ev, i) => (
             <div key={i} style={{

@@ -43,6 +43,9 @@ export default function Footer() {
           {["About", "Advertise With Us", "Contact", "Privacy"].map(l => (
             <div key={l} style={{ marginBottom: "4px", cursor: "pointer" }}>{l}</div>
           ))}
+          <div style={{ marginBottom: "4px" }}>
+            <Link href="/suggest" style={{ color: "inherit", textDecoration: "none" }}>Suggest a Business</Link>
+          </div>
         </div>
       </div>
       <div style={{

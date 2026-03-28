@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Plus, User, MessageSquare } from "lucide-react";
 import { FONTS, COLORS, CLASSIFIEDS_CATEGORIES, SPONSORED_HOME } from "@/lib/constants";
 import { fetchClassifieds } from "@/lib/data";
@@ -40,13 +41,15 @@ export default function CommunityPage() {
             Roommates, housing, jobs, services, and more from the Detroit desi community.
           </p>
         </div>
-        <button style={{
-          padding: "10px 20px", borderRadius: "12px", background: COLORS.primary,
-          color: "white", border: "none", fontFamily: FONTS.body, fontWeight: 600,
-          fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
-        }}>
-          <Plus size={16} /> Post
-        </button>
+        <Link href="/community/post" style={{ textDecoration: "none" }}>
+          <button style={{
+            padding: "10px 20px", borderRadius: "12px", background: COLORS.primary,
+            color: "white", border: "none", fontFamily: FONTS.body, fontWeight: 600,
+            fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
+          }}>
+            <Plus size={16} /> Post
+          </button>
+        </Link>
       </div>
 
       {/* Category pills */}
