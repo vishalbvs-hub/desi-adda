@@ -4,28 +4,18 @@ import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 
 export default function NewsletterOverlay() {
-  const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    if (typeof window === "undefined") return;
+    const dismissed = document.cookie.includes("adda_newsletter_seen=true");
+    if (dismissed) return;
+    const timer = setTimeout(() => setVisible(true), 2500);
+    return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    try {
-      const dismissed = document.cookie.includes("adda_newsletter_seen=true");
-      if (!dismissed) {
-        const timer = setTimeout(() => setVisible(true), 2000);
-        return () => clearTimeout(timer);
-      }
-    } catch (e) {
-      console.error("Newsletter overlay error:", e);
-    }
-  }, [mounted]);
 
   function dismiss() {
     setFadeOut(true);
