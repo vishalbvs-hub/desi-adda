@@ -7,7 +7,7 @@ import { FONTS } from "@/lib/constants";
 export default function CategoryCard({ cat }) {
   const [hovered, setHovered] = useState(false);
   const isActive = cat.data || cat.id === "events" || cat.id === "movies";
-  const href = cat.id === "movies" ? "/movies" : cat.id === "events" ? "/events" : `/category/${cat.id}`;
+  const href = cat.id === "movies" ? "/movies" : cat.id === "events" ? "/events" : cat.id === "professionals" ? "/professionals" : `/category/${cat.id}`;
 
   const inner = (
     <div
