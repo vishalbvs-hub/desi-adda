@@ -19,6 +19,12 @@ const PROFESSION_TYPES = [
   "Financial Advisor",
 ];
 
+function getProfessionType(p) {
+  if (p.subcategories?.length > 0) return p.subcategories[0];
+  const match = p.bio?.match(/Type:\s*([^.]+)/);
+  return match ? match[1].trim() : "Other";
+}
+
 export default function ProfessionalsPage() {
   const [professionals, setProfessionals] = useState(null);
   const [typeFilter, setTypeFilter] = useState("All");
@@ -40,7 +46,7 @@ export default function ProfessionalsPage() {
   const cities = ["All", ...new Set(professionals.map(p => p.city).filter(Boolean).sort())];
 
   const filtered = professionals.filter(p => {
-    if (typeFilter !== "All" && p.subcategories?.[0] !== typeFilter) return false;
+    if (typeFilter !== "All" && getProfessionType(p) !== typeFilter) return false;
     if (cityFilter !== "All" && p.city !== cityFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -58,7 +64,7 @@ export default function ProfessionalsPage() {
   // Group by profession type
   const grouped = {};
   for (const p of filtered) {
-    const type = p.subcategories?.[0] || "Other";
+    const type = getProfessionType(p);
     if (!grouped[type]) grouped[type] = [];
     grouped[type].push(p);
   }
