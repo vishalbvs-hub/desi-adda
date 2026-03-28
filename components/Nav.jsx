@@ -5,6 +5,7 @@ import { FONTS, COLORS } from "@/lib/constants";
 
 const NAV_ITEMS = [
   { label: "Directory", href: "/" },
+  { label: "Professionals", href: "/professionals" },
   { label: "Community Board", href: "/community" },
   { label: "Blog", href: "/blog" },
   { label: "Movies", href: "/movies" },
