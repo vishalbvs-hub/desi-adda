@@ -55,6 +55,8 @@ async function main() {
   await processTable("groceries");
   await processTable("temples");
   await processTable("wedding_vendors");
+  await processTable("event_halls");
+  await processTable("kids");
   console.log("\nDone!");
 }
 
