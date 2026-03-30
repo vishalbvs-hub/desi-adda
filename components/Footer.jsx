@@ -40,8 +40,15 @@ export default function Footer() {
         </div>
         <div>
           <h4 style={{ color: "white", fontWeight: 600, marginBottom: "8px" }}>Company</h4>
-          {["About", "Advertise With Us", "Contact", "Privacy"].map(l => (
-            <div key={l} style={{ marginBottom: "4px", cursor: "pointer" }}>{l}</div>
+          {[
+            { label: "About", href: "#" },
+            { label: "Advertise With Us", href: "/advertise" },
+            { label: "Contact", href: "#" },
+            { label: "Privacy", href: "#" },
+          ].map(l => (
+            <div key={l.label} style={{ marginBottom: "4px" }}>
+              <Link href={l.href} style={{ color: "inherit", textDecoration: "none" }}>{l.label}</Link>
+            </div>
           ))}
           <div style={{ marginBottom: "4px" }}>
             <Link href="/suggest" style={{ color: "inherit", textDecoration: "none" }}>Suggest a Business</Link>

@@ -270,13 +270,13 @@ export default function HomePage() {
             Know a business we&apos;re missing?
           </h2>
           <p style={{ fontSize: "15px", color: "#6B5B4F", marginBottom: "20px" }}>Help us grow the directory.</p>
-          <button style={{
-            padding: "12px 28px", borderRadius: "12px", background: primary,
-            color: "white", border: "none", fontFamily: fb, fontWeight: 600,
-            fontSize: "15px", cursor: "pointer",
+          <Link href="/suggest" style={{
+            display: "inline-block", padding: "12px 28px", borderRadius: "12px", background: primary,
+            color: "white", fontFamily: fb, fontWeight: 600,
+            fontSize: "15px", cursor: "pointer", textDecoration: "none",
           }}>
             Suggest a Business <ArrowRight size={14} style={{ display: "inline", marginLeft: 6, verticalAlign: "middle" }} />
-          </button>
+          </Link>
         </div>
       </section>
 

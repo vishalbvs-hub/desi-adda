@@ -34,7 +34,7 @@ export default function PostClassifiedPage() {
       body: form.body,
       author: form.author,
       email: form.email,
-      cat: form.category,
+      category: form.category,
       status: "pending",
     });
 
