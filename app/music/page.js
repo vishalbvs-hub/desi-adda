@@ -9,7 +9,7 @@ const ff = FONTS.heading;
 const fb = FONTS.body;
 const SAFFRON = "#E8A317";
 
-const LANGUAGES = ["All", "Telugu", "Hindi", "Tamil", "Punjabi"];
+const LANGUAGES = ["All", "Telugu", "Hindi", "Tamil", "Punjabi", "Malayalam", "Kannada", "Bengali"];
 
 const SPOTIFY_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="#1DB954">
