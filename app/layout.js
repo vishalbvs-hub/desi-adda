@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import NewsletterOverlay from "@/components/NewsletterOverlay";
-import PulseTicker from "@/components/PulseTicker";
+
 
 export const metadata = {
   title: "Desi Adda — Your Desi Life in Detroit",
@@ -26,7 +26,6 @@ export default function RootLayout({ children }) {
           <NewsletterOverlay />
             <TopBar />
           <Nav />
-            <PulseTicker />
           {children}
           <Footer />
         </AppProvider>
