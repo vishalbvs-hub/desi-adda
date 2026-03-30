@@ -21,6 +21,7 @@ const QUICK_CATS = [
   { emoji: "\u{1F3E0}", label: "Roommates", href: "/community" },
   { emoji: "\u{1F3AC}", label: "Movies", href: "/movies" },
   { emoji: "\u{1F389}", label: "Events", href: "/events" },
+  { emoji: "\u{1F3B5}", label: "Music", href: "/music" },
   { emoji: "\u{1F3A8}", label: "Kids", href: "/category/family" },
 ];
 
