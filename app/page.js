@@ -56,14 +56,37 @@ function Divider() {
   );
 }
 
-const RANGOLI_BG = {
-  backgroundImage: `
-    radial-gradient(circle at 50% 50%, rgba(200,160,100,0.04) 0%, rgba(200,160,100,0.04) 12%, transparent 12.5%, transparent 25%, rgba(200,160,100,0.03) 25%, rgba(200,160,100,0.03) 37%, transparent 37.5%, transparent 50%, rgba(200,160,100,0.02) 50%, rgba(200,160,100,0.02) 62%, transparent 62.5%),
-    radial-gradient(circle at 0% 0%, rgba(200,160,100,0.03) 0%, rgba(200,160,100,0.03) 12%, transparent 12.5%),
-    radial-gradient(circle at 100% 100%, rgba(200,160,100,0.03) 0%, rgba(200,160,100,0.03) 12%, transparent 12.5%)
-  `,
-  backgroundSize: "120px 120px",
-};
+// Kolam SVG pattern as a data URI — dot-and-line grid with interlocking curves
+const KOLAM_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'>
+  <g fill='none' stroke='rgb(180,140,80)' stroke-width='0.8' opacity='0.045'>
+    <!-- Dot grid -->
+    <circle cx='50' cy='50' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='150' cy='50' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='100' cy='100' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='50' cy='150' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='150' cy='150' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='0' cy='0' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='200' cy='0' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='0' cy='200' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='200' cy='200' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='100' cy='0' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='0' cy='100' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='200' cy='100' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <circle cx='100' cy='200' r='2.5' fill='rgb(180,140,80)' opacity='0.06'/>
+    <!-- Weaving curves connecting dots -->
+    <path d='M0,0 C25,25 25,75 50,50 C75,25 75,75 100,100 C125,75 125,25 150,50 C175,75 175,25 200,0'/>
+    <path d='M0,200 C25,175 25,125 50,150 C75,175 75,125 100,100 C125,125 125,175 150,150 C175,125 175,175 200,200'/>
+    <path d='M0,0 C25,25 75,25 50,50 C25,75 75,75 100,100 C75,125 25,125 50,150 C75,175 25,175 0,200'/>
+    <path d='M200,0 C175,25 125,25 150,50 C175,75 125,75 100,100 C125,125 175,125 150,150 C125,175 175,175 200,200'/>
+    <!-- Looping arcs around center -->
+    <path d='M50,50 C75,30 125,30 150,50 C170,75 170,125 150,150 C125,170 75,170 50,150 C30,125 30,75 50,50'/>
+    <path d='M100,0 C80,30 80,70 100,100 C120,70 120,30 100,0'/>
+    <path d='M0,100 C30,80 70,80 100,100 C70,120 30,120 0,100'/>
+    <path d='M200,100 C170,80 130,80 100,100 C130,120 170,120 200,100'/>
+    <path d='M100,200 C80,170 80,130 100,100 C120,130 120,170 100,200'/>
+  </g>
+</svg>`;
+const KOLAM_URI = `url("data:image/svg+xml,${encodeURIComponent(KOLAM_SVG)}")`;
 
 function useFadeIn() {
   const ref = useRef(null);
@@ -125,7 +148,11 @@ export default function HomePage() {
   };
 
   return (
-    <>
+    <div style={{
+      background: `#FFFBF5 ${KOLAM_URI}`,
+      backgroundRepeat: "repeat",
+      backgroundSize: "200px 200px",
+    }}>
       {/* ═══ HERO ═══ */}
       <section style={{
         minHeight: "85vh", display: "flex", alignItems: "center", justifyContent: "center",
@@ -168,7 +195,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══ CATEGORY ICONS ═══ */}
-      <section ref={catRef} style={{ background: "#FFFBF5", padding: "44px 20px 40px", ...RANGOLI_BG }}>
+      <section ref={catRef} style={{ background: "rgba(255,251,245,0.85)", padding: "44px 20px 40px" }}>
         <div style={{
           maxWidth: "1100px", margin: "0 auto",
           display: "flex", gap: "16px", overflowX: "auto",
@@ -201,7 +228,7 @@ export default function HomePage() {
       <Divider />
 
       {/* ═══ EVENTS — WARM SAND ═══ */}
-      <section ref={eventsRef} style={{ background: "#FFFBF5", padding: "56px 20px", ...RANGOLI_BG }}>
+      <section ref={eventsRef} style={{ background: "rgba(255,251,245,0.85)", padding: "56px 20px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
             <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>What&apos;s Happening This Week</h2>
@@ -249,7 +276,7 @@ export default function HomePage() {
       <Divider />
 
       {/* ═══ NEW ON DESI ADDA — LIGHT ═══ */}
-      <section ref={recentRef} style={{ background: "#FFFBF5", padding: "56px 20px", ...RANGOLI_BG }}>
+      <section ref={recentRef} style={{ background: "rgba(255,251,245,0.85)", padding: "56px 20px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
             <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>New on Desi Adda</h2>
@@ -287,7 +314,7 @@ export default function HomePage() {
       <Divider />
 
       {/* ═══ CLASSIFIEDS — WARM CLAY ═══ */}
-      <section ref={classifiedsRef} style={{ background: "#FFFBF5", padding: "56px 20px", ...RANGOLI_BG }}>
+      <section ref={classifiedsRef} style={{ background: "rgba(255,251,245,0.85)", padding: "56px 20px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
             <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>Latest from the Community</h2>
@@ -336,7 +363,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══ FOR THE KIDS ═══ */}
-      <section ref={kidsRef} style={{ padding: "56px 20px", background: "#FFFBF5", ...RANGOLI_BG }}>
+      <section ref={kidsRef} style={{ padding: "56px 20px", background: "rgba(255,251,245,0.85)" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
           <div style={{
             borderRadius: "24px", padding: "48px 36px", textAlign: "center",
@@ -396,6 +423,6 @@ export default function HomePage() {
           )}
         </div>
       </section>
-    </>
+    </div>
   );
 }
