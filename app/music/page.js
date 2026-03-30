@@ -53,6 +53,7 @@ export default function MusicPage() {
   const [songs, setSongs] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [concerts, setConcerts] = useState([]);
+  const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const trendingRef = useFadeIn();
@@ -64,10 +65,12 @@ export default function MusicPage() {
       supabase.from("music_trending").select("*").order("rank"),
       supabase.from("music_playlists").select("*").order("name"),
       supabase.from("music_concerts").select("*").order("event_date"),
-    ]).then(([s, p, c]) => {
+      supabase.from("music_news").select("*").order("published_date", { ascending: false }).limit(8),
+    ]).then(([s, p, c, n]) => {
       setSongs(s.data || []);
       setPlaylists(p.data || []);
       setConcerts(c.data || []);
+      setNews(n.data || []);
       setLoading(false);
     });
   }, []);
@@ -224,10 +227,18 @@ export default function MusicPage() {
         </div>
       </section>
 
+      {/* ═══ CONTENT + SIDEBAR LAYOUT ═══ */}
+      <div style={{
+        maxWidth: "1400px", margin: "0 auto", padding: "0 20px",
+        display: "flex", gap: "32px", alignItems: "flex-start",
+      }}>
+        {/* ═══ MAIN CONTENT ═══ */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+
       {/* ═══ TRENDING THIS WEEK ═══ */}
       {(section === "All" || section === "Songs") && (
       <section ref={trendingRef} style={{ padding: "48px 20px" }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "100%", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
             <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>
               {"\u{1F525}"} Trending This Week
@@ -265,7 +276,7 @@ export default function MusicPage() {
       {/* ═══ OUR PLAYLISTS ═══ */}
       {(section === "All" || section === "Playlists") && (
       <section ref={playlistsRef} style={{ padding: "48px 20px", background: "rgba(240,228,212,0.3)" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "100%", margin: "0 auto" }}>
           <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>
             {"\u{1F3A7}"} Our Playlists
           </h2>
@@ -341,7 +352,7 @@ export default function MusicPage() {
       {/* ═══ LIVE NEAR YOU ═══ */}
       {(section === "All" || section === "Live") && (
       <section ref={concertsRef} style={{ padding: "48px 20px" }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "100%", margin: "0 auto" }}>
           <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>
             {"\u{1F3A4}"} Live Near You
           </h2>
@@ -387,6 +398,141 @@ export default function MusicPage() {
         </div>
       </section>
       )}
+
+        </div>{/* end main content */}
+
+        {/* ═══ NEWS SIDEBAR ═══ */}
+        <aside style={{
+          width: "300px", flexShrink: 0,
+          position: "sticky", top: "70px", alignSelf: "flex-start",
+          paddingTop: "48px", paddingBottom: "48px",
+        }}>
+          <div style={{
+            background: "white", borderRadius: "16px", border: "1px solid #EDE6DE",
+            overflow: "hidden",
+          }}>
+            <div style={{
+              padding: "14px 18px", borderBottom: "1px solid #EDE6DE",
+              background: "#2D2420",
+            }}>
+              <h3 style={{
+                fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: 0,
+                color: "white", display: "flex", alignItems: "center", gap: "8px",
+              }}>
+                {"\u{1F4F0}"} Music News
+              </h3>
+            </div>
+            <div style={{ padding: "4px 0" }}>
+              {news.length > 0 ? news.map((item, i) => {
+                const daysAgo = Math.floor((Date.now() - new Date(item.published_date + "T00:00:00").getTime()) / 86400000);
+                const timeLabel = daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo}d ago`;
+                return (
+                  <a
+                    key={item.id || i}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "block", padding: "12px 18px",
+                      borderBottom: i < news.length - 1 ? "1px solid #F5F0EA" : "none",
+                      textDecoration: "none", color: "inherit",
+                      transition: "background 0.2s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#FFFBF5"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <p style={{
+                      fontFamily: fb, fontSize: "13px", fontWeight: 600,
+                      color: "#2D2420", margin: "0 0 4px", lineHeight: 1.4,
+                    }}>
+                      {item.headline}
+                    </p>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: "8px",
+                      fontSize: "11px", color: COLORS.textFaint,
+                    }}>
+                      <span style={{ fontWeight: 600, color: COLORS.textMuted }}>{item.source}</span>
+                      <span>{"\u00B7"}</span>
+                      <span>{timeLabel}</span>
+                    </div>
+                  </a>
+                );
+              }) : (
+                <p style={{ padding: "20px 18px", fontSize: "13px", color: COLORS.textMuted, margin: 0 }}>
+                  No news yet — check back soon!
+                </p>
+              )}
+            </div>
+          </div>
+        </aside>
+
+      </div>{/* end flex wrapper */}
+
+      {/* Mobile news section (hidden on desktop) */}
+      <style>{`
+        @media (max-width: 900px) {
+          aside { display: none !important; }
+        }
+      `}</style>
+      <div className="mobile-news" style={{ padding: "0 20px 48px" }}>
+        <style>{`
+          @media (min-width: 901px) {
+            .mobile-news { display: none !important; }
+          }
+        `}</style>
+        <div style={{
+          background: "white", borderRadius: "16px", border: "1px solid #EDE6DE",
+          overflow: "hidden", maxWidth: "600px", margin: "0 auto",
+        }}>
+          <div style={{
+            padding: "14px 18px", borderBottom: "1px solid #EDE6DE",
+            background: "#2D2420",
+          }}>
+            <h3 style={{
+              fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: 0,
+              color: "white", display: "flex", alignItems: "center", gap: "8px",
+            }}>
+              {"\u{1F4F0}"} Music News
+            </h3>
+          </div>
+          <div style={{ padding: "4px 0" }}>
+            {news.length > 0 ? news.slice(0, 5).map((item, i) => {
+              const daysAgo = Math.floor((Date.now() - new Date(item.published_date + "T00:00:00").getTime()) / 86400000);
+              const timeLabel = daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo}d ago`;
+              return (
+                <a
+                  key={`mob-${item.id || i}`}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "block", padding: "12px 18px",
+                    borderBottom: i < Math.min(news.length, 5) - 1 ? "1px solid #F5F0EA" : "none",
+                    textDecoration: "none", color: "inherit",
+                  }}
+                >
+                  <p style={{
+                    fontFamily: fb, fontSize: "13px", fontWeight: 600,
+                    color: "#2D2420", margin: "0 0 4px", lineHeight: 1.4,
+                  }}>
+                    {item.headline}
+                  </p>
+                  <div style={{ fontSize: "11px", color: COLORS.textFaint, display: "flex", gap: "8px" }}>
+                    <span style={{ fontWeight: 600, color: COLORS.textMuted }}>{item.source}</span>
+                    <span>{"\u00B7"}</span>
+                    <span>{timeLabel}</span>
+                  </div>
+                </a>
+              );
+            }) : (
+              <p style={{ padding: "20px 18px", fontSize: "13px", color: COLORS.textMuted, margin: 0 }}>
+                No news yet — check back soon!
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
