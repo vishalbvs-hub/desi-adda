@@ -156,10 +156,10 @@ export default function HomePage() {
       {/* ═══ HERO ═══ */}
       <style>{`@keyframes heroChevronBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }`}</style>
       <section style={{
-        minHeight: "clamp(50vh, 58vh, 60vh)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.7)), url('/hero.jpg')",
-        backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
-        padding: "40px 20px 24px", textAlign: "center", position: "relative",
+        minHeight: "clamp(40vh, 45vh, 45vh)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        backgroundImage: "linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.65)), url('/hero.jpg')",
+        backgroundSize: "cover", backgroundPosition: "center 30%", backgroundRepeat: "no-repeat",
+        padding: "28px 20px 20px", textAlign: "center", position: "relative",
       }}>
         <div style={{ maxWidth: "720px", margin: "0 auto" }}>
           <h1 style={{ fontFamily: fb, fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 700, color: "white", lineHeight: 1.2, margin: "0 0 4px" }}>
@@ -229,7 +229,7 @@ export default function HomePage() {
             >
               <div style={{
                 width: 60, height: 60, borderRadius: "50%",
-                background: "rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(0,0,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 <span style={{ fontSize: "28px", lineHeight: 1 }}>{cat.emoji}</span>
               </div>
