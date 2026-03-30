@@ -334,6 +334,10 @@ function BusinessesPageInner() {
                     }
                     return card;
                   }
+                  // Grocery cards link to detail pages
+                  if (item._catId === "grocery" && item.slug) {
+                    return <Link key={`grocery-${item.id || i}`} href={`/groceries/${item.slug}`} style={{ textDecoration: "none", color: "inherit" }}><ListingCard item={item} cat={currentCat || { color: SAFFRON }} /></Link>;
+                  }
                   // Default card for other categories
                   return <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} />;
                 })}

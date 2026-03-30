@@ -1,0 +1,310 @@
+[
+  {
+    "name": "India Grocers",
+    "city": "Farmington Hills",
+    "type": "Full grocery",
+    "specialties": "Large store, fresh fruits & vegetables, cookware, household goods, frozen foods, sweets, pooja items",
+    "address": "24385 Halsted Rd, Farmington Hills, MI 48335",
+    "phone": "(248) 888-0821"
+  },
+  {
+    "name": "India Grocers",
+    "city": "Farmington Hills",
+    "type": "Full grocery",
+    "specialties": "Orchard Lake location, large selection",
+    "address": "28958 Orchard Lake Rd, Farmington Hills, MI 48334",
+    "phone": "(248) 737-9909"
+  },
+  {
+    "name": "Vani Foods",
+    "city": "Farmington Hills",
+    "type": "South Indian specialty",
+    "specialties": "South Indian staples, ceremonial supplies, full aisle of puja items",
+    "address": "Farmington Hills, MI"
+  },
+  {
+    "name": "Namaste Plaza",
+    "city": "Farmington Hills",
+    "type": "Small grocery",
+    "specialties": "Spices, fresh fruits & vegetables, complimentary masala chai, samosa, sweets",
+    "address": "34703 Grand River Ave, Farmington Hills, MI 48335",
+    "phone": "(248) 476-7500"
+  },
+  {
+    "name": "India Mart",
+    "city": "Farmington Hills",
+    "type": "Full grocery",
+    "specialties": "Desi vegetables, spices, snacks, frozen items, sweets, beauty products, incense & pooja items",
+    "address": "24345 Halsted Rd, Farmington Hills, MI 48335",
+    "phone": "(248) 471-9621"
+  },
+  {
+    "name": "Bharat Bazaar",
+    "city": "Farmington Hills",
+    "type": "Full grocery",
+    "specialties": "Indian grocery",
+    "address": "Farmington Hills, MI 48335",
+    "phone": "(248) 478-9566"
+  },
+  {
+    "name": "Desika Foods",
+    "city": "Farmington Hills",
+    "type": "South Indian specialty",
+    "specialties": "Fresh vegetables, flours, lentils, spices, moringa leaves, puja samagri, samosas",
+    "address": "35576 Grand River Ave, Farmington Hills, MI",
+    "phone": "(248) 536-2676"
+  },
+  {
+    "name": "Mumbai Market",
+    "city": "Farmington Hills",
+    "type": "Full grocery",
+    "specialties": "Desi spices, fresh vegetables, frozen food, snacks, homemade cakes, samosa, tea, Sri Lankan food",
+    "address": "38350 W 10 Mile Rd, Farmington Hills, MI",
+    "phone": "(248) 919-0062"
+  },
+  {
+    "name": "All India Grocers",
+    "city": "Farmington Hills",
+    "type": "Full grocery",
+    "specialties": "Indian grocery, spices",
+    "address": "39261 Grand River Ave, Farmington Hills, MI 48335"
+  },
+  {
+    "name": "Gift of India",
+    "city": "Farmington Hills",
+    "type": "Full grocery",
+    "specialties": "Indian grocery, became iti's Fusion Food restaurant",
+    "address": "Farmington Hills, MI"
+  },
+  {
+    "name": "Patel Brothers",
+    "city": "Rochester Hills",
+    "type": "Full grocery chain",
+    "specialties": "National chain, large selection, fresh produce, spices, snacks, frozen items, sweets",
+    "address": "2642 South Rochester Rd, Rochester Hills, MI 48307",
+    "phone": "(248) 852-9492"
+  },
+  {
+    "name": "Spice Mart",
+    "city": "Rochester Hills",
+    "type": "Spice shop",
+    "specialties": "Spices, Indian grocery items",
+    "address": "933 W Auburn Rd, Rochester Hills, MI 48307",
+    "phone": "(248) 844-8454"
+  },
+  {
+    "name": "Aditya Foods",
+    "city": "Rochester Hills",
+    "type": "South Indian specialty",
+    "specialties": "South Indian goods, grocery, spices, fresh fruits & vegetables, lentils, daal, rice",
+    "address": "2650 S Rochester Rd, Rochester Hills, MI 48307",
+    "phone": "(248) 844-5679"
+  },
+  {
+    "name": "Hawthorne Plaza Indian Grocery",
+    "city": "Rochester Hills",
+    "type": "Full grocery",
+    "specialties": "South Indian goods, grocery, spices",
+    "address": "2650 S Rochester Rd, Rochester Hills, MI"
+  },
+  {
+    "name": "Bombay Grocers",
+    "city": "Canton",
+    "type": "Full grocery",
+    "specialties": "Known for fresh vegetables selection, wide variety",
+    "address": "Canton, MI"
+  },
+  {
+    "name": "Krishna Grocers",
+    "city": "Canton",
+    "type": "Full grocery",
+    "specialties": "Indian grocery",
+    "address": "45164 Ford Rd, Canton, MI 48187",
+    "phone": "(734) 254-0357"
+  },
+  {
+    "name": "Devi Groceries",
+    "city": "Canton",
+    "type": "Full grocery",
+    "specialties": "Indian grocery",
+    "address": "39421 Joy Rd, Canton, MI 48331",
+    "phone": "(734) 455-5170"
+  },
+  {
+    "name": "India Grocers Canton",
+    "city": "Canton",
+    "type": "Full grocery",
+    "specialties": "Indian grocery",
+    "address": "45480 Ford Rd, Canton, MI 48187",
+    "phone": "(734) 459-2016"
+  },
+  {
+    "name": "Bombay Grocers Canton Center",
+    "city": "Canton",
+    "type": "Full grocery",
+    "specialties": "Fresh vegetables, frozen food, snacks, lentils, halal meat, puja items, kitchen items, appliances",
+    "address": "6018 N Canton Center Rd, Canton, MI",
+    "phone": "(734) 667-2308"
+  },
+  {
+    "name": "Famous Meat Hub",
+    "city": "Troy",
+    "type": "Halal meat shop",
+    "specialties": "Halal meats, Indian grocery items",
+    "address": "Troy, MI"
+  },
+  {
+    "name": "Sai Sweets of India & Fast Food",
+    "city": "Troy",
+    "type": "Sweets & grocery",
+    "specialties": "Sweets, snacks, fast food, grocery items",
+    "address": "Troy, MI"
+  },
+  {
+    "name": "Mumbai Chowk",
+    "city": "Troy",
+    "type": "Full grocery",
+    "specialties": "Vegetables, spices, snacks, frozen items, sweets, beauty products, dosa batter",
+    "address": "166 W Maple Rd, Troy, MI",
+    "phone": "(248) 817-5166"
+  },
+  {
+    "name": "Patel Brothers Novi",
+    "city": "Novi",
+    "type": "Full grocery chain",
+    "specialties": "National chain, fresh vegetables, spices, frozen items, snacks & sweets, desserts",
+    "address": "47230 W 10 Mile Rd, Novi, MI",
+    "phone": "(248) 719-7345"
+  },
+  {
+    "name": "Rimi's Indian Grocery",
+    "city": "Wixom",
+    "type": "Full grocery",
+    "specialties": "Fresh vegetables, organic Indian grocery items",
+    "address": "49833 Grand River Ave, Wixom, MI",
+    "phone": "(248) 773-7190"
+  },
+  {
+    "name": "India Grocers Novi",
+    "city": "Novi",
+    "type": "Full grocery",
+    "specialties": "Indian grocery & spices, fresh vegetables, frozen food, snacks, lentils",
+    "address": "41460 Grand River Ave, Novi, MI",
+    "phone": "(248) 719-7000"
+  },
+  {
+    "name": "Desi Fruit and Vegetable",
+    "city": "Madison Heights",
+    "type": "Fresh produce",
+    "specialties": "Desi fruits and vegetables",
+    "address": "4680 E Nine Mile Rd, Madison Heights, MI"
+  },
+  {
+    "name": "Indian Grocery Sterling Heights",
+    "city": "Sterling Heights",
+    "type": "Full grocery",
+    "specialties": "Fresh vegetables, spices, pulses, rice and wheat, ready mix spices, snacks",
+    "address": "34714 Dequindre Rd, Sterling Heights, MI",
+    "phone": "(586) 264-6200"
+  },
+  {
+    "name": "Kerala Grocery",
+    "city": "Sterling Heights",
+    "type": "Kerala specialty",
+    "specialties": "Kerala food and groceries, fresh vegetables, spices, meat, frozen items, snacks, pickles, malabar chicken curry, porotta",
+    "address": "33148 Ryan Rd, Sterling Heights, MI",
+    "phone": "(586) 268-8225"
+  },
+  {
+    "name": "Bengali Grocery Store",
+    "city": "Warren",
+    "type": "Bengali specialty",
+    "specialties": "Bengali foods, vegetables, chickens, beef, fish, meats",
+    "address": "26310 Van Dyke Ave, Warren, MI",
+    "phone": "(313) 742-5315"
+  },
+  {
+    "name": "Bombay Grocers Ann Arbor",
+    "city": "Ann Arbor",
+    "type": "Full grocery",
+    "specialties": "Indian grocery, restaurant inside",
+    "address": "3022 Packard St, Ann Arbor, MI 48108",
+    "phone": "(734) 971-7707"
+  },
+  {
+    "name": "Foods of India",
+    "city": "Ann Arbor",
+    "type": "Full grocery",
+    "specialties": "Indian grocery store",
+    "address": "1143 Broadway St, Ann Arbor, MI 48105",
+    "phone": "(734) 332-0500"
+  },
+  {
+    "name": "OM Market",
+    "city": "Ann Arbor",
+    "type": "Full grocery",
+    "specialties": "Spices, coffee, teas, chutney, pickles, rice, flour, fresh/frozen traditional vegetables: curry leaves, moringa drumsticks",
+    "address": "2713 Plymouth Rd, Ann Arbor, MI 48105",
+    "phone": "(734) 883-9995"
+  },
+  {
+    "name": "Ajanta Grocers & Carry Out",
+    "city": "Garden City",
+    "type": "Full grocery",
+    "specialties": "Indian grocery with carry out food",
+    "address": "Garden City, MI"
+  },
+  {
+    "name": "Indian Grocery Taylor",
+    "city": "Taylor",
+    "type": "Full grocery",
+    "specialties": "Spices, fresh vegetables, frozen food, snacks, lentils, pantry staples",
+    "address": "14625 Telegraph Rd Suite C, Taylor, MI",
+    "phone": "(734) 777-1051"
+  },
+  {
+    "name": "Al Shorja International Market",
+    "city": "Dearborn Heights",
+    "type": "International/South Asian",
+    "specialties": "Middle Eastern and South Asian food, spices, bakery, hot prepared food, fresh meats",
+    "address": "46090 Michigan Ave, Dearborn Heights, MI",
+    "phone": "(734) 322-9240"
+  },
+  {
+    "name": "Aladdin Sweets & Grocery",
+    "city": "Hamtramck",
+    "type": "Bengali grocery & sweets",
+    "specialties": "Bengali sweets, grocery, halal meats",
+    "address": "Hamtramck, MI"
+  },
+  {
+    "name": "Bonoful Grocery",
+    "city": "Hamtramck",
+    "type": "Bengali grocery",
+    "specialties": "Bengali grocery, sweets, snacks",
+    "address": "Hamtramck, MI"
+  },
+  {
+    "name": "Desi Fruit Market",
+    "city": "Hamtramck",
+    "type": "Fresh produce",
+    "specialties": "Desi fruits and vegetables",
+    "address": "Hamtramck, MI"
+  },
+  {
+    "name": "Pande Grocers",
+    "city": "Auburn Hills",
+    "type": "Full grocery",
+    "specialties": "Indian grocery store, fresh produce, frozen foods, spices, snacks, goat meat",
+    "address": "588 N Lafayette St, Auburn Hills, MI",
+    "phone": "(947) 362-7090"
+  },
+  {
+    "name": "Namaste Flavours Grocery",
+    "city": "Farmington",
+    "type": "Grocery & restaurant",
+    "specialties": "Fresh veggies, spices & masala, desi snacks",
+    "address": "24351 Halsted Rd, Farmington, MI",
+    "phone": "(248) 987-5859"
+  }
+]
