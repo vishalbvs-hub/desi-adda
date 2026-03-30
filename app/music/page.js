@@ -403,17 +403,20 @@ export default function MusicPage() {
 
         {/* ═══ NEWS SIDEBAR ═══ */}
         <aside style={{
-          width: "300px", flexShrink: 0,
+          width: "320px", flexShrink: 0,
           position: "sticky", top: "70px", alignSelf: "flex-start",
           paddingTop: "48px", paddingBottom: "48px",
+          maxHeight: "calc(100vh - 70px)",
+          display: "flex", flexDirection: "column",
         }}>
           <div style={{
             background: "white", borderRadius: "16px", border: "1px solid #EDE6DE",
-            overflow: "hidden",
+            overflow: "hidden", display: "flex", flexDirection: "column",
+            maxHeight: "calc(100vh - 140px)",
           }}>
             <div style={{
               padding: "14px 18px", borderBottom: "1px solid #EDE6DE",
-              background: "#2D2420",
+              background: "#2D2420", flexShrink: 0,
             }}>
               <h3 style={{
                 fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: 0,
@@ -422,10 +425,12 @@ export default function MusicPage() {
                 {"\u{1F4F0}"} Music News
               </h3>
             </div>
-            <div style={{ padding: "4px 0" }}>
+            <div style={{ overflowY: "auto", scrollbarWidth: "thin" }}>
               {news.length > 0 ? news.map((item, i) => {
                 const daysAgo = Math.floor((Date.now() - new Date(item.published_date + "T00:00:00").getTime()) / 86400000);
                 const timeLabel = daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo}d ago`;
+                // Generate initials fallback color from source name
+                const hue = item.source.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
                 return (
                   <a
                     key={item.id || i}
@@ -433,7 +438,7 @@ export default function MusicPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      display: "block", padding: "12px 18px",
+                      display: "flex", gap: "12px", padding: "14px 16px",
                       borderBottom: i < news.length - 1 ? "1px solid #F5F0EA" : "none",
                       textDecoration: "none", color: "inherit",
                       transition: "background 0.2s",
@@ -441,19 +446,52 @@ export default function MusicPage() {
                     onMouseEnter={e => e.currentTarget.style.background = "#FFFBF5"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
-                    <p style={{
-                      fontFamily: fb, fontSize: "13px", fontWeight: 600,
-                      color: "#2D2420", margin: "0 0 4px", lineHeight: 1.4,
-                    }}>
-                      {item.headline}
-                    </p>
+                    {/* Thumbnail */}
                     <div style={{
-                      display: "flex", alignItems: "center", gap: "8px",
-                      fontSize: "11px", color: COLORS.textFaint,
+                      width: "64px", height: "64px", borderRadius: "10px",
+                      overflow: "hidden", flexShrink: 0,
+                      background: item.image_url ? "#EDE6DE" : `hsl(${hue}, 30%, 90%)`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                      <span style={{ fontWeight: 600, color: COLORS.textMuted }}>{item.source}</span>
-                      <span>{"\u00B7"}</span>
-                      <span>{timeLabel}</span>
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                        />
+                      ) : null}
+                      <div style={{
+                        display: item.image_url ? "none" : "flex",
+                        alignItems: "center", justifyContent: "center",
+                        width: "100%", height: "100%",
+                        fontSize: "20px", fontWeight: 700, fontFamily: ff,
+                        color: `hsl(${hue}, 40%, 50%)`,
+                      }}>
+                        {item.source.charAt(0)}
+                      </div>
+                    </div>
+                    {/* Text */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{
+                        fontFamily: fb, fontSize: "12.5px", fontWeight: 600,
+                        color: "#2D2420", margin: "0 0 6px", lineHeight: 1.35,
+                        display: "-webkit-box", WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical", overflow: "hidden",
+                      }}>
+                        {item.headline}
+                      </p>
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: "6px",
+                        fontSize: "10px", color: COLORS.textFaint,
+                      }}>
+                        <span style={{
+                          fontWeight: 600, color: COLORS.primary,
+                          fontSize: "10px",
+                        }}>{item.source}</span>
+                        <span>{"\u00B7"}</span>
+                        <span>{timeLabel}</span>
+                      </div>
                     </div>
                   </a>
                 );
@@ -462,6 +500,28 @@ export default function MusicPage() {
                   No news yet — check back soon!
                 </p>
               )}
+
+              {/* Sponsored slot placeholder — uncomment when ready to monetize */}
+              {/*
+              <div style={{
+                padding: "14px 16px", borderTop: "1px solid #F5F0EA",
+                background: "#FFFBF5",
+              }}>
+                <div style={{
+                  fontSize: "9px", fontWeight: 600, color: COLORS.textFaint,
+                  textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px",
+                }}>Sponsored</div>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <div style={{ width: "64px", height: "64px", borderRadius: "10px", background: "#FDE8EF", flexShrink: 0 }} />
+                  <div>
+                    <p style={{ fontFamily: fb, fontSize: "12.5px", fontWeight: 600, color: "#2D2420", margin: "0 0 4px", lineHeight: 1.35 }}>
+                      Your ad here — reach the desi music community
+                    </p>
+                    <span style={{ fontSize: "10px", color: COLORS.primary, fontWeight: 600 }}>Learn more</span>
+                  </div>
+                </div>
+              </div>
+              */}
             </div>
           </div>
         </aside>
@@ -495,10 +555,11 @@ export default function MusicPage() {
               {"\u{1F4F0}"} Music News
             </h3>
           </div>
-          <div style={{ padding: "4px 0" }}>
+          <div>
             {news.length > 0 ? news.slice(0, 5).map((item, i) => {
               const daysAgo = Math.floor((Date.now() - new Date(item.published_date + "T00:00:00").getTime()) / 86400000);
               const timeLabel = daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo}d ago`;
+              const hue = item.source.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
               return (
                 <a
                   key={`mob-${item.id || i}`}
@@ -506,21 +567,37 @@ export default function MusicPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    display: "block", padding: "12px 18px",
+                    display: "flex", gap: "12px", padding: "14px 16px",
                     borderBottom: i < Math.min(news.length, 5) - 1 ? "1px solid #F5F0EA" : "none",
                     textDecoration: "none", color: "inherit",
                   }}
                 >
-                  <p style={{
-                    fontFamily: fb, fontSize: "13px", fontWeight: 600,
-                    color: "#2D2420", margin: "0 0 4px", lineHeight: 1.4,
+                  <div style={{
+                    width: "56px", height: "56px", borderRadius: "10px",
+                    overflow: "hidden", flexShrink: 0,
+                    background: item.image_url ? "#EDE6DE" : `hsl(${hue}, 30%, 90%)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
-                    {item.headline}
-                  </p>
-                  <div style={{ fontSize: "11px", color: COLORS.textFaint, display: "flex", gap: "8px" }}>
-                    <span style={{ fontWeight: 600, color: COLORS.textMuted }}>{item.source}</span>
-                    <span>{"\u00B7"}</span>
-                    <span>{timeLabel}</span>
+                    {item.image_url ? (
+                      <img src={item.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <span style={{ fontSize: "18px", fontWeight: 700, fontFamily: ff, color: `hsl(${hue}, 40%, 50%)` }}>
+                        {item.source.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontFamily: fb, fontSize: "13px", fontWeight: 600,
+                      color: "#2D2420", margin: "0 0 4px", lineHeight: 1.35,
+                    }}>
+                      {item.headline}
+                    </p>
+                    <div style={{ fontSize: "10px", color: COLORS.textFaint, display: "flex", gap: "6px" }}>
+                      <span style={{ fontWeight: 600, color: COLORS.primary }}>{item.source}</span>
+                      <span>{"\u00B7"}</span>
+                      <span>{timeLabel}</span>
+                    </div>
                   </div>
                 </a>
               );
