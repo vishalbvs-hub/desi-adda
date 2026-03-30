@@ -32,7 +32,7 @@ Formatting:
 - Use line breaks between each recommendation for readability.`;
 
 export async function POST(request) {
-  const { query } = await request.json();
+  const { query, history } = await request.json();
   if (!query || !query.trim()) {
     return Response.json({ response: "Please enter a search query.", listings: [] });
   }
@@ -111,7 +111,13 @@ export async function POST(request) {
         model: "claude-haiku-4-5-20251001",
         max_tokens: 500,
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
+        messages: [
+          ...(history || []).flatMap(h => [
+            { role: "user", content: h.userQuery || "" },
+            { role: "assistant", content: h.response || "" },
+          ]),
+          { role: "user", content: userMessage },
+        ],
       }),
     });
 

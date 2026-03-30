@@ -117,8 +117,15 @@ export default function HomePage() {
   const [classifieds, setClassifieds] = useState([]);
   const [nlEmail, setNlEmail] = useState("");
   const [nlDone, setNlDone] = useState(false);
-  const [askLoading, setAskLoading] = useState(false);
-  const [askResult, setAskResult] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, chatLoading]);
 
   useEffect(() => {
     supabase.from("events").select("*").eq("status", "approved").order("name").limit(5)
@@ -129,23 +136,37 @@ export default function HomePage() {
       .then(({ data }) => setClassifieds(data || []));
   }, []);
 
-  const handleSearch = async (e) => {
-    if (e) e.preventDefault();
-    if (!searchQuery.trim()) return;
-    setAskLoading(true);
-    setAskResult(null);
+  const sendChat = async (msg) => {
+    const q = msg.trim();
+    if (!q) return;
+    const userMsg = { role: "user", content: q, listings: [] };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatLoading(true);
+    setChatInput("");
     try {
+      const history = chatMessages.filter(m => m.role === "user" || m.role === "assistant").map(m => ({
+        userQuery: m.role === "user" ? m.content : undefined,
+        response: m.role === "assistant" ? m.content : undefined,
+      })).filter(h => h.userQuery || h.response);
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: searchQuery }),
+        body: JSON.stringify({ query: q, history }),
       });
       const data = await res.json();
-      setAskResult(data);
+      setChatMessages(prev => [...prev, { role: "assistant", content: data.response, listings: data.listings || [] }]);
     } catch {
-      setAskResult({ response: "Something went wrong. Please try again.", listings: [] });
+      setChatMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again.", listings: [] }]);
     }
-    setAskLoading(false);
+    setChatLoading(false);
+  };
+
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setChatOpen(true);
+    sendChat(searchQuery);
+    setSearchQuery("");
   };
 
   const catRef = useFadeIn();
@@ -223,69 +244,123 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ ASK ADDA RESULTS ═══ */}
-      {(askLoading || askResult) && (
-        <section style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px 0" }}>
+      {/* ═══ ASK ADDA CHAT OVERLAY ═══ */}
+      <style>{`
+        @keyframes askPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+        @keyframes chatSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes chatOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
+      {chatOpen && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+          animation: "chatOverlayIn 0.2s ease",
+        }} onClick={e => { if (e.target === e.currentTarget) { setChatOpen(false); setChatMessages([]); } }}>
           <div style={{
-            background: "white", borderRadius: "16px", padding: "24px 28px",
-            border: "1px solid #EDE6DE", boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+            width: "min(660px, 95vw)", maxHeight: "min(78vh, 700px)", display: "flex", flexDirection: "column",
+            background: "#FFFBF5", borderRadius: "20px", overflow: "hidden",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.25)", animation: "chatSlideIn 0.3s ease",
           }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "20px" }}>{"\u2728"}</span> Ask Adda
-              </h3>
-              {askResult && (
-                <button onClick={() => { setAskResult(null); setSearchQuery(""); }} style={{
-                  background: "none", border: "1px solid #E0D8CF", borderRadius: "8px",
-                  padding: "4px 12px", fontSize: "12px", fontFamily: fb, color: "#8A7968",
-                  cursor: "pointer",
-                }}>Clear</button>
-              )}
+            {/* Header */}
+            <div style={{
+              background: "#2D2420", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <span style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: "8px" }}>
+                {"\u2728"} Ask Adda
+              </span>
+              <button onClick={() => { setChatOpen(false); setChatMessages([]); }} style={{
+                background: "none", border: "none", color: "rgba(255,255,255,0.7)", fontSize: "20px", cursor: "pointer", padding: "4px 8px", lineHeight: 1,
+              }}>{"\u2715"}</button>
             </div>
-            {askLoading ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 0" }}>
-                <style>{`@keyframes askPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }`}</style>
-                <div style={{ display: "flex", gap: "4px" }}>
-                  {[0, 1, 2].map(i => (
-                    <div key={i} style={{
-                      width: "8px", height: "8px", borderRadius: "50%", background: SAFFRON,
-                      animation: `askPulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-                    }} />
-                  ))}
+
+            {/* Chat messages */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: "14px" }}>
+              {chatMessages.length === 0 && !chatLoading && (
+                <div style={{ textAlign: "center", padding: "30px 0", color: "#8A7968" }}>
+                  <p style={{ fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: "0 0 4px" }}>Hi! I&apos;m your desi directory concierge.</p>
+                  <p style={{ fontSize: "13px" }}>Ask me anything — &ldquo;best biryani in Troy&rdquo;, &ldquo;Telugu temples near me&rdquo;, &ldquo;immigration lawyer&rdquo;...</p>
                 </div>
-                <span style={{ fontSize: "14px", color: "#8A7968", fontFamily: fb }}>Ask Adda is searching...</span>
-              </div>
-            ) : askResult && (
-              <>
-                <div style={{ fontSize: "14px", color: "#2D2420", lineHeight: 1.7, marginBottom: "16px", whiteSpace: "pre-line" }}
-                  dangerouslySetInnerHTML={{ __html: askResult.response.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") }}
-                />
-                {askResult.listings?.length > 0 && (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "10px" }}>
-                    {askResult.listings.map((l, i) => (
-                      <Link key={`${l._table}-${l.id}-${i}`} href={l._table === "professionals" ? "/professionals" : `/category/${l._table === "restaurants" ? "food" : l._table === "temples" ? "religious" : l._table === "groceries" ? "grocery" : l._table === "wedding_vendors" ? "weddings" : l._table === "event_halls" ? "event-halls" : l._table === "kids" ? "family" : l._table === "health_wellness" ? "wellness" : l._table === "beauty_brands" ? "beauty" : l._table === "community_networking" ? "community" : "food"}`}
-                        style={{
-                          padding: "14px 16px", borderRadius: "12px", border: "1px solid #EDE6DE",
-                          borderLeft: `3px solid ${SAFFRON}`, background: "#FFFBF5",
-                          textDecoration: "none", color: "inherit", transition: "box-shadow 0.2s",
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.boxShadow = "0 3px 12px rgba(0,0,0,0.06)"}
-                        onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
-                      >
-                        <h4 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 600, margin: "0 0 3px" }}>{l.name}</h4>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "11px", color: "#8A7968" }}>
-                          <span style={{ padding: "1px 6px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${SAFFRON}15`, color: SAFFRON }}>{l._category}</span>
-                          {l.city && <span><MapPin size={10} style={{ display: "inline", verticalAlign: "middle" }} /> {l.city}</span>}
-                          {l.rating && <span><Star size={10} fill={SAFFRON} color={SAFFRON} style={{ display: "inline", verticalAlign: "middle" }} /> {l.rating}</span>}
-                        </div>
-                      </Link>
+              )}
+              {chatMessages.map((msg, i) => (
+                <div key={i} style={{
+                  display: "flex", flexDirection: "column",
+                  alignItems: msg.role === "user" ? "flex-end" : "flex-start",
+                  animation: "chatSlideIn 0.3s ease",
+                }}>
+                  <div style={{
+                    maxWidth: "85%", padding: "12px 16px", borderRadius: "18px",
+                    background: msg.role === "user" ? SAFFRON : "white",
+                    color: msg.role === "user" ? "white" : "#2D2420",
+                    border: msg.role === "user" ? "none" : "1px solid #EDE6DE",
+                    fontSize: "14px", lineHeight: 1.6, whiteSpace: "pre-line",
+                    borderBottomRightRadius: msg.role === "user" ? "6px" : "18px",
+                    borderBottomLeftRadius: msg.role === "assistant" ? "6px" : "18px",
+                  }}
+                    dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") }}
+                  />
+                  {msg.role === "assistant" && msg.listings?.length > 0 && (
+                    <div style={{
+                      display: "flex", gap: "8px", overflowX: "auto", scrollbarWidth: "none",
+                      padding: "10px 0 2px", maxWidth: "85%",
+                    }}>
+                      {msg.listings.map((l, j) => (
+                        <Link key={`${l._table}-${l.id}-${j}`} href={l._table === "professionals" ? "/professionals" : `/category/${l._table === "restaurants" ? "food" : l._table === "temples" ? "religious" : l._table === "groceries" ? "grocery" : l._table === "wedding_vendors" ? "weddings" : l._table === "event_halls" ? "event-halls" : l._table === "kids" ? "family" : l._table === "health_wellness" ? "wellness" : l._table === "beauty_brands" ? "beauty" : l._table === "community_networking" ? "community" : "food"}`}
+                          onClick={() => { setChatOpen(false); setChatMessages([]); }}
+                          style={{
+                            flexShrink: 0, width: "180px", padding: "10px 12px", borderRadius: "12px",
+                            background: "white", border: "1px solid #EDE6DE", borderLeft: `3px solid ${SAFFRON}`,
+                            textDecoration: "none", color: "inherit", transition: "box-shadow 0.2s",
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.boxShadow = "0 3px 10px rgba(0,0,0,0.06)"}
+                          onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+                        >
+                          <div style={{ fontFamily: ff, fontSize: "12px", fontWeight: 600, margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.name}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#8A7968" }}>
+                            <span style={{ padding: "1px 5px", borderRadius: "999px", background: `${SAFFRON}15`, color: SAFFRON, fontWeight: 600 }}>{l._category}</span>
+                            {l.rating && <span><Star size={9} fill={SAFFRON} color={SAFFRON} style={{ display: "inline", verticalAlign: "middle" }} /> {l.rating}</span>}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {chatLoading && (
+                <div style={{ display: "flex", alignItems: "flex-start", animation: "chatSlideIn 0.3s ease" }}>
+                  <div style={{ padding: "14px 18px", borderRadius: "18px 18px 18px 6px", background: "white", border: "1px solid #EDE6DE", display: "flex", gap: "5px", alignItems: "center" }}>
+                    {[0, 1, 2].map(i => (
+                      <div key={i} style={{ width: "8px", height: "8px", borderRadius: "50%", background: SAFFRON, animation: `askPulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
                     ))}
                   </div>
-                )}
-              </>
-            )}
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <form onSubmit={e => { e.preventDefault(); sendChat(chatInput); }} style={{
+              padding: "12px 16px", borderTop: "1px solid #EDE6DE", background: "white",
+              display: "flex", gap: "8px",
+            }}>
+              <input
+                value={chatInput} onChange={e => setChatInput(e.target.value)}
+                placeholder="Ask a follow-up..."
+                autoFocus
+                style={{
+                  flex: 1, padding: "12px 16px", borderRadius: "12px", border: "1px solid #E0D8CF",
+                  fontSize: "14px", fontFamily: fb, outline: "none", background: "#FFFBF5",
+                }}
+              />
+              <button type="submit" disabled={chatLoading} style={{
+                padding: "10px 18px", borderRadius: "12px", background: chatLoading ? "#ccc" : SAFFRON,
+                color: "white", border: "none", fontFamily: fb, fontWeight: 600, fontSize: "13px",
+                cursor: chatLoading ? "not-allowed" : "pointer",
+              }}>
+                <Send size={14} />
+              </button>
+            </form>
           </div>
-        </section>
+        </div>
       )}
 
       {/* ═══ CATEGORY ICONS ═══ */}
