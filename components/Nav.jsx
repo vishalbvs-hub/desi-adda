@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { label: "Professionals", href: "/professionals" },
   { label: "Community Board", href: "/community" },
   { label: "Blog", href: "/blog" },
+  { label: "Music", href: "/music" },
   { label: "Movies", href: "/movies" },
   { label: "Events", href: "/events" },
 ];

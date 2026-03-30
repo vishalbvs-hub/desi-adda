@@ -46,6 +46,7 @@ function useFadeIn() {
 
 export default function MusicPage() {
   const [lang, setLang] = useState("All");
+  const [section, setSection] = useState("All");
   const [songs, setSongs] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [concerts, setConcerts] = useState([]);
@@ -148,10 +149,39 @@ export default function MusicPage() {
               </button>
             ))}
           </div>
+
+          {/* Section Filter Tabs */}
+          <div style={{
+            display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap",
+            marginTop: "14px",
+          }}>
+            {[
+              { id: "All", label: "All", icon: "\u{2728}" },
+              { id: "Songs", label: "Songs", icon: "\u{1F525}" },
+              { id: "Playlists", label: "Playlists", icon: "\u{1F3A7}" },
+              { id: "Live", label: "Live Near You", icon: "\u{1F3A4}" },
+            ].map(s => (
+              <button
+                key={s.id}
+                onClick={() => setSection(s.id)}
+                style={{
+                  padding: "6px 16px", borderRadius: "999px", fontSize: "12px",
+                  fontFamily: fb, fontWeight: 500, cursor: "pointer",
+                  border: section === s.id ? "2px solid rgba(255,255,255,0.5)" : "2px solid rgba(255,255,255,0.08)",
+                  background: section === s.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.03)",
+                  color: section === s.id ? "white" : "rgba(255,255,255,0.45)",
+                  transition: "all 0.25s",
+                }}
+              >
+                {s.icon} {s.label}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ═══ TRENDING THIS WEEK ═══ */}
+      {(section === "All" || section === "Songs") && (
       <section ref={trendingRef} style={{ padding: "48px 20px" }}>
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "24px" }}>
@@ -186,8 +216,10 @@ export default function MusicPage() {
           )}
         </div>
       </section>
+      )}
 
       {/* ═══ OUR PLAYLISTS ═══ */}
+      {(section === "All" || section === "Playlists") && (
       <section ref={playlistsRef} style={{ padding: "48px 20px", background: "rgba(240,228,212,0.3)" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>
@@ -260,8 +292,10 @@ export default function MusicPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══ LIVE NEAR YOU ═══ */}
+      {(section === "All" || section === "Live") && (
       <section ref={concertsRef} style={{ padding: "48px 20px" }}>
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
           <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>
@@ -308,6 +342,7 @@ export default function MusicPage() {
           )}
         </div>
       </section>
+      )}
     </div>
   );
 }
