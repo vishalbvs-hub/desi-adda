@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Search, ArrowRight, MapPin, Star, Clock, Calendar, Play, Ticket, ExternalLink, Film, Music } from "lucide-react";
 import { FONTS, COLORS, CLASSIFIEDS_CATEGORIES } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
+import ScrollingChips from "@/components/ScrollingChips";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
@@ -91,6 +92,26 @@ export default function HomePage() {
               style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
             <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: COLORS.primary, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
           </form>
+
+          <div style={{ maxWidth: "580px", margin: "14px auto 0" }}>
+            <ScrollingChips
+              chips={[
+                { emoji: "\u{1F35B}", text: "best biryani in Troy" },
+                { emoji: "\u{1FA7A}", text: "Telugu doctor near me" },
+                { emoji: "\u{1F6D5}", text: "temples in Novi" },
+                { emoji: "\u{1F958}", text: "Indian grocery stores Canton" },
+                { emoji: "\u{1F490}", text: "mehndi artist for wedding" },
+                { emoji: "\u{1F3E0}", text: "roommates in Farmington Hills" },
+                { emoji: "\u{1F4BC}", text: "immigration lawyer H1B" },
+                { emoji: "\u{1F3AC}", text: "Telugu movies near me" },
+                { emoji: "\u{1F9D1}\u200D\u{2695}\uFE0F", text: "Indian dentist Southfield" },
+                { emoji: "\u{1F389}", text: "desi events this weekend" },
+              ]}
+              onChipClick={(chip) => triggerChat(`${chip.emoji} ${chip.text}`)}
+              variant="light"
+              noPause
+            />
+          </div>
 
           <p style={{ marginTop: "14px", fontSize: "13px", color: "rgba(255,255,255,0.5)", fontFamily: fb, fontWeight: 500 }}>
             455+ Businesses {"\u00B7"} 18 Cities {"\u00B7"} Powered by AI

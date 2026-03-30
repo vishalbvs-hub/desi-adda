@@ -4,7 +4,7 @@ import { FONTS } from "@/lib/constants";
 
 const fb = FONTS.body;
 
-export default function ScrollingChips({ chips, onChipClick, variant = "light" }) {
+export default function ScrollingChips({ chips, onChipClick, variant = "light", noPause = false }) {
   const scrollRef = useRef(null);
   const animRef = useRef(null);
 
@@ -24,14 +24,16 @@ export default function ScrollingChips({ chips, onChipClick, variant = "light" }
       animRef.current = requestAnimationFrame(animate);
     };
 
-    el.addEventListener("mouseenter", () => { paused = true; });
-    el.addEventListener("mouseleave", () => { paused = false; });
-    el.addEventListener("touchstart", () => { paused = true; });
-    el.addEventListener("touchend", () => { setTimeout(() => { paused = false; }, 2000); });
+    if (!noPause) {
+      el.addEventListener("mouseenter", () => { paused = true; });
+      el.addEventListener("mouseleave", () => { paused = false; });
+      el.addEventListener("touchstart", () => { paused = true; });
+      el.addEventListener("touchend", () => { setTimeout(() => { paused = false; }, 2000); });
+    }
 
     animRef.current = requestAnimationFrame(animate);
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
-  }, []);
+  }, [noPause]);
 
   const isLight = variant === "light";
   const chipStyle = {
