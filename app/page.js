@@ -158,7 +158,7 @@ export default function HomePage() {
       <section style={{
         minHeight: "clamp(40vh, 45vh, 45vh)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         backgroundImage: "linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.65)), url('/hero.jpg')",
-        backgroundSize: "cover", backgroundPosition: "center 30%", backgroundRepeat: "no-repeat",
+        backgroundSize: "cover", backgroundPosition: "center 80%", backgroundRepeat: "no-repeat",
         padding: "28px 20px 20px", textAlign: "center", position: "relative",
       }}>
         <div style={{ maxWidth: "720px", margin: "0 auto" }}>
@@ -192,21 +192,20 @@ export default function HomePage() {
           <p style={{ marginTop: "16px", fontSize: "13px", color: "rgba(255,255,255,0.55)", fontFamily: fb, fontWeight: 500, letterSpacing: "0.3px" }}>
             455+ Businesses &middot; 18 Cities &middot; 100% Community-Driven
           </p>
+          {/* Scroll indicator */}
+          <button
+            onClick={() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth" })}
+            style={{
+              marginTop: "18px", background: "none", border: "none", cursor: "pointer", padding: "4px",
+              animation: "heroChevronBounce 2s ease-in-out infinite",
+            }}
+            aria-label="Scroll to categories"
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
         </div>
-        {/* Scroll indicator */}
-        <button
-          onClick={() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth" })}
-          style={{
-            position: "absolute", bottom: "16px", left: "50%", transform: "translateX(-50%)",
-            background: "none", border: "none", cursor: "pointer", padding: "8px",
-            animation: "heroChevronBounce 2s ease-in-out infinite",
-          }}
-          aria-label="Scroll to categories"
-        >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
       </section>
 
       {/* ═══ CATEGORY ICONS ═══ */}
@@ -229,7 +228,7 @@ export default function HomePage() {
             >
               <div style={{
                 width: 60, height: 60, borderRadius: "50%",
-                background: "rgba(0,0,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center",
+                background: "transparent", border: "2px solid #2D2420", display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 <span style={{ fontSize: "28px", lineHeight: 1 }}>{cat.emoji}</span>
               </div>
