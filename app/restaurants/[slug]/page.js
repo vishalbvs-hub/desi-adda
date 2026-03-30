@@ -205,7 +205,7 @@ export default async function RestaurantPage({ params }) {
                 style={{ border: 0 }}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || process.env.GOOGLE_API_KEY}&q=${r.latitude},${r.longitude}&zoom=15`}
+                src={`https://www.google.com/maps?q=${r.latitude},${r.longitude}&z=15&output=embed`}
               />
             </div>
           )}
