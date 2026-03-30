@@ -226,12 +226,7 @@ export default function HomePage() {
               onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08) translateY(-4px)"; e.currentTarget.style.boxShadow = "0 10px 28px rgba(0,0,0,0.1)"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = "scale(1) translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.05)"; }}
             >
-              <div style={{
-                width: 60, height: 60, borderRadius: "50%",
-                background: "transparent", border: "2px solid #2D2420", display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <span style={{ fontSize: "28px", lineHeight: 1 }}>{cat.emoji}</span>
-              </div>
+              <span style={{ fontSize: "32px", lineHeight: 1 }}>{cat.emoji}</span>
               <span style={{ fontSize: "14px", fontWeight: 600, color: "#2D2420", fontFamily: fb }}>{cat.label}</span>
             </Link>
           ))}
@@ -254,9 +249,10 @@ export default function HomePage() {
             {events.length > 0 ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
                 {events.map(ev => (
-                  <div key={ev.id} style={{
+                  <Link key={ev.id} href="/events" style={{
                     padding: "20px 22px", borderRadius: "16px", background: "white",
                     border: "1px solid #E0D8CF", borderLeft: `3px solid ${SAFFRON}`, transition: "all 0.25s",
+                    display: "block", textDecoration: "none", color: "inherit",
                   }}
                     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; }}
                     onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
@@ -271,7 +267,7 @@ export default function HomePage() {
                     <p style={{ fontSize: "12px", color: "#8A7968", margin: 0, display: "flex", alignItems: "center", gap: "3px" }}>
                       <MapPin size={11} /> {ev.location}
                     </p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -300,9 +296,10 @@ export default function HomePage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "14px", marginTop: "24px" }}>
             {recent.map(biz => (
-              <div key={biz.id} style={{
+              <Link key={biz.id} href="/category/food" style={{
                 padding: "20px 22px", borderRadius: "16px", border: "1px solid #EDE6DE",
                 borderLeft: `3px solid ${SAFFRON}`, background: "white", transition: "all 0.25s",
+                display: "block", textDecoration: "none", color: "inherit",
               }}
                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
@@ -318,7 +315,7 @@ export default function HomePage() {
                     {biz.reviews && <span style={{ color: "#A89888" }}>({biz.reviews})</span>}
                   </div>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         </div>

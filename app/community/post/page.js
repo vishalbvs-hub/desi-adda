@@ -13,6 +13,8 @@ const CATEGORIES = [
   { value: "services", label: "Services" },
   { value: "carpool", label: "Carpool" },
   { value: "events", label: "Events" },
+  { value: "babysitting", label: "Babysitting" },
+  { value: "home-cooked-meals", label: "Home Cooked Meals" },
   { value: "misc", label: "Misc" },
 ];
 
