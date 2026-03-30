@@ -38,76 +38,75 @@ export async function POST(request) {
   }
 
   const isFollowUp = history && history.length > 0;
-  let listings = [];
 
-  // Only search Supabase for the FIRST message. Follow-ups use conversation context.
-  if (!isFollowUp) {
-    const words = query.trim().toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    const queryLower = query.toLowerCase();
+  // Always search Supabase for every message
+  const words = query.trim().toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const queryLower = query.toLowerCase();
 
-    const relevantTables = TABLES.filter(table =>
-      table.keywords.some(kw => queryLower.includes(kw))
-    );
-    const tablesToSearch = relevantTables.length > 0 ? relevantTables : TABLES;
+  const relevantTables = TABLES.filter(table =>
+    table.keywords.some(kw => queryLower.includes(kw))
+  );
+  const tablesToSearch = relevantTables.length > 0 ? relevantTables : TABLES;
 
-    const scored = [];
-    for (const table of tablesToSearch) {
-      const searchCols = ["name", "city", "description"];
-      if (table.name === "professionals") searchCols.push("specialty", "bio", "practice_name");
+  const scored = [];
+  for (const table of tablesToSearch) {
+    const searchCols = ["name", "city", "description"];
+    if (table.name === "professionals") searchCols.push("specialty", "bio", "practice_name");
 
-      for (const word of words) {
-        const orFilter = searchCols.map(col => `${col}.ilike.%${word}%`).join(",");
-        const { data } = await supabase
-          .from(table.name)
-          .select(table.fields)
-          .or(orFilter)
-          .limit(10);
+    for (const word of words) {
+      const orFilter = searchCols.map(col => `${col}.ilike.%${word}%`).join(",");
+      const { data } = await supabase
+        .from(table.name)
+        .select(table.fields)
+        .or(orFilter)
+        .limit(10);
 
-        if (data) {
-          for (const row of data) {
-            const existing = scored.find(r => r._table === table.name && r.id === row.id);
-            if (existing) {
-              existing._score++;
-            } else {
-              scored.push({ ...row, _table: table.name, _category: table.label, _score: 1 });
-            }
+      if (data) {
+        for (const row of data) {
+          const existing = scored.find(r => r._table === table.name && r.id === row.id);
+          if (existing) {
+            existing._score++;
+          } else {
+            scored.push({ ...row, _table: table.name, _category: table.label, _score: 1 });
           }
         }
       }
     }
-
-    scored.sort((a, b) => {
-      if (b._score !== a._score) return b._score - a._score;
-      return (b.rating || 0) - (a.rating || 0);
-    });
-
-    listings = scored.slice(0, 8);
   }
+
+  scored.sort((a, b) => {
+    if (b._score !== a._score) return b._score - a._score;
+    return (b.rating || 0) - (a.rating || 0);
+  });
+
+  const listings = scored.slice(0, 8);
+
+  // Build listings context
+  const listingsContext = listings.length > 0
+    ? listings.map(l => {
+        const parts = [`Name: ${l.name}`, `Category: ${l._category}`];
+        if (l.city) parts.push(`City: ${l.city}`);
+        if (l.rating) parts.push(`Rating: ${l.rating}/5`);
+        if (l.phone) parts.push(`Phone: ${l.phone}`);
+        if (l.specialty) parts.push(`Specialty: ${l.specialty}`);
+        if (l.description || l.bio) parts.push(`About: ${l.description || l.bio}`);
+        return parts.join(", ");
+      }).join("\n")
+    : "No matching listings found in the directory.";
 
   // Build Claude messages
   let claudeMessages = [];
 
   if (isFollowUp) {
-    // Pass full conversation history — Claude already has the listings context
     for (const h of history) {
       if (h.role === "user") claudeMessages.push({ role: "user", content: h.content });
       if (h.role === "assistant") claudeMessages.push({ role: "assistant", content: h.content });
     }
-    claudeMessages.push({ role: "user", content: query });
+    claudeMessages.push({
+      role: "user",
+      content: `User is now asking: ${query}\n\nHere are the matching listings from our directory for this query:\n${listingsContext}`,
+    });
   } else {
-    // First message — include listings context
-    const listingsContext = listings.length > 0
-      ? listings.map(l => {
-          const parts = [`Name: ${l.name}`, `Category: ${l._category}`];
-          if (l.city) parts.push(`City: ${l.city}`);
-          if (l.rating) parts.push(`Rating: ${l.rating}/5`);
-          if (l.phone) parts.push(`Phone: ${l.phone}`);
-          if (l.specialty) parts.push(`Specialty: ${l.specialty}`);
-          if (l.description || l.bio) parts.push(`About: ${l.description || l.bio}`);
-          return parts.join(", ");
-        }).join("\n")
-      : "No matching listings found in the directory.";
-
     claudeMessages.push({
       role: "user",
       content: `User is asking: ${query}\n\nHere are the matching listings from our directory:\n${listingsContext}`,
