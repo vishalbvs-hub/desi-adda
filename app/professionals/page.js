@@ -277,6 +277,5 @@ function ProfessionalCard({ p }) {
         </div>
       </div>
     </div>
-    </div>
   );
 }
