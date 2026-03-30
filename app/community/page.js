@@ -94,9 +94,6 @@ export default function CommunityPage() {
       </div>
 
     <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
-          </button>
-        </Link>
-      </div>
 
       {/* Sponsored */}
       <div style={{ marginBottom: "16px" }}>
