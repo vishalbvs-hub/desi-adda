@@ -207,13 +207,10 @@ export default async function RestaurantPage({ params }) {
                   <div style={{ fontSize: "28px", marginBottom: "8px" }}>✍️</div>
                   <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 6px", color: "#2D2420" }}>Been here?</h4>
                   <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 12px", lineHeight: 1.4 }}>Share your experience and help the community find great food.</p>
-                  <button
-                    onClick={() => typeof window !== "undefined" && document.getElementById("review-form")?.scrollIntoView({ behavior: "smooth" })}
-                    style={{
-                      padding: "10px 24px", borderRadius: "12px", background: SAFFRON,
-                      color: "white", border: "none", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer",
-                    }}
-                  >Write a Review</button>
+                  <a href="#review-form" style={{
+                    display: "inline-block", padding: "10px 24px", borderRadius: "12px", background: SAFFRON,
+                    color: "white", fontFamily: fb, fontWeight: 600, fontSize: "13px", textDecoration: "none",
+                  }}>Write a Review</a>
                 </div>
               </div>
             </div>
