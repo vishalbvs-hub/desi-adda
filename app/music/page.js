@@ -178,24 +178,12 @@ export default function MusicPage() {
               </button>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ═══ TRENDING THIS WEEK ═══ */}
-      {(section === "All" || section === "Songs") && (
-      <section ref={trendingRef} style={{ padding: "48px 20px" }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
-            <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>
-              {"\u{1F525}"} Trending This Week
-            </h2>
-            <span style={{ fontSize: "12px", color: COLORS.textMuted, fontFamily: fb }}>
-              Updated weekly
-            </span>
-          </div>
-
-          {/* Platform toggle */}
-          <div style={{ display: "flex", gap: "6px", marginBottom: "24px" }}>
+          {/* Platform Filter */}
+          <div style={{
+            display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap",
+            marginTop: "10px",
+          }}>
             {[
               { id: "All", label: "All Platforms" },
               { id: "Spotify", label: "Spotify", icon: SPOTIFY_ICON },
@@ -205,24 +193,39 @@ export default function MusicPage() {
                 key={p.id}
                 onClick={() => setPlatform(p.id)}
                 style={{
-                  padding: "6px 14px", borderRadius: "999px", fontSize: "12px",
-                  fontFamily: fb, fontWeight: 600, cursor: "pointer",
+                  padding: "5px 14px", borderRadius: "999px", fontSize: "11px",
+                  fontFamily: fb, fontWeight: 500, cursor: "pointer",
                   display: "flex", alignItems: "center", gap: "5px",
                   border: platform === p.id
-                    ? `2px solid ${p.id === "Spotify" ? "#1DB954" : p.id === "Apple Music" ? "#FC3C44" : SAFFRON}`
-                    : "2px solid #EDE6DE",
+                    ? `2px solid ${p.id === "Spotify" ? "#1DB954" : p.id === "Apple Music" ? "#FC3C44" : "rgba(255,255,255,0.5)"}`
+                    : "2px solid rgba(255,255,255,0.08)",
                   background: platform === p.id
-                    ? (p.id === "Spotify" ? "#E8F5E9" : p.id === "Apple Music" ? "#FFF0F0" : `${SAFFRON}15`)
-                    : "white",
+                    ? (p.id === "Spotify" ? "rgba(29,185,84,0.2)" : p.id === "Apple Music" ? "rgba(252,60,68,0.2)" : "rgba(255,255,255,0.15)")
+                    : "rgba(255,255,255,0.03)",
                   color: platform === p.id
-                    ? (p.id === "Spotify" ? "#1DB954" : p.id === "Apple Music" ? "#FC3C44" : SAFFRON)
-                    : COLORS.textMuted,
+                    ? (p.id === "Spotify" ? "#1DB954" : p.id === "Apple Music" ? "#FC3C44" : "white")
+                    : "rgba(255,255,255,0.4)",
                   transition: "all 0.25s",
                 }}
               >
                 {p.icon && p.icon} {p.label}
               </button>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ TRENDING THIS WEEK ═══ */}
+      {(section === "All" || section === "Songs") && (
+      <section ref={trendingRef} style={{ padding: "48px 20px" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
+            <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>
+              {"\u{1F525}"} Trending This Week
+            </h2>
+            <span style={{ fontSize: "12px", color: COLORS.textMuted, fontFamily: fb }}>
+              Updated weekly
+            </span>
           </div>
 
           {lang === "All" ? (
@@ -381,20 +384,19 @@ export default function MusicPage() {
 
 // ═══ SONG LIST COMPONENT ═══
 
-// Apple Music fallback playlists by language (when individual track URLs aren't available)
-const APPLE_MUSIC_FALLBACKS = {
-  "Telugu": "https://music.apple.com/in/playlist/telugu-hits/pl.1be89625ddd94a80a1dff804b41efd63",
-  "Hindi": "https://music.apple.com/us/playlist/bollywood-hits/pl.d60caf02fcce4d7e9788fe01243b7c2c",
-  "Tamil": "https://music.apple.com/in/playlist/tamil-hits/pl.c8d5311e407f42c89d0fce075b5aaa43",
-  "Punjabi": "https://music.apple.com/us/playlist/punjabi-hits/pl.35b8520d9d6a486d9bf5c1b3331165b2",
-};
+// Generate an Apple Music search URL for a specific song
+function getAppleMusicUrl(song) {
+  if (song.apple_music_url) return song.apple_music_url;
+  const query = encodeURIComponent(`${song.title} ${song.artist.split(",")[0].trim()}`);
+  return `https://music.apple.com/us/search?term=${query}`;
+}
 
 function SongList({ songs, platform }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
       {songs.map((song, i) => {
         const spotifyUrl = song.spotify_url;
-        const appleUrl = song.apple_music_url || APPLE_MUSIC_FALLBACKS[song.language];
+        const appleUrl = getAppleMusicUrl(song);
         const showSpotify = platform === "All" || platform === "Spotify";
         const showApple = platform === "All" || platform === "Apple Music";
 
@@ -473,13 +475,11 @@ function SongList({ songs, platform }) {
                 }}
                 onMouseEnter={e => e.currentTarget.style.opacity = 1}
                 onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
-                title={song.apple_music_url ? "Play on Apple Music" : "Open Apple Music Playlist"}
+                title="Listen on Apple Music"
               >
                 {APPLE_ICON}
                 {platform === "Apple Music" && (
-                  <span style={{ fontSize: "11px", fontWeight: 600, color: "#FC3C44", fontFamily: fb }}>
-                    {song.apple_music_url ? "Play" : "Playlist"}
-                  </span>
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "#FC3C44", fontFamily: fb }}>Play</span>
                 )}
               </a>
             )}
