@@ -18,8 +18,8 @@ export default function PulseTicker() {
       ] = await Promise.all([
         supabase.from("restaurants").select("*", { count: "exact", head: true }),
         supabase.from("temples").select("*", { count: "exact", head: true }),
-        supabase.from("events").select("*", { count: "exact", head: true }),
-        supabase.from("classifieds").select("*", { count: "exact", head: true }),
+        supabase.from("events").select("*", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("classifieds").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("wedding_vendors").select("*", { count: "exact", head: true }),
         supabase.from("groceries").select("*", { count: "exact", head: true }),
       ]);
