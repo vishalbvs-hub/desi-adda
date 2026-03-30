@@ -74,8 +74,8 @@ export async function POST(request) {
   const scored = [];
   if (searchTerms.length > 0) {
     for (const table of tablesToSearch) {
-      const searchCols = ["name", "city", "description"];
-      if (table.name === "professionals") searchCols.push("specialty", "bio", "practice_name");
+      const searchCols = ["name", "city", "description", "subcategories"];
+      if (table.name === "professionals") searchCols.push("specialty", "bio", "practice_name", "languages");
 
       for (const word of searchTerms) {
         const orFilter = searchCols.map(col => `${col}.ilike.%${word}%`).join(",");
@@ -131,6 +131,10 @@ export async function POST(request) {
         if (l.rating) parts.push(`Rating: ${l.rating}/5`);
         if (l.phone) parts.push(`Phone: ${l.phone}`);
         if (l.specialty) parts.push(`Specialty: ${l.specialty}`);
+        if (l.title) parts.push(`Title: ${l.title}`);
+        if (l.practice_name) parts.push(`Practice: ${l.practice_name}`);
+        if (l.languages) parts.push(`Languages: ${l.languages}`);
+        if (l.subcategories) parts.push(`Tags: ${l.subcategories}`);
         if (l.description || l.bio) parts.push(`About: ${l.description || l.bio}`);
         return parts.join(", ");
       }).join("\n")
