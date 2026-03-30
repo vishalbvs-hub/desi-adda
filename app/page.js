@@ -154,9 +154,10 @@ export default function HomePage() {
     setChatLoading(true);
     setChatInput("");
     try {
-      // Send full conversation history as { role, content } pairs
-      const allMsgs = [...chatMessages, userMsg];
-      const history = allMsgs.map(m => ({ role: m.role, content: m.content }));
+      // Send only PREVIOUS messages as history (not the current one)
+      const history = chatMessages.length > 0
+        ? chatMessages.map(m => ({ role: m.role, content: m.content }))
+        : null;
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
