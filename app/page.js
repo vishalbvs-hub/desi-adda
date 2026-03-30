@@ -154,48 +154,63 @@ export default function HomePage() {
       backgroundSize: "200px 200px",
     }}>
       {/* ═══ HERO ═══ */}
+      <style>{`@keyframes heroChevronBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }`}</style>
       <section style={{
-        minHeight: "85vh", display: "flex", alignItems: "center", justifyContent: "center",
+        minHeight: "clamp(50vh, 58vh, 60vh)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.7)), url('/hero.jpg')",
         backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
-        padding: "60px 20px", textAlign: "center",
+        padding: "40px 20px 24px", textAlign: "center", position: "relative",
       }}>
         <div style={{ maxWidth: "720px", margin: "0 auto" }}>
-          <h1 style={{ fontFamily: fb, fontSize: "clamp(30px, 5.5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.2, margin: "0 0 6px" }}>
+          <h1 style={{ fontFamily: fb, fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 700, color: "white", lineHeight: 1.2, margin: "0 0 4px" }}>
             Your desi life in <span style={{ fontFamily: ff, fontStyle: "italic", color: COLORS.primary }}>Detroit</span>
           </h1>
-          <p style={{ fontFamily: ff, fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 300, color: "rgba(255,255,255,0.8)", margin: "0 0 24px", fontStyle: "italic" }}>
+          <p style={{ fontFamily: ff, fontSize: "clamp(16px, 2.5vw, 22px)", fontWeight: 300, color: "rgba(255,255,255,0.8)", margin: "0 0 14px", fontStyle: "italic" }}>
             the gathering place for desi life in America.
           </p>
-          <p style={{ fontSize: "clamp(14px, 2.2vw, 16px)", color: "rgba(255,255,255,0.75)", lineHeight: 1.6, margin: "0 auto 32px", maxWidth: "560px" }}>
+          <p style={{ fontSize: "clamp(13px, 2vw, 15px)", color: "rgba(255,255,255,0.7)", lineHeight: 1.5, margin: "0 auto 20px", maxWidth: "520px" }}>
             Restaurants, wedding vendors, temples, roommates, movies, and more — curated by the community, for the community.
           </p>
-          <form onSubmit={handleSearch} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
-            <Search size={20} style={{ position: "absolute", left: "18px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+          <form onSubmit={handleSearch} style={{ maxWidth: "520px", margin: "0 auto", position: "relative" }}>
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
             <input
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search restaurants, temples, doctors..."
               style={{
-                width: "100%", padding: "18px 130px 18px 50px", borderRadius: "16px",
-                border: "none", fontSize: "16px", fontFamily: fb,
-                background: "white", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                width: "100%", padding: "14px 120px 14px 44px", borderRadius: "14px",
+                border: "none", fontSize: "15px", fontFamily: fb,
+                background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)",
                 boxSizing: "border-box", outline: "none",
               }}
             />
             <button type="submit" style={{
-              position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)",
-              background: COLORS.primary, color: "white", border: "none", borderRadius: "12px",
-              padding: "12px 24px", fontFamily: fb, fontWeight: 600, fontSize: "14px", cursor: "pointer",
+              position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)",
+              background: COLORS.primary, color: "white", border: "none", borderRadius: "10px",
+              padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer",
             }}>Search</button>
           </form>
-          <p style={{ marginTop: "28px", fontSize: "14px", color: "rgba(255,255,255,0.65)", fontFamily: fb, fontWeight: 500, letterSpacing: "0.3px" }}>
+          <p style={{ marginTop: "16px", fontSize: "13px", color: "rgba(255,255,255,0.55)", fontFamily: fb, fontWeight: 500, letterSpacing: "0.3px" }}>
             455+ Businesses &middot; 18 Cities &middot; 100% Community-Driven
           </p>
         </div>
+        {/* Scroll indicator */}
+        <button
+          onClick={() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth" })}
+          style={{
+            position: "absolute", bottom: "16px", left: "50%", transform: "translateX(-50%)",
+            background: "none", border: "none", cursor: "pointer", padding: "8px",
+            animation: "heroChevronBounce 2s ease-in-out infinite",
+          }}
+          aria-label="Scroll to categories"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
       </section>
 
       {/* ═══ CATEGORY ICONS ═══ */}
-      <section ref={catRef} style={{ background: "rgba(255,251,245,0.85)", padding: "44px 20px 40px" }}>
+      <section id="categories" ref={catRef} style={{ background: "rgba(255,251,245,0.85)", padding: "36px 20px 32px" }}>
         <div style={{
           maxWidth: "1100px", margin: "0 auto",
           display: "flex", gap: "16px", overflowX: "auto",
