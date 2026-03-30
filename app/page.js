@@ -25,9 +25,33 @@ const QUICK_CATS = [
 ];
 
 function Divider() {
+  const c = "#E8832A";
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: "-14px", marginBottom: "-14px", position: "relative", zIndex: 2 }}>
-      <span style={{ color: SAFFRON, fontSize: "16px", opacity: 0.6, lineHeight: 1 }}>{"\u2726"}</span>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: "-24px", marginBottom: "-24px", position: "relative", zIndex: 2 }}>
+      <svg viewBox="0 0 320 50" xmlns="http://www.w3.org/2000/svg" style={{ width: "300px", height: "48px", opacity: 0.55 }}>
+        {/* Lines */}
+        <line x1="0" y1="25" x2="105" y2="25" stroke={c} strokeWidth="1" opacity="0.5" />
+        <line x1="215" y1="25" x2="320" y2="25" stroke={c} strokeWidth="1" opacity="0.5" />
+        {/* Small side ornaments */}
+        <circle cx="108" cy="25" r="2.5" fill={c} />
+        <circle cx="212" cy="25" r="2.5" fill={c} />
+        {/* Center lotus/mandala */}
+        <g transform="translate(160,25)">
+          {/* Outer petals */}
+          {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
+            <ellipse key={angle} cx="0" cy="-14" rx="4" ry="10" fill={c} opacity="0.35"
+              transform={`rotate(${angle})`} />
+          ))}
+          {/* Inner petals */}
+          {[0, 60, 120, 180, 240, 300].map(angle => (
+            <ellipse key={`i${angle}`} cx="0" cy="-9" rx="3" ry="7" fill={c} opacity="0.55"
+              transform={`rotate(${angle})`} />
+          ))}
+          {/* Center circle */}
+          <circle cx="0" cy="0" r="4" fill={c} opacity="0.7" />
+          <circle cx="0" cy="0" r="2" fill="white" opacity="0.8" />
+        </g>
+      </svg>
     </div>
   );
 }
