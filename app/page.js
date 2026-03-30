@@ -1,287 +1,349 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Search, ArrowRight, TrendingUp, Clock, MapPin,
-  MessageSquare, BookOpen, Send,
+  Search, ArrowRight, MapPin, Star, Clock, MessageSquare, Send,
+  UtensilsCrossed, Church, ShoppingBag, Heart, Stethoscope, Home, Film, Calendar, Baby,
 } from "lucide-react";
-import { FONTS, COLORS, TRENDING, SPONSORED_HOME, CLASSIFIEDS_CATEGORIES } from "@/lib/constants";
-import { fetchAllData } from "@/lib/data";
-import CategoryCard from "@/components/CategoryCard";
-import SponsoredCard from "@/components/SponsoredCard";
-import NewsletterSignup from "@/components/NewsletterSignup";
+import { FONTS, COLORS, CLASSIFIEDS_CATEGORIES } from "@/lib/constants";
+import { supabase } from "@/lib/supabase";
+
+const ff = FONTS.heading;
+const fb = FONTS.body;
+
+const QUICK_CATS = [
+  { icon: UtensilsCrossed, label: "Restaurants", href: "/category/food", color: "#E65100" },
+  { icon: Church, label: "Temples", href: "/category/religious", color: "#BF360C" },
+  { icon: ShoppingBag, label: "Groceries", href: "/category/grocery", color: "#33691E" },
+  { icon: Heart, label: "Weddings", href: "/category/weddings", color: "#C2185B" },
+  { icon: Stethoscope, label: "Doctors", href: "/professionals", color: "#37474F" },
+  { icon: Home, label: "Roommates", href: "/community", color: "#455A64" },
+  { icon: Film, label: "Movies", href: "/movies", color: "#6A1B9A" },
+  { icon: Calendar, label: "Events", href: "/events", color: "#7B1FA2" },
+  { icon: Baby, label: "Kids", href: "/category/family", color: "#1565C0" },
+];
+
+function useFadeIn() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.opacity = "0";
+    el.style.transform = "translateY(24px)";
+    el.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0)";
+        obs.disconnect();
+      }
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
 
 export default function HomePage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [data, setData] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [recent, setRecent] = useState([]);
+  const [classifieds, setClassifieds] = useState([]);
+  const [nlEmail, setNlEmail] = useState("");
+  const [nlDone, setNlDone] = useState(false);
 
   useEffect(() => {
-    fetchAllData().then(setData);
+    const today = new Date().toISOString().split("T")[0];
+    supabase.from("events").select("*").eq("status", "approved").gte("event_date", today).order("event_date").limit(5)
+      .then(({ data }) => setEvents(data || []));
+
+    supabase.from("restaurants").select("id, name, city, rating, reviews, description, created_at").order("created_at", { ascending: false }).limit(6)
+      .then(({ data }) => setRecent(data || []));
+
+    supabase.from("classifieds").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(4)
+      .then(({ data }) => setClassifieds(data || []));
   }, []);
 
-
-  const router = useRouter();
-  const ff = FONTS.heading;
-  const fb = FONTS.body;
-  const { primary, marigold, teal } = COLORS;
-
-  if (!data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
-  const { CATEGORIES, EVENTS, BLOG_ARTICLES, CLASSIFIEDS_POSTS } = data;
-
-  const handleSearch = () => {
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
-    const q = searchQuery.toLowerCase();
-    if (q.includes("movie") || q.includes("film") || q.includes("bollywood")) {
-      router.push("/movies");
-      return;
-    }
-    if (q.includes("roommate") || q.includes("room") || q.includes("carpool") || q.includes("for sale") || q.includes("tiffin")) {
-      router.push("/community");
-      return;
-    }
-    for (const cat of CATEGORIES.filter(c => c.data)) {
-      if (cat.data.some(r =>
-        r.name.toLowerCase().includes(q) ||
-        r.sub?.some(s => s.toLowerCase().includes(q)) ||
-        r.desc?.toLowerCase().includes(q)
-      )) {
-        router.push(`/category/${cat.id}?q=${encodeURIComponent(searchQuery)}`);
-        return;
-      }
-    }
     router.push(`/category/food?q=${encodeURIComponent(searchQuery)}`);
+  };
+
+  const catRef = useFadeIn();
+  const eventsRef = useFadeIn();
+  const recentRef = useFadeIn();
+  const classifiedsRef = useFadeIn();
+  const kidsRef = useFadeIn();
+  const nlRef = useFadeIn();
+
+  const formatDate = (d) => {
+    if (!d) return "";
+    const date = new Date(d + "T00:00:00");
+    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   };
 
   return (
     <>
-      {/* Hero */}
-      <section style={{ position: "relative", overflow: "hidden", background: "linear-gradient(170deg, #FFFBF5 0%, #FFF0E6 40%, #FCE4EC 100%)",
-        padding: "60px 20px 50px", textAlign: "center", position: "relative", overflow: "hidden",
+      {/* ─── HERO ─── */}
+      <section style={{
+        minHeight: "85vh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1730816243891-e4e28e56fa7f?w=1920&q=80') center/cover no-repeat",
+        padding: "60px 20px", textAlign: "center", position: "relative",
       }}>
-        <div className="rangoli-pattern" />
-        <div style={{
-          position: "absolute", top: "-40px", right: "-60px", width: "200px", height: "200px",
-          borderRadius: "50%", background: `${marigold}10`, pointerEvents: "none",
-        }} />
-        <div style={{ maxWidth: "680px", margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <h1 style={{ fontFamily: fb, fontSize: "clamp(30px, 5.5vw, 48px)", fontWeight: 700, lineHeight: 1.2, margin: "0 0 6px" }}>
-            Your desi life in <span style={{ fontFamily: ff, fontStyle: "italic", color: primary }}>Detroit</span>
+        <div style={{ maxWidth: "720px", margin: "0 auto" }}>
+          <h1 style={{
+            fontFamily: ff, fontSize: "clamp(36px, 7vw, 64px)", fontWeight: 700,
+            color: "white", lineHeight: 1.1, margin: "0 0 16px",
+          }}>
+            Everything Desi.<br />One Place.
           </h1>
-          <p style={{ fontFamily: ff, fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 300, color: "#6B5B4F", margin: "0 0 24px", fontStyle: "italic" }}>
-            all in one place.
+          <p style={{
+            fontSize: "clamp(15px, 2.5vw, 18px)", color: "rgba(255,255,255,0.85)",
+            lineHeight: 1.6, margin: "0 auto 32px", maxWidth: "560px",
+          }}>
+            The easiest way to find restaurants, temples, doctors, roommates, and more for the South Asian community in Metro Detroit.
           </p>
-          <p style={{ fontSize: "16px", color: "#6B5B4F", marginBottom: "28px", lineHeight: 1.6, maxWidth: "520px", marginLeft: "auto", marginRight: "auto" }}>
-            Restaurants, wedding vendors, temples, roommates, movies, and more — curated by the community, for the community.
-          </p>
-          <div style={{ maxWidth: "540px", margin: "0 auto", position: "relative" }}>
+
+          <form onSubmit={handleSearch} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
             <Search size={20} style={{ position: "absolute", left: "18px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
             <input
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSearch()}
-              placeholder="Search restaurants, roommates, movies, services..."
+              placeholder="Search restaurants, temples, doctors..."
               style={{
-                width: "100%", padding: "16px 130px 16px 48px", borderRadius: "16px",
-                border: "1px solid #E0D8CF", fontSize: "15px", fontFamily: fb,
-                background: "white", boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                width: "100%", padding: "18px 130px 18px 50px", borderRadius: "16px",
+                border: "none", fontSize: "16px", fontFamily: fb,
+                background: "white", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
                 boxSizing: "border-box", outline: "none",
               }}
             />
-            <button onClick={handleSearch} style={{
+            <button type="submit" style={{
               position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)",
-              background: primary, color: "white", border: "none", borderRadius: "12px",
-              padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "14px", cursor: "pointer",
+              background: COLORS.primary, color: "white", border: "none", borderRadius: "12px",
+              padding: "12px 24px", fontFamily: fb, fontWeight: 600, fontSize: "14px", cursor: "pointer",
             }}>Search</button>
+          </form>
+
+          <p style={{
+            marginTop: "28px", fontSize: "14px", color: "rgba(255,255,255,0.65)",
+            fontFamily: fb, fontWeight: 500, letterSpacing: "0.3px",
+          }}>
+            455+ Businesses &middot; 18 Cities &middot; 100% Community-Driven
+          </p>
+        </div>
+      </section>
+
+      {/* ─── CATEGORY ICONS ─── */}
+      <section ref={catRef} style={{ background: "#FFFBF5", padding: "40px 20px 36px" }}>
+        <div style={{
+          maxWidth: "1100px", margin: "0 auto",
+          display: "flex", gap: "12px", overflowX: "auto",
+          scrollbarWidth: "none", paddingBottom: "8px",
+        }}>
+          {QUICK_CATS.map(cat => (
+            <Link key={cat.label} href={cat.href} style={{
+              display: "flex", flexDirection: "column", alignItems: "center", gap: "8px",
+              minWidth: "90px", padding: "16px 12px", borderRadius: "16px",
+              background: "white", border: "1px solid #EDE6DE",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none",
+              transition: "all 0.2s", cursor: "pointer", flexShrink: 0,
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = cat.color + "60"; e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = `0 6px 20px ${cat.color}15`; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#EDE6DE"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}
+            >
+              <div style={{
+                width: 44, height: 44, borderRadius: "12px",
+                background: cat.color + "10", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <cat.icon size={22} color={cat.color} />
+              </div>
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#5A4A3F", fontFamily: fb }}>{cat.label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── EVENTS THIS WEEK ─── */}
+      <section ref={eventsRef} style={{ maxWidth: "1100px", margin: "0 auto", padding: "44px 20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "20px", flexWrap: "wrap", gap: "8px" }}>
+          <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: 0 }}>What&apos;s Happening This Week</h2>
+          <Link href="/events" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
+            See All Events <ArrowRight size={14} />
+          </Link>
+        </div>
+        {events.length > 0 ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
+            {events.map(ev => (
+              <div key={ev.id} style={{
+                padding: "18px 20px", borderRadius: "16px", background: "white",
+                border: "1px solid #EDE6DE", transition: "box-shadow 0.2s",
+              }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+              >
+                <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
+                  <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#F3E5F5", color: "#7B1FA2" }}>{ev.type}</span>
+                  <span style={{ fontSize: "12px", color: "#8A7968", display: "flex", alignItems: "center", gap: "3px" }}>
+                    <Clock size={11} /> {formatDate(ev.event_date)}
+                  </span>
+                </div>
+                <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: "0 0 4px" }}>{ev.name}</h4>
+                <p style={{ fontSize: "12px", color: "#8A7968", margin: 0, display: "flex", alignItems: "center", gap: "3px" }}>
+                  <MapPin size={11} /> {ev.location}
+                </p>
+              </div>
+            ))}
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px", marginTop: "20px" }}>
-            {["Biryani", "Roommates", "Wedding Vendors", "Temples", "Indian Movies", "Send Money"].map(t => (
-              <button key={t} onClick={() => setSearchQuery(t)} style={{
-                padding: "6px 14px", borderRadius: "999px", border: "1px solid #E8E0D8",
-                background: "white", fontSize: "12px", fontFamily: fb, color: "#6B5B4F",
-                cursor: "pointer", fontWeight: 500, transition: "all 0.2s",
-              }}>{t}</button>
+        ) : (
+          <div style={{ padding: "40px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #EDE6DE" }}>
+            <p style={{ fontSize: "15px", color: "#8A7968", margin: "0 0 12px" }}>No events this week — submit yours!</p>
+            <Link href="/events/submit" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, textDecoration: "none" }}>
+              Submit an Event <ArrowRight size={14} style={{ display: "inline", verticalAlign: "middle" }} />
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* ─── NEW ON DESI ADDA ─── */}
+      <section ref={recentRef} style={{ background: "white", padding: "50px 20px", borderTop: "1px solid #EDE6DE", borderBottom: "1px solid #EDE6DE" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "20px", flexWrap: "wrap", gap: "8px" }}>
+            <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: 0 }}>New on Desi Adda</h2>
+            <Link href="/category/food" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
+              Explore the Full Directory <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "14px" }}>
+            {recent.map(biz => (
+              <div key={biz.id} style={{
+                padding: "18px 20px", borderRadius: "16px", border: "1px solid #EDE6DE",
+                background: "#FFFBF5", transition: "box-shadow 0.2s",
+              }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+              >
+                <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: "0 0 4px" }}>{biz.name}</h4>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12px", color: "#8A7968", marginBottom: "6px" }}>
+                  <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#FFF3E0", color: "#E65100" }}>Restaurant</span>
+                  {biz.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {biz.city}</span>}
+                </div>
+                {biz.rating && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", color: "#5A4A3F" }}>
+                    <Star size={13} fill="#E8A317" color="#E8A317" /> {biz.rating}
+                    {biz.reviews && <span style={{ color: "#A89888" }}>({biz.reviews})</span>}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Sponsored */}
-      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "24px 20px 0" }}>
-        <SponsoredCard ad={SPONSORED_HOME[0]} />
-      </section>
-
-      {/* Category Grid */}
-      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "40px 20px" }}>
-        <h2 style={{ fontFamily: ff, fontSize: "28px", fontWeight: 700, marginBottom: "6px" }}>
-          Explore Detroit&apos;s Desi World
-        </h2>
-        <p style={{ color: "#8A7968", fontSize: "15px", marginBottom: "28px" }}>
-          Everything the South Asian community needs.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "14px" }}>
-          {CATEGORIES.map(cat => <CategoryCard key={cat.id} cat={cat} />)}
+      {/* ─── LATEST CLASSIFIEDS ─── */}
+      <section ref={classifiedsRef} style={{ maxWidth: "1100px", margin: "0 auto", padding: "44px 20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "20px", flexWrap: "wrap", gap: "8px" }}>
+          <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: 0 }}>Latest from the Community</h2>
+          <Link href="/community" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
+            See All Posts <ArrowRight size={14} />
+          </Link>
         </div>
-      </section>
-
-      {/* Community Board Preview */}
-      <section style={{ background: "white", padding: "50px 20px", borderTop: "1px solid #EDE6DE", borderBottom: "1px solid #EDE6DE" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "20px", flexWrap: "wrap", gap: "8px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <MessageSquare size={18} color={primary} />
-              <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: 0 }}>Community Board</h2>
-            </div>
-            <Link href="/community" style={{ color: primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px" }}>
-              View all posts <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "14px" }}>
-            {CLASSIFIEDS_POSTS.slice(0, 4).map(post => {
-              const catInfo = CLASSIFIEDS_CATEGORIES.find(c => c.id === post.cat);
+        {classifieds.length > 0 ? (
+          <div style={{ display: "grid", gap: "12px" }}>
+            {classifieds.map(post => {
+              const catInfo = CLASSIFIEDS_CATEGORIES.find(c => c.id === post.category);
               return (
                 <Link key={post.id} href="/community" style={{
-                  padding: "16px 18px", borderRadius: "14px", border: "1px solid #EDE6DE",
-                  display: "block", transition: "all 0.2s", textDecoration: "none", color: "inherit",
-                }}>
-                  <div style={{ display: "flex", gap: "8px", marginBottom: "6px", alignItems: "center" }}>
+                  padding: "16px 20px", borderRadius: "14px", border: "1px solid #EDE6DE",
+                  background: "white", display: "block", textDecoration: "none", color: "inherit",
+                  transition: "box-shadow 0.2s",
+                }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+                >
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "4px", alignItems: "center" }}>
                     <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>
                       {catInfo?.icon} {catInfo?.label}
                     </span>
-                    <span style={{ fontSize: "11px", color: "#A89888" }}>{post.date}</span>
                   </div>
-                  <h4 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3 }}>
-                    {post.title}
-                  </h4>
-                  <div style={{ fontSize: "12px", color: "#A89888" }}>
-                    <MessageSquare size={11} style={{ display: "inline", verticalAlign: "middle" }} /> {post.replies} replies
-                  </div>
+                  <h4 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 600, margin: "0 0 2px", lineHeight: 1.3 }}>{post.title}</h4>
+                  <p style={{ fontSize: "12px", color: "#A89888", margin: 0 }}>
+                    {post.author} · <MessageSquare size={11} style={{ display: "inline", verticalAlign: "middle" }} /> {post.replies || 0} replies
+                  </p>
                 </Link>
               );
             })}
           </div>
-        </div>
-      </section>
-
-      {/* Blog Preview */}
-      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "40px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "20px", flexWrap: "wrap", gap: "8px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <BookOpen size={18} color={teal} />
-            <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: 0 }}>From the Blog</h2>
-          </div>
-          <Link href="/blog" style={{ color: primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px" }}>
-            All articles <ArrowRight size={14} />
-          </Link>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "16px" }}>
-          {BLOG_ARTICLES.filter(a => a.featured).map(a => (
-            <Link key={a.id} href={`/blog/${a.slug}`} style={{
-              borderRadius: "16px", overflow: "hidden", border: "1px solid #EDE6DE",
-              background: "white", transition: "transform 0.2s, box-shadow 0.2s",
-              display: "block", textDecoration: "none", color: "inherit",
-            }}>
-              <div style={{ height: "6px", background: `linear-gradient(90deg, ${a.color}, ${a.color}80)` }} />
-              <div style={{ padding: "20px" }}>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
-                  <span style={{ fontSize: "11px", fontWeight: 600, color: a.color, textTransform: "uppercase" }}>{a.category}</span>
-                  <span style={{ fontSize: "11px", color: "#A89888" }}>{a.readTime}</span>
-                </div>
-                <h3 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 600, margin: "0 0 8px", lineHeight: 1.3 }}>{a.title}</h3>
-                <p style={{ fontSize: "13px", color: "#8A7968", lineHeight: 1.5, margin: 0 }}>
-                  {a.excerpt.substring(0, 100)}...
-                </p>
-              </div>
-            </Link>
-          ))}
-          <SponsoredCard ad={SPONSORED_HOME[1]} style={{ border: "1px solid #EDE6DE" }} />
-        </div>
-      </section>
-
-      {/* Trending */}
-      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px 20px 40px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-          <TrendingUp size={18} color="#C75B39" />
-          <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0 }}>Trending</h2>
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-          {TRENDING.map((t, i) => (
-            <button key={i} onClick={() => { setSearchQuery(t); }} style={{
-              padding: "8px 16px", borderRadius: "999px", background: "white",
-              border: "1px solid #E8E0D8", fontSize: "13px", fontFamily: fb,
-              fontWeight: 500, color: "#5A4A3F", cursor: "pointer", transition: "all 0.2s",
-            }}>{t}</button>
-          ))}
-        </div>
-      </section>
-
-      {/* Events + Remittance */}
-      <section style={{ background: "white", padding: "50px 20px", borderTop: "1px solid #EDE6DE", borderBottom: "1px solid #EDE6DE" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "20px" }}>
-            <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700 }}>Upcoming Events</h2>
-            <Link href="/events" style={{ color: primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px" }}>
-              View all <ArrowRight size={14} />
+        ) : (
+          <div style={{ padding: "40px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #EDE6DE" }}>
+            <p style={{ fontSize: "15px", color: "#8A7968", margin: "0 0 12px" }}>Be the first to post!</p>
+            <Link href="/community/post" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, textDecoration: "none" }}>
+              Create a Post <ArrowRight size={14} style={{ display: "inline", verticalAlign: "middle" }} />
             </Link>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
-            {EVENTS.slice(0, 4).map((ev, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px 18px", borderRadius: "14px", border: "1px solid #EDE6DE" }}>
-                <span style={{ fontSize: "28px" }}>{ev.icon}</span>
-                <div>
-                  <h4 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 600, margin: "0 0 3px" }}>{ev.name}</h4>
-                  <div style={{ fontSize: "12px", color: "#8A7968" }}>
-                    <Clock size={11} style={{ display: "inline", verticalAlign: "middle" }} /> {ev.date} · <MapPin size={11} style={{ display: "inline", verticalAlign: "middle" }} /> {ev.where}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </section>
 
-      {/* Remittance + Sponsored */}
-      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "40px 20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
-          <div style={{
-            background: `linear-gradient(135deg, ${teal}08, ${teal}04)`,
-            borderRadius: "20px", padding: "30px", border: "1px solid #EDE6DE",
-          }}>
-            <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: "0 0 6px" }}>💸 Sending money home?</h3>
-            <p style={{ fontSize: "14px", color: "#5A4A3F", margin: "0 0 16px" }}>Compare Wise, Remitly, Xoom — side by side.</p>
-            <Link href="/category/travel" style={{
-              display: "inline-block", padding: "10px 22px", borderRadius: "12px",
-              background: teal, color: "white", fontFamily: fb, fontWeight: 600,
-              fontSize: "14px",
-            }}>
-              Compare Now <ArrowRight size={14} style={{ display: "inline", marginLeft: 6, verticalAlign: "middle" }} />
-            </Link>
-          </div>
-          <SponsoredCard ad={SPONSORED_HOME[2]} />
-        </div>
-      </section>
-
-      {/* Suggest Business */}
-      <section style={{ maxWidth: "700px", margin: "0 auto", padding: "20px 20px 40px", textAlign: "center" }}>
+      {/* ─── FOR THE KIDS ─── */}
+      <section ref={kidsRef} style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 20px 44px" }}>
         <div style={{
-          background: `linear-gradient(135deg, ${primary}06, ${marigold}06)`,
-          borderRadius: "20px", padding: "40px 30px", border: "1px solid #EDE6DE",
+          borderRadius: "20px", padding: "40px 32px", textAlign: "center",
+          background: "linear-gradient(135deg, #FFF8E1, #FCE4EC, #E8EAF6)",
+          border: "1px solid #EDE6DE", position: "relative", overflow: "hidden",
         }}>
-          <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, marginBottom: "8px" }}>
-            Know a business we&apos;re missing?
-          </h2>
-          <p style={{ fontSize: "15px", color: "#6B5B4F", marginBottom: "20px" }}>Help us grow the directory.</p>
-          <Link href="/suggest" style={{
-            display: "inline-block", padding: "12px 28px", borderRadius: "12px", background: primary,
-            color: "white", fontFamily: fb, fontWeight: 600,
-            fontSize: "15px", cursor: "pointer", textDecoration: "none",
-          }}>
-            Suggest a Business <ArrowRight size={14} style={{ display: "inline", marginLeft: 6, verticalAlign: "middle" }} />
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "12px" }}>
+            <Baby size={22} color="#E65100" />
+            <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: 0 }}>For the Little Ones</h2>
+          </div>
+          <p style={{ fontSize: "16px", color: "#5A4A3F", maxWidth: "480px", margin: "0 auto 20px", lineHeight: 1.6 }}>
+            Free coloring books, alphabet worksheets, and festival activities for South Asian kids.
+          </p>
+          <span style={{
+            display: "inline-block", padding: "6px 18px", borderRadius: "999px",
+            fontSize: "12px", fontWeight: 700, background: "rgba(255,255,255,0.7)",
+            color: "#E65100", letterSpacing: "0.5px",
+          }}>COMING SOON</span>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <NewsletterSignup />
+      {/* ─── NEWSLETTER ─── */}
+      <section ref={nlRef} style={{ background: COLORS.primary, padding: "56px 20px", textAlign: "center" }}>
+        <div style={{ maxWidth: "500px", margin: "0 auto" }}>
+          <h2 style={{ fontFamily: ff, fontSize: "26px", fontWeight: 700, color: "white", marginBottom: "6px" }}>Stay Connected</h2>
+          <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "15px", marginBottom: "28px" }}>
+            Your city. Your people. One email a week.
+          </p>
+          {nlDone ? (
+            <p style={{ color: COLORS.marigold, fontWeight: 600, fontFamily: ff, fontSize: "18px" }}>You&apos;re in! ✨</p>
+          ) : (
+            <div style={{ display: "flex", gap: "8px", maxWidth: "420px", margin: "0 auto" }}>
+              <input
+                value={nlEmail} onChange={e => setNlEmail(e.target.value)}
+                placeholder="your@email.com"
+                style={{
+                  flex: 1, padding: "14px 18px", borderRadius: "12px", border: "none",
+                  fontSize: "15px", fontFamily: fb, outline: "none",
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (!nlEmail.includes("@")) return;
+                  supabase.from("subscribers").insert({ email: nlEmail.trim().toLowerCase(), opted_metros: ["detroit"] }).then(() => setNlDone(true));
+                }}
+                style={{
+                  padding: "14px 24px", borderRadius: "12px", background: COLORS.marigold,
+                  color: "white", border: "none", fontFamily: fb, fontWeight: 600,
+                  fontSize: "15px", cursor: "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                <Send size={14} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} />
+                Subscribe
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
     </>
   );
 }
