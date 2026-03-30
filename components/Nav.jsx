@@ -7,10 +7,11 @@ const NAV_ITEMS = [
   { label: "Local Businesses", href: "/businesses" },
   { label: "Temples", href: "/temples" },
   { label: "Professionals", href: "/professionals" },
-  { label: "Community Board", href: "/community" },
+  { label: "Event Planning", href: "/event-planning" },
+  { label: "Community", href: "/community" },
+  { label: "Entertainment", href: "/entertainment" },
+  { label: "Classifieds", href: "/classifieds" },
   { label: "Events", href: "/events" },
-  { label: "Music", href: "/music" },
-  { label: "Movies", href: "/movies" },
   { label: "News", href: "/blog" },
 ];
 
