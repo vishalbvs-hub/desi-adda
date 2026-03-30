@@ -14,6 +14,26 @@ export default function AskAdda() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef(null);
+  const pendingQueryRef = useRef(null);
+
+  // Listen for external queries (from InlineAskBar on subpages)
+  useEffect(() => {
+    const handler = (e) => {
+      setChatOpen(true);
+      pendingQueryRef.current = e.detail;
+    };
+    window.addEventListener("askadda", handler);
+    return () => window.removeEventListener("askadda", handler);
+  }, []);
+
+  // Process pending query after chat opens
+  useEffect(() => {
+    if (chatOpen && pendingQueryRef.current) {
+      const q = pendingQueryRef.current;
+      pendingQueryRef.current = null;
+      setTimeout(() => sendChat(q), 100);
+    }
+  }, [chatOpen]);
 
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });

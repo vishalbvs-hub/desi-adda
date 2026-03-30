@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, MapPin, Calendar, Ticket } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
+import InlineAskBar from "@/components/InlineAskBar";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
@@ -167,64 +168,61 @@ export default function MusicPage() {
               </button>
             ))}
           </div>
-
-          {/* Section Filter Tabs */}
-          <div style={{
-            display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap",
-            marginTop: "14px",
-          }}>
-            {[
-              { id: "All", label: "All", icon: "\u{2728}" },
-              { id: "Songs", label: "Songs", icon: "\u{1F525}" },
-              { id: "Playlists", label: "Playlists", icon: "\u{1F3A7}" },
-              { id: "Live", label: "Live Near You", icon: "\u{1F3A4}" },
-            ].map(s => (
-              <button
-                key={s.id}
-                onClick={() => setSection(s.id)}
-                style={{
-                  padding: "6px 16px", borderRadius: "999px", fontSize: "12px",
-                  fontFamily: fb, fontWeight: 600, cursor: "pointer",
-                  border: section === s.id ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)",
-                  background: section === s.id ? SAFFRON : "rgba(255,255,255,0.08)",
-                  color: section === s.id ? "#1a1a2e" : "rgba(255,255,255,0.6)",
-                  transition: "all 0.25s",
-                }}
-              >
-                {s.icon} {s.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Platform Filter */}
-          <div style={{
-            display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap",
-            marginTop: "10px",
-          }}>
-            {[
-              { id: "All", label: "All Platforms" },
-              { id: "Spotify", label: "Spotify", icon: SPOTIFY_ICON },
-              { id: "Apple Music", label: "Apple Music", icon: APPLE_ICON },
-            ].map(p => (
-              <button
-                key={p.id}
-                onClick={() => setPlatform(p.id)}
-                style={{
-                  padding: "5px 14px", borderRadius: "999px", fontSize: "11px",
-                  fontFamily: fb, fontWeight: 600, cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: "5px",
-                  border: platform === p.id ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)",
-                  background: platform === p.id ? SAFFRON : "rgba(255,255,255,0.08)",
-                  color: platform === p.id ? "#1a1a2e" : "rgba(255,255,255,0.6)",
-                  transition: "all 0.25s",
-                }}
-              >
-                {p.icon && p.icon} {p.label}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
+
+      {/* ═══ SEARCH BAR + FILTERS ═══ */}
+      <InlineAskBar
+        placeholder="Ask about music... new Telugu songs? best Bollywood playlist?"
+        chips={[
+          { emoji: "\u{1F3B5}", text: "trending Telugu songs this week" },
+          { emoji: "\u{1F3A4}", text: "Anirudh concerts near Detroit" },
+          { emoji: "\u{1F3A7}", text: "best Tamil playlist on Spotify" },
+          { emoji: "\u{1F525}", text: "new Punjabi songs this week" },
+          { emoji: "\u{1F3B6}", text: "Arijit Singh latest hits" },
+          { emoji: "\u{1F3B8}", text: "Malayalam indie music" },
+          { emoji: "\u{1F3B9}", text: "Bollywood road trip playlist" },
+          { emoji: "\u{1F399}\uFE0F", text: "desi concerts in Michigan" },
+          { emoji: "\u{1F4FA}", text: "best Kannada songs 2026" },
+          { emoji: "\u{1F3A4}", text: "Diljit Dosanjh tour dates" },
+        ]}
+      />
+      <div style={{
+        background: "white", borderBottom: "1px solid #EDE6DE",
+        padding: "12px 20px", display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap", alignItems: "center",
+      }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          {[
+            { id: "All", label: "All", icon: "\u{2728}" },
+            { id: "Songs", label: "Songs", icon: "\u{1F525}" },
+            { id: "Playlists", label: "Playlists", icon: "\u{1F3A7}" },
+            { id: "Live", label: "Live Near You", icon: "\u{1F3A4}" },
+          ].map(s => (
+            <button key={s.id} onClick={() => setSection(s.id)} style={{
+              padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
+              border: section === s.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+              background: section === s.id ? SAFFRON : "white",
+              color: section === s.id ? "#2D2420" : COLORS.textMuted, transition: "all 0.25s",
+            }}>{s.icon} {s.label}</button>
+          ))}
+        </div>
+        <div style={{ width: "1px", height: "24px", background: "#EDE6DE" }} />
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          {[
+            { id: "All", label: "All Platforms" },
+            { id: "Spotify", label: "Spotify", icon: SPOTIFY_ICON },
+            { id: "Apple Music", label: "Apple Music", icon: APPLE_ICON },
+          ].map(p => (
+            <button key={p.id} onClick={() => setPlatform(p.id)} style={{
+              padding: "5px 12px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: "5px",
+              border: platform === p.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+              background: platform === p.id ? SAFFRON : "white",
+              color: platform === p.id ? "#2D2420" : COLORS.textMuted, transition: "all 0.25s",
+            }}>{p.icon && p.icon} {p.label}</button>
+          ))}
+        </div>
+      </div>
 
       {/* ═══ CONTENT + SIDEBAR LAYOUT ═══ */}
       <div style={{

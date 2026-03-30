@@ -6,6 +6,8 @@ import { Search, ArrowRight, MapPin, Star, Clock, MessageSquare, Send } from "lu
 import { FONTS, COLORS, CLASSIFIEDS_CATEGORIES } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 
+import ScrollingChips from "@/components/ScrollingChips";
+
 const ff = FONTS.heading;
 const fb = FONTS.body;
 const WARM_SAND = "#F0E4D4";
@@ -236,22 +238,23 @@ export default function HomePage() {
               padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer",
             }}>Ask Adda {"\u2728"}</button>
           </form>
-          <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", marginTop: "14px" }}>
-            {[
-              { emoji: "\u{1F35B}", text: "best biryani in Troy" },
-              { emoji: "\u{1FA7A}", text: "Telugu doctor near me" },
-              { emoji: "\u{1F6D5}", text: "temples in Novi" },
-            ].map(chip => (
-              <button key={chip.text} onClick={() => { setSearchQuery(`${chip.emoji} ${chip.text}`); setChatOpen(true); sendChat(`${chip.emoji} ${chip.text}`); }} style={{
-                padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontFamily: fb,
-                fontWeight: 500, color: "white", cursor: "pointer",
-                background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)",
-                transition: "background 0.2s",
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.25)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
-              >{chip.emoji} {chip.text}</button>
-            ))}
+          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
+            <ScrollingChips
+              chips={[
+                { emoji: "\u{1F35B}", text: "best biryani in Troy" },
+                { emoji: "\u{1FA7A}", text: "Telugu doctor near me" },
+                { emoji: "\u{1F6D5}", text: "temples in Novi" },
+                { emoji: "\u{1F958}", text: "Indian grocery stores Canton" },
+                { emoji: "\u{1F490}", text: "mehndi artist for wedding" },
+                { emoji: "\u{1F3E0}", text: "roommates in Farmington Hills" },
+                { emoji: "\u{1F4BC}", text: "immigration lawyer H1B" },
+                { emoji: "\u{1F3AC}", text: "Telugu movies near me" },
+                { emoji: "\u{1F9D1}\u200D\u{2695}\uFE0F", text: "Indian dentist Southfield" },
+                { emoji: "\u{1F389}", text: "desi events this weekend" },
+              ]}
+              onChipClick={(chip) => { setChatOpen(true); sendChat(`${chip.emoji} ${chip.text}`); }}
+              variant="light"
+            />
           </div>
           <p style={{ marginTop: "10px", fontSize: "11px", color: "rgba(255,255,255,0.5)", fontFamily: fb }}>
             Powered by AI — ask in plain English
@@ -335,7 +338,11 @@ export default function HomePage() {
                       padding: "10px 0 2px", maxWidth: "85%",
                     }}>
                       {msg.listings.map((l, j) => (
-                        <Link key={`${l._table}-${l.id}-${j}`} href={`${l._table === "professionals" ? "/professionals" : `/category/${l._table === "restaurants" ? "food" : l._table === "temples" ? "religious" : l._table === "groceries" ? "grocery" : l._table === "wedding_vendors" ? "weddings" : l._table === "event_halls" ? "event-halls" : l._table === "kids" ? "family" : l._table === "health_wellness" ? "wellness" : l._table === "beauty_brands" ? "beauty" : l._table === "community_networking" ? "community" : "food"}`}?q=${encodeURIComponent(l.name)}`}
+                        <Link key={`${l._table}-${l.id}-${j}`} href={(() => {
+                          const catSlug = l._table === "restaurants" ? "food" : l._table === "temples" ? "religious" : l._table === "groceries" ? "grocery" : l._table === "wedding_vendors" ? "weddings" : l._table === "event_halls" ? "event-halls" : l._table === "kids" ? "family" : l._table === "health_wellness" ? "wellness" : l._table === "beauty_brands" ? "beauty" : l._table === "community_networking" ? "community" : "food";
+                          const base = l._table === "professionals" ? "/professionals" : `/category/${catSlug}`;
+                          return `${base}?q=${encodeURIComponent(l.name)}`;
+                        })()}
                           onClick={() => { setChatOpen(false); setChatMessages([]); }}
                           style={{
                             flexShrink: 0, width: "180px", padding: "10px 12px", borderRadius: "12px",

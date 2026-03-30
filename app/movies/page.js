@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, Clock, Star, Play, Ticket } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
+import InlineAskBar from "@/components/InlineAskBar";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
@@ -103,6 +104,8 @@ export default function MoviesPage() {
         </div>
       </section>
 
+      {/* SEARCH BAR + FILTERS */}
+      <InlineAskBar placeholder="Ask about movies... new Telugu films on Netflix? Dhurandhar review?" chips={[{emoji:"\u{1F3AC}",text:"Telugu movies on Netflix"},{emoji:"\u{1F37F}",text:"best Bollywood movie 2026"},{emoji:"\u{1F4FA}",text:"new Malayalam movies on OTT"},{emoji:"\u{1F3AC}",text:"Dhurandhar review"},{emoji:"\u{2B50}",text:"highest rated Tamil movies"},{emoji:"\u{1F39F}\uFE0F",text:"Indian movies in theaters Michigan"},{emoji:"\u{1F4C5}",text:"upcoming Punjabi movies"},{emoji:"\u{1F3A5}",text:"Coolie trailer Rajinikanth"},{emoji:"\u{1F4DA}",text:"best Telugu movies all time"},{emoji:"\u{1F525}",text:"Kannada movies 2026"}]} />
       {/* CONTENT + SIDEBAR */}
       <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 20px", display: "flex", gap: "32px", alignItems: "flex-start" }}>
         <div ref={moviesRef} style={{ flex: 1, minWidth: 0, padding: "48px 0" }}>
