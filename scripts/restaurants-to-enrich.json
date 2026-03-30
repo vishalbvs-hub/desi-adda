@@ -1,0 +1,1073 @@
+[
+  {
+    "name": "Royal Indian Cuisine",
+    "city": "Troy",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Lunch buffet, extensive menu",
+    "status": "Open"
+  },
+  {
+    "name": "Ashoka Indian Cuisine",
+    "city": "Troy",
+    "cuisine_type": "Pan-Indian, South Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Rava masala dosa, chole bhatura, Indo-Chinese soups",
+    "status": "Open"
+  },
+  {
+    "name": "Charminar Biryani House",
+    "city": "Troy",
+    "cuisine_type": "Hyderabadi/Biryani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Hyderabadi dum biryani",
+    "status": "Open"
+  },
+  {
+    "name": "Neehee's Troy",
+    "city": "Troy",
+    "cuisine_type": "Gujarati, Chaat/Street Food",
+    "veg_status": "Veg",
+    "price_range": "$",
+    "notable_dishes": "Samosa Pav, paneer pakoda, dosas, Indo-Chinese",
+    "status": "Open"
+  },
+  {
+    "name": "Deccan Delights",
+    "city": "Troy",
+    "cuisine_type": "Hyderabadi/Biryani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Goat biryani, kebabs, Mandi, punugulu, rasmalai",
+    "status": "Open"
+  },
+  {
+    "name": "Honest Restaurant",
+    "city": "Troy",
+    "cuisine_type": "Gujarati, Chaat/Street Food",
+    "veg_status": "Veg",
+    "price_range": "$",
+    "notable_dishes": "Bhaji pav, chaat, dosas, uttapam, Indo-Chinese",
+    "status": "Open"
+  },
+  {
+    "name": "Priya Restaurant",
+    "city": "Troy",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Non-veg curries, sweets, snacks",
+    "status": "Open"
+  },
+  {
+    "name": "Bheema's Indian Cuisine",
+    "city": "Troy",
+    "cuisine_type": "South Indian, Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "South Indian specialties",
+    "status": "Open"
+  },
+  {
+    "name": "Virasat The Heritage",
+    "city": "Troy",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$$$",
+    "notable_dishes": "Fine dining, North/South Indian, Indo-Chinese",
+    "status": "Open"
+  },
+  {
+    "name": "Main Street Kitchen",
+    "city": "Troy",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Diverse menu",
+    "status": "Open"
+  },
+  {
+    "name": "Sai Sweets of India & Fast Food",
+    "city": "Troy",
+    "cuisine_type": "Sweets & Bakery, Chaat/Street Food",
+    "veg_status": "Veg",
+    "price_range": "$",
+    "notable_dishes": "Sweets, chaat, fast food",
+    "status": "Open"
+  },
+  {
+    "name": "Paradise Biryani Pointe",
+    "city": "Troy",
+    "cuisine_type": "Hyderabadi/Biryani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Hyderabadi dum biryani, Mughlai, tandoor",
+    "status": "Open"
+  },
+  {
+    "name": "iti's Fusion Food",
+    "city": "Troy",
+    "cuisine_type": "Pan-Indian, Fusion",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Fusion Indian, originally Gift of India grocery",
+    "status": "Open"
+  },
+  {
+    "name": "Authentikka Indian Cuisine",
+    "city": "Troy",
+    "cuisine_type": "Pan-Indian, Fusion",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Curries, fusion, brunch, lunch, dinner",
+    "status": "Open"
+  },
+  {
+    "name": "Swagat Indian Cuisine",
+    "city": "Troy",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Masala Indian Kitchen",
+    "city": "Novi",
+    "cuisine_type": "North Indian, South Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Dosa, biryani, chicken tikka masala, chicken 65",
+    "status": "Open"
+  },
+  {
+    "name": "1947 Indian Cuisine",
+    "city": "Novi",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "The GOAT Indian Grill and Biryani",
+    "city": "Novi",
+    "cuisine_type": "North Indian, Biryani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Biryani, grilled items",
+    "status": "Open"
+  },
+  {
+    "name": "Turmerican Vegetarian",
+    "city": "Novi",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Veg",
+    "price_range": "$$",
+    "notable_dishes": "Vegetarian Indian",
+    "status": "Open"
+  },
+  {
+    "name": "Roti Point",
+    "city": "Novi",
+    "cuisine_type": "North Indian, Punjabi",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Rotis, Punjabi dishes",
+    "status": "Open"
+  },
+  {
+    "name": "Dhaba Indian Kitchen",
+    "city": "Novi",
+    "cuisine_type": "North Indian, Punjabi",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Dhaba-style North Indian",
+    "status": "Open"
+  },
+  {
+    "name": "Kabab N Curry",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pakistani, North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Beef bihari kebabs, chicken tikka biryani, halwa puri",
+    "status": "Open"
+  },
+  {
+    "name": "Zayeqa Restaurant",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pakistani, North Indian, Indo-Chinese",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Halal Pakistani/Indian/Chinese, samosas, kebabs",
+    "status": "Open"
+  },
+  {
+    "name": "Akshaya Patra",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Biryani, Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Saffron Indian Cuisine",
+    "city": "Farmington Hills",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Traditional Indian with modern touch",
+    "status": "Open"
+  },
+  {
+    "name": "Chutneys",
+    "city": "Farmington Hills",
+    "cuisine_type": "Gujarati, South Indian",
+    "veg_status": "Veg",
+    "price_range": "$$",
+    "notable_dishes": "Vegetarian Indian, wide variety",
+    "status": "Open"
+  },
+  {
+    "name": "Noorjahan Indian Cuisine",
+    "city": "Farmington Hills",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "16 curries, fresh naan, halal",
+    "status": "Open"
+  },
+  {
+    "name": "Daawat Cuisine",
+    "city": "Farmington Hills",
+    "cuisine_type": "North Indian, South Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "North and South Indian dishes",
+    "status": "Open"
+  },
+  {
+    "name": "Nihari Cafe",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pakistani, North Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Pakistani, Indian, Chinese since 2007",
+    "status": "Open"
+  },
+  {
+    "name": "MamaEatz",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pan-Indian, Fusion",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Malai kofta, biryani, paneer tikka masala, dosa",
+    "status": "Open"
+  },
+  {
+    "name": "Paradise Biryani Pointe",
+    "city": "Farmington Hills",
+    "cuisine_type": "Hyderabadi/Biryani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Hyderabadi dum biryani, Mughlai, tandoor",
+    "status": "Open"
+  },
+  {
+    "name": "Namaste Flavors",
+    "city": "Farmington",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Samosa, biryani, dosa, bhindi masala, aloo gobi",
+    "status": "Open"
+  },
+  {
+    "name": "Pakwaan Fine Indian Cuisine",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Authentic Indian, generous portions",
+    "status": "Open"
+  },
+  {
+    "name": "Tandoori Corner",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pakistani, North Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Pakistani/Indian food counter",
+    "status": "Open"
+  },
+  {
+    "name": "Kolachi Kitchen",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pakistani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Pakistani cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Sweet Timez Bakery",
+    "city": "Farmington Hills",
+    "cuisine_type": "Sweets & Bakery",
+    "veg_status": "Veg",
+    "price_range": "$",
+    "notable_dishes": "Cakes, pastries with desi twist",
+    "status": "Open"
+  },
+  {
+    "name": "Kakatiya Indian Cuisine",
+    "city": "Canton",
+    "cuisine_type": "South Indian, Hyderabadi",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "South Indian, Hyderabadi specialties",
+    "status": "Open"
+  },
+  {
+    "name": "Delhi Hut Indian Cuisine",
+    "city": "Canton",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "North Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Raja Rani Indian Restaurant",
+    "city": "Canton",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Authentikka Indian Cuisine",
+    "city": "Canton",
+    "cuisine_type": "Pan-Indian, Fusion",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Curries, tandoori, full bar, banquet, catering",
+    "status": "Open"
+  },
+  {
+    "name": "Namaste Flavours Canton",
+    "city": "Canton",
+    "cuisine_type": "South Indian, Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "South Indian specialties",
+    "status": "Open"
+  },
+  {
+    "name": "Neehee's Canton",
+    "city": "Canton",
+    "cuisine_type": "Gujarati, Chaat/Street Food",
+    "veg_status": "Veg",
+    "price_range": "$",
+    "notable_dishes": "Chaat, dosas, Indo-Chinese, street food",
+    "status": "Open"
+  },
+  {
+    "name": "Chennai Express",
+    "city": "Canton",
+    "cuisine_type": "South Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "South Indian, Tamil Nadu style",
+    "status": "Open"
+  },
+  {
+    "name": "Kumkum Indian Vegetarian",
+    "city": "Canton",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Veg",
+    "price_range": "$",
+    "notable_dishes": "Vegetarian Indian street food",
+    "status": "Open"
+  },
+  {
+    "name": "Honest Restaurant Canton",
+    "city": "Canton",
+    "cuisine_type": "Gujarati, Chaat/Street Food",
+    "veg_status": "Veg",
+    "price_range": "$",
+    "notable_dishes": "Same as Troy Honest - street food, chaat, dosas",
+    "status": "Coming Soon"
+  },
+  {
+    "name": "BarBQ Nite",
+    "city": "Canton",
+    "cuisine_type": "Pakistani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Goat chops, spring rolls, chicken patties, BBQ",
+    "status": "Open"
+  },
+  {
+    "name": "Pizzawala's",
+    "city": "Canton",
+    "cuisine_type": "Indo-Chinese, Fusion",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Indian pizza, fusion",
+    "status": "Open"
+  },
+  {
+    "name": "Punjab Indian Cuisine",
+    "city": "Livonia",
+    "cuisine_type": "North Indian, Punjabi",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Catering, buffet, patio dining, Punjabi",
+    "status": "Open"
+  },
+  {
+    "name": "Raj Palace Indian Cuisine",
+    "city": "Livonia",
+    "cuisine_type": "North Indian, Punjabi",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Northern Indian Punjabi, since 2015",
+    "status": "Open"
+  },
+  {
+    "name": "Deccan Bawarchi",
+    "city": "Livonia",
+    "cuisine_type": "Hyderabadi/Biryani, South Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Hyderabadi biryani, South Indian",
+    "status": "Open"
+  },
+  {
+    "name": "Madhur's Royal South Indian Cuisine",
+    "city": "Livonia",
+    "cuisine_type": "South Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "South Indian specialties",
+    "status": "Open"
+  },
+  {
+    "name": "Aahar Indian Cuisine",
+    "city": "Livonia",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Pista House",
+    "city": "Livonia",
+    "cuisine_type": "Hyderabadi/Biryani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Biryani, kebabs, Hyderabadi",
+    "status": "Open"
+  },
+  {
+    "name": "Athidhi Indian Cuisine",
+    "city": "Northville",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Egg biryani, diverse menu",
+    "status": "Open"
+  },
+  {
+    "name": "Basil Indian Bistro",
+    "city": "Northville",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian bistro",
+    "status": "Open"
+  },
+  {
+    "name": "CupsnChai",
+    "city": "Northville",
+    "cuisine_type": "Chai/Tea House",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Chai, Indian snacks",
+    "status": "Open"
+  },
+  {
+    "name": "Deshi Kitchen Indian Cuisine",
+    "city": "Sterling Heights",
+    "cuisine_type": "Bangladeshi, Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Bangladeshi/Indian, buffet",
+    "status": "Open"
+  },
+  {
+    "name": "Kashmiri Kitchen",
+    "city": "Sterling Heights",
+    "cuisine_type": "North Indian, Kashmiri, Indo-Chinese",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Lamb rogan josh, butter chicken, biryani",
+    "status": "Open"
+  },
+  {
+    "name": "New Delhi Indian Restaurant",
+    "city": "Sterling Heights",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "North Indian, halal available",
+    "status": "Open"
+  },
+  {
+    "name": "Red Chillies",
+    "city": "Sterling Heights",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Masala Junction",
+    "city": "Sterling Heights",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Butter chicken, samosa chaat, masala chai",
+    "status": "Open"
+  },
+  {
+    "name": "Shahi Palace Indian Kabab and Cuisine",
+    "city": "Sterling Heights",
+    "cuisine_type": "North Indian, Mughlai",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Kababs, Mughlai cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "New Little India",
+    "city": "Shelby Township",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine, serves wide area",
+    "status": "Open"
+  },
+  {
+    "name": "Pink Garlic Indian Cuisine",
+    "city": "Shelby Township",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "La Peri Peri",
+    "city": "Sterling Heights",
+    "cuisine_type": "Indo-Chinese, Fusion",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Peri peri chicken, fusion",
+    "status": "Open"
+  },
+  {
+    "name": "Shaad Deshi Cuisine",
+    "city": "Warren",
+    "cuisine_type": "Bangladeshi, Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Curries, biryani, tandoori, delivery",
+    "status": "Open"
+  },
+  {
+    "name": "Royal Oak Masala",
+    "city": "Royal Oak",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine, carry-out",
+    "status": "Open"
+  },
+  {
+    "name": "Nawab British Indian Cuisine",
+    "city": "Royal Oak",
+    "cuisine_type": "North Indian, British-Indian",
+    "veg_status": "Both",
+    "price_range": "$$$",
+    "notable_dishes": "British-Indian fusion, upscale",
+    "status": "Open"
+  },
+  {
+    "name": "Moti Mahal Indian Cuisine",
+    "city": "Royal Oak",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Casual Indian dining",
+    "status": "Open"
+  },
+  {
+    "name": "Star of India",
+    "city": "Ferndale",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Award-winning, butter chicken, samosas, garlic naan",
+    "status": "Open"
+  },
+  {
+    "name": "Noorjahan Indian Cuisine",
+    "city": "Royal Oak",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "16 curries, fresh naan, halal",
+    "status": "Open"
+  },
+  {
+    "name": "Detroit Eatery",
+    "city": "Royal Oak",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "The Himalayan Flames",
+    "city": "Dearborn",
+    "cuisine_type": "Nepali, North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Himalayan/Nepali and Indian",
+    "status": "Open"
+  },
+  {
+    "name": "Paradise Street Eats & Biryani",
+    "city": "Dearborn",
+    "cuisine_type": "Hyderabadi/Biryani, Chaat/Street Food",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Street food, biryani",
+    "status": "Open"
+  },
+  {
+    "name": "Charminar Biryani House Express",
+    "city": "Dearborn",
+    "cuisine_type": "Hyderabadi/Biryani",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Hyderabadi biryani express",
+    "status": "Open"
+  },
+  {
+    "name": "Saffron Indian Cuisine",
+    "city": "Dearborn",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "The Coriander India Cuisine",
+    "city": "Dearborn",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Pink Garlic Indian Cuisine",
+    "city": "Dearborn",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Basmatee Indian Grub",
+    "city": "Southfield",
+    "cuisine_type": "Pan-Indian, Fusion",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian fusion grub",
+    "status": "Open"
+  },
+  {
+    "name": "Deshi Bhoj",
+    "city": "Detroit",
+    "cuisine_type": "Bangladeshi",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Best Bangla food, dum chicken biryani, fish biryani",
+    "status": "Open"
+  },
+  {
+    "name": "Aladdin Sweets & Cafe",
+    "city": "Hamtramck",
+    "cuisine_type": "Bangladeshi, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Sweets, chicken tikka, naan, roti, Bangladeshi",
+    "status": "Open"
+  },
+  {
+    "name": "Modhuban Sweets",
+    "city": "Hamtramck",
+    "cuisine_type": "Bangladeshi, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Bengali sweets, snacks",
+    "status": "Open"
+  },
+  {
+    "name": "Bonoful Sweets & Cafe",
+    "city": "Hamtramck",
+    "cuisine_type": "Bangladeshi, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Bengali sweets, cafe",
+    "status": "Open"
+  },
+  {
+    "name": "Premium Cafe & Sweets",
+    "city": "Hamtramck",
+    "cuisine_type": "Bangladeshi, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Sweets, snacks, samosas",
+    "status": "Open"
+  },
+  {
+    "name": "Flavors of Bangladesh",
+    "city": "Hamtramck",
+    "cuisine_type": "Bangladeshi",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Authentic Bangladeshi, curry, biryani",
+    "status": "Open"
+  },
+  {
+    "name": "Sumaiya Indian Restaurant and Sweets",
+    "city": "Detroit",
+    "cuisine_type": "Bangladeshi, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Indian/Bangladeshi, sweets",
+    "status": "Open"
+  },
+  {
+    "name": "Amar Pizza",
+    "city": "Hamtramck",
+    "cuisine_type": "Bangladeshi, Fusion",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Bangladeshi-style pizza and food",
+    "status": "Open"
+  },
+  {
+    "name": "Kabob House & Mouchak Sweets",
+    "city": "Hamtramck",
+    "cuisine_type": "Bangladeshi, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Kabobs, Bengali sweets",
+    "status": "Open"
+  },
+  {
+    "name": "Reshmi Sweets & Cafe",
+    "city": "Hamtramck",
+    "cuisine_type": "Bangladeshi, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Bengali sweets, cafe",
+    "status": "Open"
+  },
+  {
+    "name": "Radhuni Restaurant",
+    "city": "Detroit",
+    "cuisine_type": "Bangladeshi, Nepali",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Bengali, halal, momos",
+    "status": "Open"
+  },
+  {
+    "name": "Midnight Temple",
+    "city": "Detroit",
+    "cuisine_type": "Chaat/Street Food",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Authentic street food, bold spices",
+    "status": "Open"
+  },
+  {
+    "name": "Aladdin Sweets Bangladeshi",
+    "city": "Detroit",
+    "cuisine_type": "Bangladeshi, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Bangladeshi food and sweets",
+    "status": "Open"
+  },
+  {
+    "name": "Mumbai Market",
+    "city": "Detroit",
+    "cuisine_type": "Pan-Indian, Grocery/Deli",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Indian grocery with food counter",
+    "status": "Open"
+  },
+  {
+    "name": "Madras Masala Restaurant",
+    "city": "Ann Arbor",
+    "cuisine_type": "South Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Dosas, South Indian specialties",
+    "status": "Open"
+  },
+  {
+    "name": "Madras Masala Express",
+    "city": "Ann Arbor",
+    "cuisine_type": "South Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Quick South Indian",
+    "status": "Open"
+  },
+  {
+    "name": "Cardamom",
+    "city": "Ann Arbor",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$$",
+    "notable_dishes": "Chicken biryani, bhindi masala, upscale",
+    "status": "Open"
+  },
+  {
+    "name": "Shalimar Cuisine of India",
+    "city": "Ann Arbor",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Consistent, traditional Indian",
+    "status": "Open"
+  },
+  {
+    "name": "Namaste Flavours Ann Arbor",
+    "city": "Ann Arbor",
+    "cuisine_type": "South Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Best sit-down South Indian in A2",
+    "status": "Open"
+  },
+  {
+    "name": "Taste of India",
+    "city": "Ann Arbor",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Spice Palace Indian Cuisine",
+    "city": "Ann Arbor",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Everest Sherpa Restaurant",
+    "city": "Ann Arbor",
+    "cuisine_type": "Nepali, North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Himalayan/Nepali food",
+    "status": "Open"
+  },
+  {
+    "name": "Foods of India",
+    "city": "Ann Arbor",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Desi Ruchulu Indian Cuisine",
+    "city": "Ann Arbor",
+    "cuisine_type": "South Indian, Telugu",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Telugu/South Indian specialties",
+    "status": "Open"
+  },
+  {
+    "name": "Earthen Jar",
+    "city": "Ann Arbor",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Indian cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Curry On",
+    "city": "Ann Arbor",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Casual Indian",
+    "status": "Open"
+  },
+  {
+    "name": "India Cafe",
+    "city": "Ann Arbor",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Chicken tikka masala, fresh naan, tandoori",
+    "status": "Open"
+  },
+  {
+    "name": "Base Camp Restaurant",
+    "city": "Ann Arbor",
+    "cuisine_type": "Nepali, Himalayan",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Himalayan/Nepali cuisine",
+    "status": "Open"
+  },
+  {
+    "name": "Basil Indian Bistro",
+    "city": "New Hudson",
+    "cuisine_type": "Pan-Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Authentic Indian, new to area",
+    "status": "Open"
+  },
+  {
+    "name": "Noorjahan Indian Cuisine",
+    "city": "Grosse Pointe Woods",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "16 curries, fresh naan, halal",
+    "status": "Open"
+  },
+  {
+    "name": "Karahi Korner",
+    "city": "West Bloomfield",
+    "cuisine_type": "Pakistani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Pakistani karahi dishes",
+    "status": "Open"
+  },
+  {
+    "name": "Asian Fusion Restaurant",
+    "city": "Bloomfield Hills",
+    "cuisine_type": "Indo-Chinese, Pan-Asian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Asian fusion including Indian/Chinese",
+    "status": "Open"
+  },
+  {
+    "name": "Mithai & Chai",
+    "city": "Troy",
+    "cuisine_type": "Chai/Tea House, Sweets & Bakery",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Chai, sweets, wraps, naan paninis, smoothies",
+    "status": "Open"
+  },
+  {
+    "name": "Tanduri Korner",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pakistani, North Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "Pakistani/Indian, tandoor",
+    "status": "Open"
+  },
+  {
+    "name": "Khan BBQ and Grill",
+    "city": "Farmington Hills",
+    "cuisine_type": "Pakistani",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "BBQ, Pakistani grilled meats",
+    "status": "Open"
+  },
+  {
+    "name": "Seasons of India",
+    "city": "Rochester Hills",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$$",
+    "notable_dishes": "Elevated dining, North Rochester Rd",
+    "status": "Open"
+  },
+  {
+    "name": "Happy Hen Bakery",
+    "city": "Canton",
+    "cuisine_type": "Sweets & Bakery",
+    "veg_status": "Veg",
+    "price_range": "$",
+    "notable_dishes": "Eggless cakes, Indian/American flavors",
+    "status": "Open"
+  },
+  {
+    "name": "Noorjahan Indian Cuisine",
+    "city": "Northville",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "16 curries, fresh naan, halal",
+    "status": "Open"
+  },
+  {
+    "name": "Noorjahan Indian Cuisine",
+    "city": "Bloomfield Township",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "16 curries, fresh naan, halal",
+    "status": "Open"
+  },
+  {
+    "name": "Noorjahan Indian Cuisine",
+    "city": "Berkley",
+    "cuisine_type": "North Indian",
+    "veg_status": "Both",
+    "price_range": "$",
+    "notable_dishes": "16 curries, fresh naan, halal",
+    "status": "Open"
+  }
+]

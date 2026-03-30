@@ -1,0 +1,5218 @@
+-- ============================================================
+-- RESTAURANT ENRICHMENT IMPORT
+-- Generated: 2026-03-30T21:25:45.054Z
+-- 118 restaurants, 590 reviews
+-- ============================================================
+
+-- ── STEP 1: Add new columns to restaurants ──
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS slug text;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS cuisine_type text;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS veg_status text;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS price_range text;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS notable_dishes text;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS what_to_order text;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS origin_city_match text;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS featured boolean DEFAULT false;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS address text;
+
+-- ── STEP 2: Create restaurant_reviews table ──
+CREATE TABLE IF NOT EXISTS restaurant_reviews (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  restaurant_google_place_id text NOT NULL,
+  author_name text,
+  rating numeric,
+  review_text text,
+  review_time text,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE restaurant_reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "Public read restaurant_reviews" ON restaurant_reviews FOR SELECT USING (true);
+
+-- ── STEP 3: Upsert restaurants ──
+-- Using ON CONFLICT on google_place_id (requires unique constraint)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_restaurants_google_place_id ON restaurants(google_place_id) WHERE google_place_id IS NOT NULL;
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Royal Indian Cuisine', 'Troy', 'royal-indian-cuisine-troy', 'Pan-Indian', 'Both', '$$', 'Lunch buffet, extensive menu', 'Lunch buffet, extensive menu', '{"Pan-Indian"}', '{}', '3877 Rochester Rd, Troy, MI 48083, USA', '(248) 743-0223', 'http://myroyalindiancuisine.com/', 4.2, 1059, 'Monday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Tuesday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Wednesday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Sunday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM', 'ChIJJxRr4nvEJIgRcdG3N48RT4g', 42.5755722, -83.1290556, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHQryjhkTr9PBJg6yYCjX40KVpRExgY59lOY0rIFdOmc8jONC0mFC-_HzI3raz4X5MFCMZbpUk_SuR78hrHxgQesuqgS50We6QHb47KAkNBEx7TTOko9LRRR7hHH1B4A_S0YsaD3jyUQ23bk8j44GVqVYTt8nS_4hRDmDLy-GScUtKfVNoGy1DW5v-f2E-9T2Z3-Y3-M3f11D78JBRioeX1TbJZ-vqbC_CAnut41pgzdTrHf2V-oih2ZeUvhCRPQBQ5lwqggxtJG5seoGL-ru6elhOas-ori9VdkOx6TUcGxCe27ygR5CmALUb4cnSTXnnxHEQPF5e273cFY80c9ixIXzt1Ypdx3m-XlrAdPFYDp-mC0VT_ZTSsGjrh4fn69WU2bidi1Jn4lH_zx349RZzPMP9JMHEGDNjdgyHQSF1tdLr-&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHH4IeFeQW_yfHGxQqNC_oqCpf_gpDcopy2G-AeWlzwyUEG0bYVb8lDaTnWL-gNTEJtmZwFdnMNu8emGeehekQo2GhxPd0gisQ8cBbEC_2afsOc84KWdtP5tG9HenIz1F8EVUh85Q-kNO1CxkmFKHeLkb_1DKJ_qSsaLyc1--gKPeBA4JRehq4PSl6e6ZiqomdYFiK03FcjLCm-gxknlWvz98duT5bSbgZV01KbYIpq5IMNK-D8VT3l_XVmIfFpoMR9Gc6PUZbodW4ZnTzFFreusMKGPUrLF_vbnPlgk5i3IGPtsQMyqPGMRcxZXMQkxYv8Fe9y1icD-WGUBWlfoZV1B1Kmzuvk6TBdepnr7T3DHGVB5OGCMo_6Y2pd66oh1MaqcSP1lWGgMVHrBFpybPdD37Nck4b1Krjs-GgA3yyEYA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGmyYLk3RTE_nKC50Rfni1C-Ch8RcNMN4JHqiPkjY3E-8P6WBF03R0cPPN-LQ7XkpHgIEp34cEIoULt6S1nElXGN_YCqOK72p2YsHNSstXuGK07-scaEXokOtGVOiU0wLixe2P0J7RijwUT9IoKZsN0CGsW27D5ijL7OiVNTcszxZ0xNU5gNNUhyXj0rqBx7EbbtgT_jxplBZl7Hb5nEpgt1Ttv_HwqmbUZojkd2AUp9NzAfKU1UNmcR_7pRQqfARR_m16_azmFNrh15qGYWrOQF-zJiGfL1qrg0cRoNh3B0my8lQXQeXqapNpr7Bds-wq-3MG8XngfnJq38qg6V66ta3S8qFTBNSDRANWtwKmnD_CZNaiJkOjGTs_xrx2ErPgBc_K09ApX3L2GxDSdwO4SC7tDJu85ovTr7iV6fp_HMg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Ashoka Indian Cuisine', 'Troy', 'ashoka-indian-cuisine-troy', 'Pan-Indian, South Indian', 'Both', '$$', 'Rava masala dosa, chole bhatura, Indo-Chinese soups', 'Rava masala dosa, chole bhatura, Indo-Chinese soups', '{"Pan-Indian","South Indian"}', '{}', '3642 Rochester Rd, Troy, MI 48083, USA', '(248) 689-7070', 'http://ashokaindiancuisine.com/', 4.1, 1416, 'Monday: 11:00 AM – 2:30 PM, 5:30 – 10:00 PM | Tuesday: 11:00 AM – 2:30 PM, 5:30 – 10:00 PM | Wednesday: 11:00 AM – 2:30 PM, 5:30 – 10:00 PM | Thursday: 11:00 AM – 2:30 PM, 5:30 – 10:00 PM | Friday: 11:00 AM – 2:30 PM, 5:30 – 10:30 PM | Saturday: 11:30 AM – 3:00 PM, 5:30 – 10:30 PM | Sunday: 11:30 AM – 3:00 PM, 5:30 – 9:00 PM', 'ChIJSXlVb3vEJIgRWzkDiJ26b3w', 42.5719444, -83.1269444, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHD40kPr2-alH9_2kzD2RdIPYd-Bux_32KuZtctx4ij6-E7dBirK7VMHngV4m3lAmdsWHOLZgrLZ1dE9FIfAwzp5rz7LK8GP4XhNKFMKFcWlC4dtttbIGrBbBC3X7kNbS6EKvTpC06vBT6rj4ELdYS6PA0jKLuA4awqoabJm45VtnGmFcoRez5VFo3b3_PZmXW73ZxOeslk2132lXio6wErmabjUOg18hRWNSro5QK7JYy8x_ZlCAYutOk8vbWbIUafjyt_IfbpzxiSyCkpxlbqVCvBP2ZiwDoYL7LlXruLpLz9gXbasZhEDxJkQd7VhObip5HvBl_AKuN_I28V--09_ogsbtLoRik6G1mgQoTBjDcbOP7sEVW-6N57skU9HQCI-eyxzKhuT37QpMJaYd5255Hc-9tD70xorKjDiNJhny_D&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHifzmt0pFzOVKVbjO82X5THfBcShmg-ThJtlFrqR2F7RBdp3YTxnBYAn8HL1R3VnHUlZUlZf-3Kru8S4vDvjyFnZt0h_bHORZ_0rimOwevR9ehRnvO9Ylpx4Prm2PZ6mBzjITdSaPZCPTthvGz9ZKaOr-F82svuGxVNCfzxzMfwpjpLpMrtE7iSICZnuNfX_IrrIdRnr8LzuruXXCBmsDgk0kMAA1MkMfLvPosa-FuvTojs_AReaK8ky-VwAY52rD5x9ccP4rhxNgsX7i5k8r5lAqq1v7hmxK9AznpDZIYYwwOaCbWVv-bfZZhRkiEJbD8LvaAJTfhyLlco-ibG1ZYlyf55BVVmPyj0fsLbjTpxR0za8tLe3XLvmRyVdMzRdJaG3LhdwM68W7F0V7DPQO4o6WTwpjEbW3HCJLR_oDPc9qfRq4DYyQV6HH-Ztx-&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFIOqCtW_1nD9pa-h_AvZKfPuKQrxOd2hLYsXBrTglzYU-4hiAeolyJhBWcUGCBJXkcdquJIu4zkFEBJg2lEpxmQ6gcDx8ECzI1dZS9wYG3YpGAgm6SAazcbR5QDimU1ds6GEoVAj5EtvmqgeK2LmD1bUYNdDgeuY2LYN0_mHBwAzumWRRm7FzYZ-UlQLhc4auiYkYRTiLNTdeJeuY0oAcHq3iHwo0j43cfTlmcpb_jL7AytBJaMuwCqANvPjq2zY6b7B1rB5iWTdl_m6gEUKix8vVTXHhiMAjmJwFKofB1gft9KVFRiE7GSrD6ZTGakB7xuT_mkQcd6oaoLxzr5uD33kjuvXvvP7KgnWiWWGI32ztBNUHa8KkfBvMm4t590V29lbEuRQCpAa1yHGE27DCQGkA-8lrFTV5GGhVUE1Tkusrh0-ZE_ovse-wwylEV&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Charminar Biryani House', 'Troy', 'charminar-biryani-house-troy', 'Hyderabadi/Biryani', 'Both', '$$', 'Hyderabadi dum biryani', 'Hyderabadi dum biryani', '{"Hyderabadi","Biryani"}', '{}', '3059 Rochester Rd, Troy, MI 48083, USA', '(248) 817-2753', 'https://www.charminarmi.com/', 3.9, 1280, 'Monday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Tuesday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Wednesday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Thursday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Friday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Saturday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM', 'ChIJI0CC7WbEJIgR9tKqD1Y3ClI', 42.5639571, -83.1293536, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF3vrQiIy0WpOCFYCwOIQe7UJWEqXRVTygUQEG9VrRjEH_LSq3_Yh0Ntb--DYjMYzxzhNUXoeIAgCr5dOFMM4MZtDxMoCH3jBt7xEacYguF12cxB73BQ9EpiWHNRERHfGEnEg9wfWpbOCiACF6e9SFr3eEpfAiwC-SkHSIg6-j_uAU0MszGVbxKyyWLGCNDoQb-FW1PRHUfVGreuevBTvmcExbGd6TsQwVfrJp2fYdZs_cbAfX7otXZuLdLifnFtpbm0UfNUnDba20UppZAIC2svuHF1FB8sCnQEWEd4st5TjtglhI6piPfUMc19otei6e2_JRgRKCbix3hTcOAMEkqdcdcffU5aIkMnstRnyUPYA6JWGO5p2O4EIqElJ9FlEewyggnbvi6_QdWvMSGal-r-ZbKEqb6j-CjouNUv9w1WA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFVINozMBAI5TGgdMla_FQ3bbxyelv0iLtVB-TUaaQImS6XHa1RKtCgFwb4IHOR4v8PGFuXiUg0ePnINgzxhKiq8gqHQ7G3jOvrZFVlbhZ0l6w1k_RS1WeuUd0eTVYZNc7KZDHLVsxFnT7HW_X60GUPw7XA9YaQxMe0j0p3kX8lezhQnCMNmC1Wb-KwmotvF8hf2SYQn_yZ2-dLyHIiKTGjyG1Mg-FUXITMWxFHWjYTBFVPmal7Q93OmjHpNb7YKVee6LCOCU69IFWlDgSXcMpEQjU2UvRF2Ywri7UeBued6Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEECoQ_Y3xhClW4Pp0Q4f1xj1931L3og30kV0uaHfY7F6pER9oybgCi9zgdJlDHiZICB9PwvWG88eOfqr-vKwL0aYcTrhmrxXcBhcRiCPTGXbg5htr1pIh4ETOW-t4D7fuOD7Ydjr8nWAggn-ZvV5r26BakMHte4RpEied18h9oNtUj2N_vMCgcddhQiqoa7w8N7i0JvNtvNq8JZFRurRobh8D_zPZeIDVI1My74E1nm4KL1EWea_Q_45_hM-07B0TVwqjvBiEaE9hHtPLsJVCc5WixNxuFXDN-MS29jSGvNtIB-B9gcjT9iD_pJFZpPRThruziCotzK1aq28KmneZsY6mmMT4Wv35nqO5h_OfMBEjUr1lxUnE_FCucOm3p5mRteNsezchI3vRlelElKngqECda5-qeHlQKLj88aY4Qime4&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Neehee''s Troy', 'Troy', 'neehees-troy-troy', 'Gujarati, Chaat/Street Food', 'Veg', '$', 'Samosa Pav, paneer pakoda, dosas, Indo-Chinese', 'Samosa Pav, paneer pakoda, dosas, Indo-Chinese', '{"Gujarati","Chaat","Street Food"}', '{}', '4924 Rochester Rd, Troy, MI 48085, USA', '(248) 250-6335', 'https://www.neehees.com/?utm_source=gmb_listing&utm_medium=gmb_listing&utm_campaign=gmb-troy', 4.2, 3149, 'Monday: 11:00 AM – 9:30 PM | Tuesday: 11:00 AM – 9:30 PM | Wednesday: 11:00 AM – 9:30 PM | Thursday: 11:00 AM – 9:30 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: Closed', 'ChIJXcLtQZvDJIgR8NOPl3yLKO0', 42.590762, -83.128334, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHB9EtFdytXOD61U6BJx7XA1xmEA4kr9lAMzSPHiWqFgGfW8ZlYsiB-3mnSdJNaTF8slosfOUtGogYpJQxU-8sbEJeZV3THVc5WUKkQEGeKO7QT1Gx0NpP6AJYfdRhwZSdePpCs1l6RuPzJURaFrGkCg7WFo6VZCWk3Ntd8F-B6BYW-U4p04cZY3R8se2P-W6r3cKOElYCj4EaGZaO_D5aql3MDW27eSw2K8nUi2JSVnOK11X1icoEGSbQ1w0PDT5LTAglKz2d6Mdv4QKEgh5QUjKC12C7QgemyxlYIU33S3g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFZttq7f01TOj0SPXrPy9RAEpEdYhudyi-OZELa8U7AmH-p8CBXPIpqGgSWZ9dAm_OvIOHEcAd9ihWtzS7Q17C9XFzWpJDFWaNq0mcqPBsdBxKHIh306S6drG9E9DTFJ26R9WwQ1M3z5rzb_TYUbjSmc_oLQluhoP1W81QqGWLNENSVOH4LSq0Jh5LhSkmOfdrM_kRGu_31Xkdn-q5fyV32ZH-ulRRPVY6IiWZhybd_yK9SlfeS9VxyrE7Ca99DMwlaKW9wTg2PxJbn0ZiQ3reDJuR6u_qkgXL91ZqZFTrbyA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFK4K0mRV7MA5V-T-_W_wj8lnwri6mLXN2Bgyr46isPR2FvIriAmgX91xVR4KVUJMiXLKwPV8oYsYV7HKpsxs6C-andjiDsGa74fxt8xUtakOtvMlubEZq6lEfFnp-k8ySvfinr3svgM0NDRW6UmGGcFTP3oXgM3abZE896-IIcnfGboRx6e8V25BwFVB6T2UomNuhrFOuXSEZ_LD6zmFv7m-fEhYbn4iVXbuwli_Q-hwvlZ7n4sRBMz-tkaV9RnYmsD0SMsBv9oedABuT9SCYelF0kwcKsEC2--3G6xKjuKhLaw1ktD4dk-6RjQS8TiucqZrn5Qk0NP4h--ewl7KGW3Ib6Jk5CodVqy1At1eKTgr_Vbr31Lk9ddWAHa0tG8399lR3vniyP5zmRaZm0g2CJpoVGDHf8VAItwjg-LNMvbn5he0YGZgVH1mvK1g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Deccan Delights', 'Troy', 'deccan-delights-troy', 'Hyderabadi/Biryani', 'Both', '$$', 'Goat biryani, kebabs, Mandi, punugulu, rasmalai', 'Goat biryani, kebabs, Mandi, punugulu, rasmalai', '{"Hyderabadi","Biryani"}', '{}', '3516 Rochester Rd, Troy, MI 48083, USA', '(248) 509-2255', 'https://www.deccandelightstroy.com/', 4.3, 344, NULL, 'ChIJa_TIMU_FJIgRERXubFuXcDY', 42.57046010000001, -83.12688870000001, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFYHVfQ0x_pYz3hsBi_pkV7WRrYUPSzJT_QOBtAVsr2xpqxknAxbpl5kERLf-1KOIEzfRqmETbwtuQGrdXruirCvKUtpYb3u1_q1Ic22TIolOzuFW6_MiGNgJ2Q0h0QN1o5GzdWhnEBywIw174yVxrfielzuZr-Hgk5plMgvG0ktUftRNi6ubjoAXXL5w9sMe5RrHsWqCdiOt6fF16E_pSUzAKfKh5cWxqLkVVZOk7kpfQeL0gE6S1D5k1uJZaGY3YBUjmX09btVcT5kQEp-N7ANf8Dd2f9r2YHTp7d8oNVAg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFknHErULkvxc12WlCVliYVxaW-Nk5ObOTU0x26JSQdU0Hv_mgGH0j2KUB6Y3FkAzY131G4R_-jY_yVXzJ39KlFfJgddeMahWQ3Ml3d2Zufb_R9uGwjF99-SCpE3A_sp6l04FI7HYDvHrRDwfxrYejCYUmJJqLNGa0eNASErQwSVKmkabNd86EIPTfRjJubqoxlUhyJ1hsf0_OCz6Npn6NBAYnkPEVIMe8870gNNA1XRhBjA5LxVMAZgKccjI9qjWeVVKDTuRGPdMaMfELMzezCGgKhswo-ebTOXNExpPACTg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG5UcK2HNmAhc3Ocz8CmaSJVT83OIyapDjf1sFMzriL_BbpXAjOVK-1eHxv5xkgBmnqvkvu0HBLaFOKmqQE9P5tKsgyRyYZ3OmEOYe3ewT0Mgpl1MC0Pcbo5Llh9bELy5wot9Tv-sgKZx8g5mbvVr0DE1BgLbhO1Ckp_NIYi0fvivFFbdqPQN58K-Ag7VrFh2ZsOU2enX2vBkjnzA7WWCgMCFgK3EwWqqsawu3smurPX2fI1c3wuc1z7T7qoJ-8swYi-HfY-b1Xs5EoK5ZL3Wt-bM_cQ83-atL7YcgI9SlR1mAXzN3WIbv6sn2srHqZMAKmYTRPd4xNAdqmeUdGo-Nv0v3g0ZCjmPHcKCgN-FK0O_8RsIEBuwNcWglG6-kQurfbqzvZCLSnQxv6sOAaftSDoPizyXiTMLqNmv4-S4so6cjXTVAi7vTGvE_A0A&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Honest Restaurant', 'Troy', 'honest-restaurant-troy', 'Gujarati, Chaat/Street Food', 'Veg', '$', 'Bhaji pav, chaat, dosas, uttapam, Indo-Chinese', 'Bhaji pav, chaat, dosas, uttapam, Indo-Chinese', '{"Gujarati","Chaat","Street Food"}', '{}', '5029 Rochester Rd, Troy, MI 48085, USA', '(248) 315-0234', 'http://honesttroy.com/', 4.4, 1233, 'Monday: 11:00 AM – 9:30 PM | Tuesday: 11:00 AM – 9:30 PM | Wednesday: 11:00 AM – 9:30 PM | Thursday: 11:00 AM – 9:30 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 9:30 PM', 'ChIJ-XgbIUnDJIgR894njE2W7MY', 42.5925991, -83.13047209999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEKJd-jVTuAyEH9JAengnkNvW_bjsS3jvLcyLoH0KyKjPCDBzrp-D9nja_mYnX5ztBvl73pjOvy7vfYv1LSbFMwH2S1abyGL9aos2-BRYCZTRY7NBnFHMLGvFOCNaiEK2sLyfuvehSNODQu4FF-GkvAOwBGGT1jfgqRGgL5rLHtPrEvMprZWKUCl-ksN6gMja9kNbR3Hm7neopy-X_9o3kgxOE0GrBwhqRoGc4y-RxbpYcaQ9zgRZkdzyHThYZal2xP4f7WZH4kPpjsHznSonJK43qXLUjyEhFVmg5Yas5JDg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGnLV9hSiesrVSPVfYEk1xyj5EYytE6zWA20mmwzKjBbV6OYPPhE6MKzMU4z2h1mjGTXTSr_U8KeG9dJibbHkp564zbNkT8NHmEc-SuBbIUUoGhx4GwcvolJ2_yvMOyP7W-k6Oh8eqbKJfXOo-N1MqKok6OKXTC5BNMSDyTqkWq9sCQKrgp0YMye7K_PcWq39agBmuw9rIW4Cfr2-RgZINpULZ89uzBuZ4kJcvk6WSUF-8pMCe3VtEdvTKrwcfNJdhCSTXyoIczqUAizoPDqD8bLxrB_LSGxbXuI8iQMrdEUQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHJoxmS75LpuSRlshbvdCxukmiHB3kg-C41IDHcP1do_5r6zs0mc8WA7kErgmMDdOiu0DWejw855OI7REQ3B2rOk_e7D7FXdz-Az796oLcXWqm9RGKdBWVPK2LihmJu_kW7HwtzMsNEnRgire-b-Ny8bYLjvJWXR08j5Fi2QGpYg-2bTrrXtB9oSQldFJ_TNWJtK2VtgMzG6Zo-FVcXSHFzK_JLvfn16PCFfgT8hqpbTnrVuKEf6RhWv27hIgXBnmoi0a4p-BULB9I1dNq6br6ftVDX1OExTQxtccjS6l1DMaVMYwKIogHqLXOx0U3dNgDLF7WmFK54kAtKfBVWdthvqRsBCESSyrl3pVQuaWoXqa-7EGxmzDAATQSRWXyFdGidXUAKku22wRLLAfvvKi-oHWy7AA4BBppA_2mdWPvzDw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Priya Restaurant', 'Troy', 'priya-restaurant-troy', 'Pan-Indian', 'Both', '$$', 'Non-veg curries, sweets, snacks', 'Non-veg curries, sweets, snacks', '{"Pan-Indian"}', '{}', '72 W Maple Rd, Troy, MI 48084, USA', '(248) 269-0100', NULL, 3.7, 690, NULL, 'ChIJeTng2zbEJIgRTUr_4BHVnqQ', 42.549159, -83.14799699999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGwf1t9rm39B12dcvN0xGKtMuI-obQwWI-fQOB_738q0SiYmUbrUCIEVq0UD6uZUtzfcJH0slai9jqz5MbY07dX2is3BPUMylVQ2HOC3-S8HReiMpQOGVng2aONC0jqktECd7s4K3XfAhhyTSxM08D4YZvLsDVQJnl9C8XmBmJUXqJSY55NgfqauRfKVNhMSJtgs8nJ6U7IwtssdE8su7cVOjcBg3EX9zT32CA4gJcfisXNCM77dxr9XlJENt_C4v21wZcd2KBGnCUJGKRCGBdMRPttVWWc7atJ_ULyYM1ktdvDDjUVN10jaRq8rZCkO70Xa5mQwVVhRPbrbI6uZPaKTpbihQ0HeonYjpbv9luj-s6eDbyjgmp_QSCkgbbOyE8FD6khazsJJfcWZGced_qKMmhsmD5hTabGlj_nYDmDZQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHdbKwrAx_3mJWWeMZNHBuswvCwb4e7IUANY7D1DiEBNcn-q3ziIHgzNdvjevQCDgnKOOlGV1dUHpgXQcbg-saYqBwijVOfSOwmvWHU5HHAqSSe71mEu95FBLgFc3PxMemoNOghLGmXOLC-Ls2_qaTbnemKc78MKAx3hSvbz-nHYSmPkAKjT677hqr585q8_T9DvsO4Y5DuTcZnR4lyVE-kPjbHpXKrVqiU-qg_ju093ARR4waTN-u00dzwpJ4K99NmMQtJc_ZYYmWMhfeYNk6SPPXMPnA1aQh-qDEPepM&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHBp7VDsCEH1raWeMcFu8GpiBMA24kis6FMV8D3UxwvxgaewBEbCpSN8xkERZcCxPp-NQP7d8ED1yDiLMk1m1eiXNZqR5hBuMrngDiYQq4zgFj9SQIxGGYA3kg9ypnj3SMjTQz7_v9SJRPBB5CT1cV8peAKTEttxo0h1el3KtD_-TXFcu_Xn5Y3Id9KZVx7EkRZ50uK6N2lgopktUwAdIL83po_ELOyA0mJjGbDYlskZv4okfn8bA77Bt2iJsykkDe88oF-JunvSYD8S1Ll1Cq7dZcfEX7x7pfGEQSPV-QvV27ibYml-qRIvxBAXE2vjzVqiLSPB-Y0EtSeRWDJadIyl8qFJnZjFbnk6SGNafljAZtW6zHwQ7Z0wMAeKgOftBpVt5Hz2pMHngdx-AMhX3pWdXkrmT-FK54CGL7jJ48D0g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Bheema''s Indian Cuisine', 'Troy', 'bheemas-indian-cuisine-troy', 'South Indian, Pan-Indian', 'Both', '$$', 'South Indian specialties', 'South Indian specialties', '{"South Indian","Pan-Indian"}', '{}', '72 W Maple Rd, Troy, MI 48084, USA', '(248) 269-0100', 'https://www.bheemasmi.com/troy/troyHome', 4.6, 906, 'Monday: 11:30 AM – 2:30 PM, 5:30 – 11:00 PM | Tuesday: 11:30 AM – 2:30 PM, 5:30 – 11:00 PM | Wednesday: 11:30 AM – 2:30 PM, 5:30 – 11:00 PM | Thursday: 11:30 AM – 2:30 PM, 5:30 – 11:00 PM | Friday: 11:30 AM – 2:30 PM, 5:30 PM – 12:00 AM | Saturday: 11:30 AM – 2:30 PM, 5:30 PM – 12:00 AM | Sunday: 11:30 AM – 2:30 PM, 5:30 – 9:30 PM', 'ChIJHbIqDgDFJIgRjjwV7WCdXZc', 42.5491141, -83.1480121, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHqut-whYhhkwjqwXX73rMD66xDOOBGcSbI9RE6gQ6JrYYt3ahnOMKImvNJt59CNdA_GjK6l11AEnV8mmTpku1VFZombghL0r71cv3Om76ynOyyZ_Wlrenx14zM-Frgno4TJ2sW3jOfXHUG5-SlDcT_YkiK3DxfXJ3BKfX5AIOaOgaJXHEvKbJCyxHDuyutMSaAfc8uqf1fEBpldwU8ruq7qO1Wg7sw78VZRhaiNcTh4NcSIJdTfCjRYfDw9L-6_Az2_u6wh5adJNziNIaHE1x65seO4LldGFS7uYlmiyv4QYqWF1R549md1OT1rznGuveHDEmHDkRT_YRxjmCZE_aIN7f4nDkc1pCAonC1n0uEg8yjbz00qfWjc2GxWVXzVXcG7L4enSpRw1TZLxQhcZBzfgaWtea55Uy3JjZP30Y&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGe_YG4FMgSfjpR0vdGpWuYZOSBHO1Qtw0kPfWBuTh8aXQI6eYyNbp7mFOLU36WCwVxUNgBRp46dImzizc3J_KHi9qQ6IB-Pw9xKU9ZpYHvjoWEOglp3aH6CDJskSNas88Hp8oeHaUOsvrKB_s49oNnd-bEaUQB_8SkWZpcrrAOntgsgL5PIe1M3pWnCZPpiNXgg5jA7MRtQpOSEHWCtHzSNbksoUB9NBu7ExJ0xxtNKVt-CTHfcLzS0amNzUVCeiP8c8EfWmaPoEDVkAqjo6SNp6R5ecLQhRrPY47sLEDu3g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFUB7tLmjU3zdYpDDqEL5nbm2KRq_tHqH67KePuH-4iVxH7IKv3lVhLA7cGGHUuKZdeZIHurrqtpfaSol4aaoALJo3VEUoVYUgP_WDX6TZEgVNwvUZYnl8HrDZGZSCl2IBlh3KOUTaRItmaosqsFFgBUVCvTMaqyzIEq5IDkvyLhnqx_UjdnR3UBSQ-JtLE5fFqa7UUXB6zMvrRGJXVufd5PSHsi3lHFxlkmq8pfQAa1BRYQLNOTxwknkTR8wPPL5OLpuWfh2eMQy75x0naSZhcyI2yf6_rr9LwWxCmlWuDS-kgnvdR4V9AS2SBGJXyjk-VUkWPmEKd4A84bpg0jTWndOFYdP_azQRSJo2YGPuu_7CMAAFYxZV3zI6jiG8vvLLbiYPqdR8tfjQ3mLPPx9gAXsmaSx7Tyvt96aNnpNfM-M1t6ErWtEJ_GNiQPQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Virasat The Heritage', 'Troy', 'virasat-the-heritage-troy', 'North Indian', 'Both', '$$$', 'Fine dining, North/South Indian, Indo-Chinese', 'Fine dining, North/South Indian, Indo-Chinese', '{"North Indian"}', '{}', '2642 Crooks Rd, Rochester Hills, MI 48309, USA', '(248) 602-2121', 'https://virasatindiancuisine.com/', 4.5, 639, 'Monday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Tuesday: Closed | Wednesday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM', 'ChIJw41YR7_BJIgR9aKLwIC6x5Y', 42.6405672, -83.1723233, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF1xYSeEZBTZeOK9eiJe18pm0qPkdcYwt9ikHiVBy1nY4_2VOK7lie5g2UCB3frXs4rEK-QZbNhXIFr_UQSbqJc0RmAO8XfHxdMv5N4nDQLQMhawbgDuKoTbZhgQm_lUhPJfSLjUnvgTYmemJKfuvoPpqgSVq3HDyEd63tIxMw0EjS03duamhlEMJXiynluI75gHZBLu-8DAjUezNfrkrNIz-XdsC7_EDbSXp83N5tZ9Zpw07edhk4iL8LzipbAKAFL4OSbBnD4CvIm-_b2bxy-7Gb6y39sE4q-pQdsZNMsSA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH0kUd7ByU6GlI_dgciurcnn4GNWBimi6AjZX0DAVaDskrdiI33b_n57IWt8TrwzShhmQI_DrwWRh7lbuU6L7K8UAIWMB_A9gJNwinnB7amK9fhZbhC8IIjShgwOr4dE7Gl0F8MdIi6OhpYB-bUhrCIumEAJVTRbHP1vD2LGJYUo0iUUgmalEWAH0MDPsVMw5sQvhepFOcYLaWgxypzu-BHRUpAsJFbkLqCpg2M-5S-VAejvQKhMWUKghAbu3vj39g3o9Rv2mBZsK_dcsSuI7PUb3OuOu1qVePfXLN4ssqfjg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG3a3-neFhtshilAQ0YT6B0IU9-C0_oGyMu1kgoJ8iZZ5tYxROcj-llf-9HQrXVoxzF4OPaKxWOOOwdbVXXHRFxhzzxW-STtMC9yKgg2TEtc5egtlRkGlOW8HkLkuVNCbh9DuWg0yudGUe2szWt7-lnbub0MMGUx2Q4qiH_MOKHvEWQ2kfs77dj5psRGzmLCJLOI6EZjglruExsRgkmyi3w_-7xiPX4ssba9tEOWHecmtjV94X-A4iZD6JXBgCDPNhdUztZKJdVvtY7lxfnbpmloLqRz75WtU3ePYhoAsV02119uGd36LEGOlZsivxUizt__Ylmb-B2h-I8LQbYNlfMj5n-Atym6vSlaivh13RpYltKpgpKXS1AoNShi33g4dYJsNH2sSdXEKCDEDOzDO3rNvjw7d4RNWJRJ-bNKZ8btT2Aw8FQ7AILcWTtG8Hp&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Main Street Kitchen', 'Troy', 'main-street-kitchen-troy', 'Pan-Indian', 'Both', '$$', 'Diverse menu', 'Diverse menu', '{"Pan-Indian"}', '{}', '309 N Main St, Clawson, MI 48017, USA', '(248) 629-6677', 'https://mainstreet-kitchen.com/', 4.6, 1065, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 12:00 – 10:00 PM | Sunday: 12:00 – 9:00 PM', 'ChIJ7U76VaDFJIgRExykUP3qTSc', 42.5356471, -83.14686999999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGX4LNxEmWDAV-ITXwcsSNLTIgqFOWJAUs9ltROjuXebZtlTDYEdB--XdiKbDiUa4YqME53TdPBEj9La7n0_PTC9kumf9sb_KXLZTc20KFvXUz71ZnU6_3IvEaNFcG4Va25LANGJFwq5lrUlXZOJgd_19dioSF9YTr7GbQ2v-oVMMkTXeh383WaX0IinFNaSQabFzJGMhS9zrQdUwqDtB1JmNZPSPzkifWV3yLHTmfi03-pFXR8eJVvR89pa4lJPVyy_eYGGYZI2WN9zyu4r5TMoe9NYj8uQV58WhSDjCHHTVbk3YdTU4Le7XH3FltUBRVreFoKoN7Zhhe2C_ti-VG4rYi-hyHVKWzt0vZaEbC_AOI2-dkXB36nLpobo-H67hxTNZ8NwalK8Ve7dbNQviHLXGgmZ8krpuLwk7580KIgs3J6&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEErEnrtAs5nqLPlrRYTGmun29BeMmYtttZzT_NrJ93C0yOmZRC4fWp3jM7l7xPsP5EO6B5qNEZrT-Nt8pUQGWaLxJJTq93p0lGai0eCwGM8Q4vVms8v-qR5Mgr4YUzJ1SYlSS7frZbo2_X3cY0OiINoh_80yFcctSgRgQrqK5lVYnA_X89tZhl0yCBrlkyA8ke94TLwFsrujJgZQFoKbylMrbhgIjr3w4HQ_NsupbCoHqzohbkXzoJ_BU5b1UC1EWSHkqt9hANrO8fcXis-ZO83X047o76FHUanRv2NVMB9yA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEdlpZZiNgpGzpl8B2Q-if2bE1ddCGkMjx4OCuRZmgVf13OpMiO_6dX2U6wVEu2zrRTcRfboJfYahhqhVeNzJT0MkOdbYiAVsfgbOX370wqXl2ocw9dTXrBg7gkjesEBCxItnnkagERB6NakJajT2RGAPWknLdoR4palVaZYUpVa2N8WGQfAxbrAzuWj_cxgvuZFxGBDtCQSW1dxPgdNBc6leFX1WcJTvwRdMsB4bLZymfehQujKY_QZJbgdp5LYnMr5Jg9pEYLiibuCdmYrrlzZ0dmZGmTWNYBfG2uop8J_dB9nYOc1yROnQ8Gfc8B6zNgfH0WbmwImWZ4rds1aEZgl1dBiPBhOHPfsTnI83By24k5lVq1bYrFB6wRvNyqZghOa9qiVe_Xg31jeHIwGUyN5PK7DXnvzFDmxD-0yK8LipDXFvcFFznqhc79GICW&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Sai Sweets of India & Fast Food', 'Troy', 'sai-sweets-of-india-fast-food-troy', 'Sweets & Bakery, Chaat/Street Food', 'Veg', '$', 'Sweets, chaat, fast food', 'Sweets, chaat, fast food', '{"Sweets & Bakery","Chaat","Street Food"}', '{}', '4917 Rochester Rd, Troy, MI 48085, USA', '(248) 479-4966', 'https://www.aahartroy.com/', 4.1, 225, 'Monday: 11:30 AM – 10:00 PM | Tuesday: Closed | Wednesday: 11:30 AM – 10:00 PM | Thursday: 11:30 AM – 10:00 PM | Friday: 11:30 AM – 10:00 PM | Saturday: 11:30 AM – 10:00 PM | Sunday: 11:30 AM – 10:00 PM', 'ChIJI6ZYJIXDJIgR95UrvoRwR0s', 42.5909275, -83.1297493, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF1SrJum_5WbdEfbqOrFMq6VaaU6awh4XxgoiQ0gsRTXOjpo4UxcQLjc6JAAzbj0rMFWJqoRSm9PURLPDJy3Sfp39UCaOQDh8ji0rcHV-q3ANlgsfRuL51AAlj7ApfWng6b64nbnTnPb3qQjPVpXZ7K1zqCfS0aGcERul-n0wIGmAOgiusLP5c_T5Fsc4Do3Bl1TGGHsfp0xYjyHaGKrHmb8ju6L8CsGYfTl_AuD9WAROqsqn-KOKPLyNx0SdKacb9LDO4tizkuGt2A59mQDFHq4bhtzWOiDOe6JGR775mJxKkcFo7za9U5r7fAFCzf8TFORej2PW0xm4SmuDgrLlH6hbnCNgBM-m1l1iUE8SPaQjpkIVUNDQXp2k80pZewIpiVJxsKmLj6goRFiseBY7-DJBzdi-WIQakwAYoVOOVccg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEL7X7szbFGkSlPUL-ap8iePPkxLgjbq9xkz6KUE48PXOc78j-AsLd2cDZI7Y3x-87EsFViHu2qdlc2BraP8vwxSESr0J2Jdg6ReVqzqn4_Fq49Guy4Bhb5W0jHhzt3uQpEEChYbiIoq2L6dyhhGVcf5lEzpF2HE_vMRkJEPweOFeHOLKk-u3nhCBAwnD-3bu20l3Ncxii4nTpfhKd001lxlR1Wz49LVHDqg1jzDYuGAjyZMFEwuBitd8SuKXJ0zItivPVnutGGTSoYW4n4nUAI4vq_ZzZOmWn3KeTmZmePJjwNENG0Rs09fONXCqrAZNc3qr-JVu-1A6U0CPd7zq0bIATDAKKmIjt1GBrRheELCm7IpVuqhXhxuIBj0LtQCUDETyCIMKczPDQs6njdhB2s-TDC1GckBmg11B_0hbVmdBc&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHwtBeRG1MnLzu7J-rtHoJLC6xh8FNL2P_puncsvvn8R-hnOIXbfpCYBMvXo7m0NDWdITwnptnOmdYNeI78fAs8cVQ9vR_09msaLOW3wnn6VJvvp_DbNQvI078HCno_fGaIRNxdS3GelGb89p1dO2Yc_D96EkNK82cKgcNOqbVKddEHFLIagUF_-y2Wh9aW_GcZ_5rFgX9FS3gQfGpUtdzr4j0lFy84ooMjFoonR58c520_Oti1xCC3tZlwkXsr_UwNchrKREeZiiv7SFEnqcvbPvIzVU45A4b3aZ-ScZOnXNUC3pzscme23vEbkD2OGZC5VWb4MJSBMTKeiFmKwkFXX81EkjEqtl_k1cfnVN7iB6R5e1iI9hFUYn4jvsANBGXV6bdMHWXcqIrkBgSe9KB0m9gV5ZtpO0XYsu7rRyyflxk&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Paradise Biryani Pointe', 'Troy', 'paradise-biryani-pointe-troy', 'Hyderabadi/Biryani', 'Both', '$$', 'Hyderabadi dum biryani, Mughlai, tandoor', 'Hyderabadi dum biryani, Mughlai, tandoor', '{"Hyderabadi","Biryani"}', '{}', '4880 Rochester Rd, Troy, MI 48085, USA', '(248) 509-4327', 'http://paradisebiryanitroymi.com/', 3.7, 1840, 'Monday: 11:00 AM – 10:00 PM | Tuesday: 11:00 AM – 10:00 PM | Wednesday: 11:00 AM – 10:00 PM | Thursday: 11:00 AM – 10:00 PM | Friday: 11:00 AM – 12:00 AM | Saturday: 11:00 AM – 11:00 PM | Sunday: 11:00 AM – 10:00 PM', 'ChIJNZbeRZvDJIgR23L4urg4bDI', 42.5903115, -83.12846880000001, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGDqQkUFTqgFRNmdJTj6ddE22MHkgto_7SvhDg1fNME0nD5MryIvOEXVg4KkSmgfwLjmwnu5e59pAGT_0lNnpxEG1gVyr4UWX7y-A6NioC53PG0Tpr281q-j3d06YQ4IoVrFE3yJ5YF4PLlrIGzzX0AFS3WpNrxa9FrEpFY2_mUueXxgykFPiIEfHpBYstKYQuvq8Jga8NQxnEZaDckE6ZrsYQA5-VKGKFj69nAg11x2yaaHZaPdrh6xfAqoeQiYE2cZ_smqywUVKexwdhLzk9EzgtTEKdrWEjKpiXFmOxJJ1_krVssYyErqpiqh-72yyrPFf7sKOlsY2nq_z2wZE_ciZxo5vV88OM2hX44qvAnbWtklYtUCKzT1MRBgmcew87EhOp2vsTZ9Ijz8WPdQcuPFLFovkxppRTsl1fnt2JspCrX&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFyohSljJrMlqbCyWuVDtPdwu7aIqZrPqGVJLOpkjSq_ntj0-7u7Z3sLt6D2TUT_qbYx-o2JWhTGWdPyYxUZ167Eh3WKk9XEtWimKh08Ms_aD7_6ClIf8s0bYkzVFC8a7Ml9YOM6Mp6kf3B7Hw6hgYrzX2OBi-002V5dbN5t1iIav0HTZ-Bq-QJmNqAcVJXxOvRDKlBZnhPsRObc0i_4M_JyOx5I40Lgf86pVHXfp8v94UxE0TErCDuTnl-3L3Oer1ohO0tkWTnp1fo8RQofM4vGDYoIyD12zft4H-GuoHSVw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEw3el1_NDh4NBNlw5ejJFeWWz-XfL5Xe4saXTP2WoMS4qvvayjUV_hTlbPqpNc8L3ZsxYf9rHvtogmVE-yPFha63ctSWrxTRc4rDx4yybbhET8B4umYg-qE7EtqXtr_zqcCQ8hhkW8oGLT3cBqDAi7jcVep9X5cI5EmuO693SwpKzrdSfoxUUpey1ULksVQED6TMHM_Sb-ciInGtlYRP-SIPGXugK6Da8SunW6NuCM-sYikC50oNjlW21ZlrrcZWeyuf7rF6mvqtIchB6b1fRUqW-uuZVP4U5pNtenmByiOc1zoidS67HlyxIDfUNGeR7mvJPql5ZVTVgTqoFyuJA6gjyTAYVhbyEDUt_jOuwGe90-QRQvTLg_-7EoyE3sxiXmswNPt7kRmXlKHNcBQQXapPJjJCE6NMsm56tz573mUkHoE4iQpKJoW5QmKmh9&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('iti''s Fusion Food', 'Troy', 'itis-fusion-food-troy', 'Pan-Indian, Fusion', 'Both', '$$', 'Fusion Indian, originally Gift of India grocery', 'Fusion Indian, originally Gift of India grocery', '{"Pan-Indian","Fusion"}', '{}', '5114 Rochester Rd, Troy, MI 48085, USA', '(248) 250-6510', 'https://www.authentikkatroy.com/', 4.5, 405, 'Monday: Closed | Tuesday: 5:00 – 10:00 PM | Wednesday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 9:00 – 11:30 AM, 12:00 – 3:00 PM, 5:00 – 10:00 PM | Sunday: 9:00 – 11:30 AM, 12:00 – 3:00 PM, 5:00 – 10:00 PM', 'ChIJz_uIBuPDJIgROZUFgItahBY', 42.5939473, -83.12838099999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFdDBm2BGLq-4gf7VUeabue3WyQ_cB3kZAqs0DkVq_sMGBrkpkQYI9_D8DOill5kVAP6SlOz1cJ2dWVZxRZQ1WXr-xUt_4byww4e-K1KvSd2gAg68NS5bi9W6p1vvbEyXAy_r7jrKl5yjJzr2nHctA3DaTxVwASyOvWrMCBWw3Z4FxDYlZBY0JXVcMZkP4Mpk3jc7xCB8Ka-EgIhbrrvOFw0NP3lyVCUYgn2sziZ177bCY9Gt2mE11PV_5rdoethfJc-edKYFMMwBQC3U3vfOgSJS1Bq16ZQzf3HkPmJMp0by8V0b2R_1MIvLmT3A3I0CcX9QpwYAlz73bZgdGCMYgwz597-et92gT0TpAeXQD2owzGdvwVgT9xIjFnoVlFgHJHk6uJo6L2C1MQHLEEb0bOaqsNDVSSFdaYHdgyNeI&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH5Lg53dopc0qlIk-gxTtZdUT3LfapwRbwaKmEO3LuJk5vmCRMEDCr6acy03JprioTftAnGatXDm5TfPcRjudq_5AtMN_qHGtA3jqupkrOjnzvXVXZCgbzV_81DdmlSLzp7nkabq7JfWhgNK3tB8FMEhubOp3XnTrLoPcsmMzcbYpli1rJbN86O4BM1qEVWzQbWOuuqJmeTKL8117jF8W4no2C_tGesuSikArHXIvZOiyKzf0TyQXSD8_35x4TxAWZ-yyNYM0HzoQI-aBN18mt2gsI6Uc83ZHjl8kkR7OTi8Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGw9sp8VmAQvEjUidJZw7LAhNkP3VuyRqc0lU_E4qrvbIGcPDGcd8_mYs9Kdmxk_WzxhD2r9_94OmAd2z-wLYlfMZyrHxucpH47856AjOe2YjLs9s-4DhHRiYgGjONMuwSLKMsYiBHKY96Ac5h9v5LrHP4vmR9GFqFGaiZMiFAM-22yQfhg5vzC9reZG2qaTH_TKH3cW5CCOgc2zSS4IqfPerUYEbRpeQtaQlDWlhqlmx3-iILT5jIlOoFFBBoZZI4D_doAAsrcjlVZlVBh606I_2vyMskwedxx3I3lIUYyK4eSpKLOF0S3Z38xvlvqki_Xy93U-mHrSzX9fIo-94Sp8qZbS-T50EnhJq8-AVnXleTQ7Cpot1HrD3e6BklyhrgE_mbCWBmel_qrBleWGKaUTq41HCae3JR7pMNcU77uJC89-07aQxBpSD2HzVIW&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Authentikka Indian Cuisine', 'Troy', 'authentikka-indian-cuisine-troy', 'Pan-Indian, Fusion', 'Both', '$$', 'Curries, fusion, brunch, lunch, dinner', 'Curries, fusion, brunch, lunch, dinner', '{"Pan-Indian","Fusion"}', '{}', '5114 Rochester Rd, Troy, MI 48085, USA', '(248) 250-6510', 'https://www.authentikkatroy.com/', 4.5, 405, 'Monday: Closed | Tuesday: 5:00 – 10:00 PM | Wednesday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 9:00 – 11:30 AM, 12:00 – 3:00 PM, 5:00 – 10:00 PM | Sunday: 9:00 – 11:30 AM, 12:00 – 3:00 PM, 5:00 – 10:00 PM', 'ChIJz_uIBuPDJIgROZUFgItahBY', 42.5939473, -83.12838099999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEwMB3zdvfqvE1ouuNl2byk54F99V5dzZyfQkulolXUONQsEHeg33IVayIjksi0hKvCJnEZb7mVhtd_I8X1gde6qtGeAZ3YXBkh40sIzIEZvYWbgavQTT_cRyvKsy55Ks9WDlullDdfQbf9OqXIA5Gz6BgpIPf79N2-lTteAnBmRPPCKm93toyD47C_SR3TrfWQfJgaV5baEbcfV9ln6Ird1SOjI0auOiYMbS8w4lXcXYMx98EqKcHjhTz1rmfLFrGi83nNiafip9f3eg-BwYSTIRdMAFvexFdBI_XS6p3MG4kmwgHWHTN2q8ZA1YzW2OmCh72cJJLlrmVVyfWX0xC6ylH6oB7qzuPVN78Snke5jwyW4NQ-OjJL9yg7CbTAKpy0Tu58DzoD1MLLVXiEUtK_galnjxWCX0CBrBn4ONA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFw8iuGmhNq2PdENz8aYaiVnFDFAYdBH4XAhuMlgf69DJBHFHFCUOhzWFnZ0t8b6h5pdaLgLyJXmjNI5IMKL1Qlvn2rYs71zsxY2GApxatto0c6GeLIlSU8spUsUoezI36h733FR9URr7phl725IySAblY4sJdKxHZwGAhmPd4k7Ddf3RAnBzyziT3OdQvm6Xd6WZko6lYcQBwcOXFq0RacxAXPGcA4OQm6RG9E3nFHhRv03yMap6d88sfH-yS0XPT0w-ANMrjR0S87GnjDT9chPRgT_fRaU9KadN6MW9QU2g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGKePeOLeilM5mTjrWcOOB5viWtXH7mdnkYZ6yGHkDZeoxhnkNZb-X9v3cDv3OGmWFNJf96hQ0zN7VdhiCKuUOmHzFoVIVI3NaTVXRzMlY_QnO7CaSOaoX99iNDIhsaYWPa8-og7iHOTfNRSg_mT16Ks-WFP2oVlpC6yegQFjnW4L3azQYWA9fBZtqI5i7bcWT6a76C3LmGDVWiFEAzQY3f-uO1ZgB9O1vLCdPHorly-fEgPP-vUEOqttye3XxnYl8v_BocONPGyp15UyF5ZveprIEMY4vHySjlF30xsYc52thX94pMm23thzde0zyXCLrE-PnWa1RnoRqyLetkmWuX_30KwXDGyuztk1EkW9A6Mv2KR7-Qrjs9BXJ6V8kCye8P19mB9yZztBPFftTnn9NFOuLwutjmampjCfAzcZ9OcZv1UZUmfvrA-yiCxPZv&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Swagat Indian Cuisine', 'Troy', 'swagat-indian-cuisine-troy', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '31632 John R Rd, Madison Heights, MI 48071, USA', '(248) 597-4500', 'https://swagatindiancuisineusa.com/?utm_source=google', 4.8, 170, 'Monday: 11:00 AM – 2:30 PM, 4:30 – 9:00 PM | Tuesday: 11:00 AM – 2:30 PM, 4:30 – 9:00 PM | Wednesday: 11:00 AM – 2:30 PM, 4:30 – 9:00 PM | Thursday: 11:00 AM – 2:30 PM, 4:30 – 9:00 PM | Friday: 11:00 AM – 9:00 PM | Saturday: 11:00 AM – 9:00 PM | Sunday: 11:00 AM – 9:00 PM', 'ChIJDbtIKQDFJIgRdic32WSYe5k', 42.5261661, -83.10602949999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFY6rHfaeRY-sEIJ6xA9wQm982n0KsCbG-AF2cZs56RkKW325nRJbtb1rweFtumelehGkFayX_XwSzmluyPKRcPXksSJCDDKV9sSkNIUsXO8NpeVvY_oD5FpS_2WD10mDnYpy07P-smD5ATqBSpw0W5-5HeOBMoxZX4Zz3h_ZKvMBB2jQ76EprFSiVLPbOulnsUhT2WwYaNn5EPBXGstqVO58hZWAq1TUt1p05egykjppWUuoCgOaUhrfDkTOe6bAOyZt3y0afTGX28DyjSZNt7yFNHra36FY9U4ax85-uuQw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGdOLCcF5_FvuZervASjUcRmIrrbOwaLNV846TrFfRDM6bBjvc4xIbTPObD3-CUKVS4SeuHpAIYhY4N9vi_nyNby19ysDkHlOlSN8vGqFIhF8i7j1C-zp2X_WV8c6Ls46JY0Yuyou01CxCxAeCgS5D0PDQIKoPszNi24RRyyi_hbezIsE3ztwNWNRrr2m6KqvMXePqmvgkh_oQlsC8atiaQLw3gAKzOkWfB0jm4q7oWbN-UAUygTl4o57exJKPkl1cTzmBZho3q3bBALqpmVQkO4y5JBcgXiSU5t-b_0RxJOA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFVB0ureEla2lIp3SXzzd3Lt_rhjBGYR3lQRd3VIcmGz5qbALHx85nhaTJxMHTBijR46dEay5UmcJ-NJSDxXQXf5_XWF3RxL8KuvRD-GVqphcBaG9NFvgshzL5TYFnxyrgbHuk4E-07r3nxu9SWtpTb0k_YYduX9xaAhaNdk2Ekrmgqnfc4yfApeE1RawudjDEea5UYPZww1rEsBZQkJX_xi4kOKf4pps1jJVERA6pM9lVhdwdkfpSjeJxbJ4v_T49XL5ZD9UVc26Gxspx6BkVmKE8kVsEhQCxATVW0e92tqg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Masala Indian Kitchen', 'Novi', 'masala-indian-kitchen-novi', 'North Indian, South Indian', 'Both', '$$', 'Dosa, biryani, chicken tikka masala, chicken 65', 'Dosa, biryani, chicken tikka masala, chicken 65', '{"North Indian","South Indian"}', '{}', '43168 Grand River Ave, Novi, MI 48375, USA', '(248) 513-4821', 'https://www.masalamichigan.com/', 4.2, 903, 'Monday: Closed | Tuesday: 11:30 AM – 9:30 PM | Wednesday: 11:30 AM – 9:30 PM | Thursday: 11:30 AM – 9:30 PM | Friday: 11:30 AM – 9:30 PM | Saturday: 11:30 AM – 9:30 PM | Sunday: 11:30 AM – 9:15 PM', 'ChIJrYdsF7WvJIgR12R1yg3dA-8', 42.4805196, -83.4726049, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFocAjVMdhoRGGdL5xpBqXGaLbaqv7PS-ZPoNgo0pITLy-b9Vg06-dVQmeyTaejjcPLPbgbPp7POMdng2cMWTi3gEnM_AYFu4Kyr5d3AkdD-_jFfwl3W75o1--JBohp0JGEYYlwNBxUnX7c-SgVkj1x9OMLFLBOViWYa3Pnm1tEGA1FvvtMRiCsLI8tn_p3vf7zHlrjek_CQyKAUlgqf0MTUUwPFFkUT4f-jJjbgKU0dhgC7NY38WZe2Aiuo-eR_kBMbx1Pg1V3cCGGydfSq1Ln7WpZMKKmWXAC6FHtE1F8rXJWWbksTIh_0HPhaci0ZEbrvgt5dts24Oz5-0UunFf-vFaMO0BbMeD4CRA_SPpwZKqjBIyWZdaPtnYnuVw-GPfjtbMgl5mcYf98qC5grTKFu6e1rIaYqk1Y1W7UnzeW7QOO&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEzjaUpShKEdwK_X82F8Y_ZcsSKNFXU6ApMfKU4JIpYxaDDfbRx_F5t_mD9lypGsl5w7_ompGZtAS3lMPUZLfkKBUi4qygu_-25QHPNsuo5ajGQp70wHHGQ7qlMPz5ST2QRTwHGFNgQUdOrSXDRKQL0aK6oPjzYaPMNRD_R7qyO40GYJJUYkdCobvfNVmfIAeCGhW2m47aO-FY1XSJjWdPQXLOl2X9I-tYQE9KhXx9ux8yIpaz_-Vnwt86sO3CK4r6Vap1v7UEFPhrravGphP2kU0rR-G1NkqQxYGrhI14&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFDBcABhT_QskrEEgZEYEvfVG-_UnmPxjs9-lEgKXr7koWC4x6-dcmNnuy7RpVXq_MEUD4yGyGCcyQtS7D_ZFejOqbdWJrxDdz55kFCeZ-b7uEMR8twoYg-fYY14VAc26bY6ewhBF9D-k3pkDjfOydsvJYaiA0q535B5WK9TzfHz9DW62siyvSmBNB85nF3giqbjH-Kcjt_zUc-RZD66f1m6crsctmO7oOA3ey72VAPUHHt0WqUqKj4A45xOPuAWKt_N1HF-5VwVlUMkJlQahhpZSJu5k7PZhEK9S8jYAqtNvAZsoImxQGAtbksi1n-WSuGizzcyafot9tr8bg1oSgcCjZV5JvXBmZz3o-vZsXZSffbSi7P4mqvJhJLrtZYnFfjk25z9kvE5pLxCahp3h7STGQoa-uoYrVRIWTYunDCRA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('1947 Indian Cuisine', 'Novi', '1947-indian-cuisine-novi', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '25750 Novi Rd, Novi, MI 48375, USA', '(248) 946-1974', 'http://indiancuisine1947.com/', 4.8, 185, 'Monday: 10:00 AM – 2:30 PM, 5:00 – 9:00 PM | Tuesday: Closed | Wednesday: 10:00 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 10:00 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 10:00 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 10:00 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 10:00 AM – 3:00 PM, 5:00 – 10:00 PM', 'ChIJFUGOjC2vJIgR0zht65fIbbs', 42.4773018, -83.47459549999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEwqX3D5CRAmbXEHIfyE5UotaI8qcnMDoq5Va2ivFAKPL7r-uyec9lp73_kCcpc-Cw6BQ-_rl9QXC19sxgxhx8PBmOhrkEylD7lLVREOZFEyek8ssKDkmG4r4FVxFOq0JZWOqwCCcwF-HvB7_htPgPmHVSNWwLIcDH8uZ4splGpSegZ3BO3ZUAM2ek4sK7TMQDYVFnNIJdtW83DRDtzl3qUBabhAnfFDFa7bTye33VISfpp2nA48imQvG5zhg6s-q2t8g0KvEdzTlnU0U-SaCqxHt1exY7tJTGRqOGzTdyW8RiETcMP_tZfzkm2RS_5COn-kh3NTZvA0OylKPuezyn6bzQ_FTZ_-VC4IIcyg-KupFKMSKt63v9khVhbsMgOxbLbssRHVxun_ZQ-4uoCyoZMRdyradlsEmsm3QLn90QIL8NfiV3sLlWLrY-y7QVP&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH00MO4L2dJGFkgHa88vb_VfJmc8kejvyrSzeKO2cSMijTp-I_1rSHLKfsHxMrxFrQHeTdggEaSqGnPvR_CEKGk0qSyqPWZWMao4LsYweVQ6lXy-3iQdCNyDl0G8uBB6I4U0mH9TaDNNcNIC2Esxy_wv5CtpEbTdRASJNuZ4rTTubwV58o_mCAVrZhKbr6UtMdQO7F8dwe4qARmXulnbUplCH7Nr2zbkJHi27HqV0VtZbpHinXhvyWSGL9iITZMHpalBmulHACaoL9g-UzMYEW4ZBV4bqOnQ3VQvbrUHHSq6wv528hVs0BtSZXchzs2_IrKf206z3hiQueMmn6EUzK1Nr3UJflIEJu10UEY8N8LX463I-JDj_wOLCs1qmJn8WBqy9gzuQQ7rkvS4Ucutbf7il7Bmi9fqch7Q94pHrlwDgvcwMTpwdWJI8C1Ig&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG7Pl9jlySmJWe7cXvTcU47_E5ltB4P22nGUBH3sECKWnSLE-5eG4tSbGinbsuWWPiOboVt2sc0Q_eeytEP4DqxRbDVguL5jQ--pupy4gOGcP3C0fAcZdUNSxgsli1Pfhl853azrGpwml-vrNQ5CMQgzM3eAV3qx-j94oTW-o4l8UJ5Vdo3i6oDkiTwXZbFZjV3iIuEtN9aTimNH7IQ8nfrI0mnVLbxphpOw1S0vMzrt1mJyZ7CioB-jIfXct6RlpvJs5fkjWQZhikQAogVKsYJeCtxXvJm5gh6-exS8ZsNyHYgnvjbxowvqm0ySqpscK4W0qUGKSjbKOHnoqyPYjhPdleuSG5Nn0gwKFUmAwfoeNUjb057lHRjqDJUEy17m2H6BlFB517qzrUBPj8gWQi4IoHbPgyO8LvCbfP303OKn7IsLDLXzzEtXfd5Wkp8&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('The GOAT Indian Grill and Biryani', 'Novi', 'the-goat-indian-grill-and-biryani-novi', 'North Indian, Biryani', 'Both', '$$', 'Biryani, grilled items', 'Biryani, grilled items', '{"North Indian","Biryani"}', '{}', '40240 W 14 Mile Rd, Commerce Township, MI 48390, USA', '(248) 863-9102', 'https://www.thegoatgnb.com/', 4.8, 384, 'Monday: Closed | Tuesday: 11:00 AM – 9:30 PM | Wednesday: 11:00 AM – 9:30 PM | Thursday: 11:00 AM – 9:30 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:30 AM – 10:00 PM | Sunday: 11:30 AM – 9:15 PM', 'ChIJRV46D9mlJIgR7GVvCfQjPoI', 42.5280078, -83.4434496, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEEhHPmBrFyQlrDoK6aW-9xwU4moGOiez-VEh4xazDcdeUO-IMlfxH2OLvSWoG9quTES2s72yQ150iGJ39UbMGciD2YGUsdcKrVSnL3UcejrZZB0K4Di-WrJYlpBxuO2GOwTn27JYCkQVJnFi4yES8RBskL7NIh_FsYiU8Wwnoxh7yqkFX31omLaKTlzgl-KccEM_QIrH0hjcKtRbQfOa3FmJDGQ0q8-tWEWn_W9GBsGeQjP0GeEiMgrP1fJmJoRE4y5aJ7fsHgZt5Ld1DxuUHJEmP8vcHPsn05N7VA6NPA2Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFRtaYXQ_zF1uPHbFZOTx94E8zCmCni6HoaecmyQuZfaioXefIgRyE0Tnd2opxdBHTPt1Md5neBD0uKzdRKVMIne5dcnFRlWEUkbgEUNhMZk7sSPKdJaBcjZzMhzySTTjQfl7VGAFmTuBIsRaCBF7l_vWVRUJXu2qA667nB3z6X4ZgET944otJnChCqjJOKh1hwLxy4E3zB_zUnvUYIX6r0KKhmyMU5GrI9ozvsvSIeanjcnAp0Axd4T_IEJS1dtgbobo_8KQ5TAHvwG2llMv4g_lfviXluFbIard-GAOOAZA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGygdd1_qffGT7_5hFMN1uxYfnDpPrrwLxAaT9_eRWxgUiAxshS3yqOi-xlrDMNgTH8QJNK78nWXaR5nIWn8BxHbbcPaPqMlGzwCjPlMILgb1Wq0Blo0tPl_OJtCqr-ZkccjWZjjy0YNSOsuzjTJI674Ju1_gjLBe1ttXG0hqCPaB7ay_oXC0cfqMqdAG-wbb0i7Sfm-WsjKTZShxgmBbwZt5BdIwLE6JpcwqULsYXJIR5f__i4hQ4ptgKsquWEMuQ_wuGfV5BFySm9RdG4upE_A9Xt2FgQK4B9bQdsf5rwXg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Turmerican Vegetarian', 'Novi', 'turmerican-vegetarian-novi', 'Pan-Indian', 'Veg', '$$', 'Vegetarian Indian', 'Vegetarian Indian', '{"Pan-Indian"}', '{}', '24259 Novi Rd, Novi, MI 48375, USA', '(248) 513-4392', 'http://turmericanvegcuisine.com/', 4, 1482, NULL, 'ChIJeWU25e2uJIgRF45RIQUUNSI', 42.467635, -83.4759777, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGX6OK2DfSvIDTBQg7Zjfvh6yVQbT02zeo-pxuOYUfwAhjlSjWLwl8yeutk0krSlP97yOBbMrzD8JWYPkc85xFJBZCi7p4MYxGgHM-BG5rFokuac4viqnR4WvP3zZusR48kzzuesn-_Me3FbthAwwpsb__WjsxLlrtgW0N9UEMNNErmTttdJS60fBGphCWKIejbN0Oc4mlj4hdJn5wV88j3r7aDDsWXMrvD7DADqjKSEzi9GwANfirahh0b7d_FFnM07XQj0qgXcPHshI1aKKh_XCbYQ0Fht6v6tiiPe6grnq70IZnarOgIBSPVMty33ZhkR3NdTI0HZq1y7RIpG2E9JTcRmaPq3eu8IQd8T7UgrfWbrpP_Tz1kxa_BQksGuAG-U6-JQf6OrSLUa8Xua5eGOjIrk-3HAZcKKwOBmU7h9A&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGdSbyuhn2FmqnpkDhTjbPkkEmbKanvNtEdPpEAzihCcJMtK0ZVHNeAWUD61s_RSYVXV1-6vZ1e0dAySVWcd2AH5LR_yNy1Kwz-eSkB7VbH9j80yqf2YF4XoHuqDsI3wdWEQPqk0pkMzlbkinilR0xCVuR0vKG6zR2KJCwLqqgpNbrjU82XEektX0IzWKa7bUEa_s76W1lKTT9sxVaeDLYn6KNwQZfvgua-uIwSnoacvW78lX1cxkwxepjnOvJ2V7CBrH7QqIYyS6Y99gCV1kZAUYU2vhCFCi44Qu_6DVcni0zAAulwWeFsI6YPU5t_Qtnyp1DGskpaoZ_gXtcx-MFcrZQdH9hJejAhE6EV9uhPNfv6tOvZ8LBY_YJ2XqdmA02Z6T_f0HQMoOxlwJM2l1guFSIDdS6hAPN8LypOC7Av2oT7uibLyeL5mv0n9Gdw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHhUSxdaj80ePMRiVO2AH8UmaHOQDuJmDue64NCrKCpHOJlVHasoPwcO5zGabBEmqGHvDDXrOtBphTRVo8nnB0qh5RF2S6o0xXGfysZcwp8y5nTuEWhg4sWOh44k0rnkUVBmeGBCdndbCuMjGik6jXu5BqijiTx5NChlTEZCpfavqVmOIIMzZPT7Ko9oU6nNs2RGeiRIZhHqeIHaIlUPTteIGmBufTId2ybp2Q2N1CVrTou1Uk5kmPqqqobpkEYe_4JdpNF4kjBLHzguDB4BWj6A6SQMDkyLrPZE4578cq6Ql-IqvihVqQ5KcbxKKq6AUhte0ZAOM5rYa0KgDtXBs8oyxG-JL_CpP12PTakDx3snF7MgOtc4vDCILrDTHxcbXaW1b9tGzo3XRZMVDXCiCM8vwplcvp4W83z5BqG25w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Roti Point', 'Novi', 'roti-point-novi', 'North Indian, Punjabi', 'Both', '$$', 'Rotis, Punjabi dishes', 'Rotis, Punjabi dishes', '{"North Indian","Punjabi"}', '{}', '28221 Beck Rd Suite A9, Wixom, MI 48393, USA', '(614) 209-8345', 'https://www.rotipoint.com/', 4.9, 57, 'Monday: 10:00 AM – 8:00 PM | Tuesday: 10:00 AM – 8:00 PM | Wednesday: 10:00 AM – 8:00 PM | Thursday: 10:00 AM – 8:00 PM | Friday: 10:00 AM – 8:00 PM | Saturday: 10:00 AM – 8:00 PM | Sunday: 10:00 AM – 8:00 PM', 'ChIJY_ohe3qpJIgRHkdqAO3SrHc', 42.4985778, -83.5178651, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFOH0Gyve4WFXzXj46DusVlFwTrhFTkNsz2ul6PjQdWDZk912tXwOdJJywSJbE7MTiu0xqcNipdb5pDnQg798Wu403wVGLvEH4XWzx1QP1OQMJ7kWqQ8ZrdRxtD8vdmGBu9gqhZzvwbB_H8YN3IwHGWfUzPeg6inkYtL_nrE4AonEY_gKGvVgUUpzzcM0KjeqI0dCsDdk3uyyaAGbziUJlKYLVYpGHJwlrYMKSSrQ0pcw4hD_Woe5j05kcTQIoAY4aetsYVQVKtScIFNqgy5WI8nc13PbRfQo10iAJyIwN65Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHKHZP3K9hkvgNysKwuEzMbo0AIl2YSUUATOsXEGjCNm3lWEWlimDzvfqO61ORdnyJPlFBtgbfsdYNpw0xru4-Ixg9uQaxnbJKELjBFUZhyG1YREJutjpiUdPtSKggttvS_SbMWlP5gXzrZHeDDNhdAXcyaDhgjRmh_IJ7uaNvp6d4HdATexSBwJCFwMKoLQpndGTrqMFqWKYwhlm77QTS57tvs2ObOxGZ-1qfw-EtRC3jA0I8B46R9d-90hIvDbj6klDD4kQX0PZc9wMGrBT0KzA8yDGIG5lsJMCJMdwlNlrrMykkxrCMyY2_uUXBzLFuvUk15KC8cU3eXLtYSPkFjBJphEse-a9qksgcxYG_7gsajOgcbcWvoMBGq_FozTHYfyEK51VhItt3MAaJbEfw05bN4eif0cdl8v21BX3XTnMLTplIoTpgbAOK4M1kv&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEFk90FDjQddMvD0ZNDnC9-ypGaOYTMGZV_IOskPvSAKu47JXYC-KYqcDYdJ8TJ_yvKUU2Zx26MZMHxJs3i3V_gX9d16kFSgPF6kFi0LFYj62WUDLKNLVgUf-fZB9SGkIQpzr6sKKFZA0Wy5gYhW_JhJJ38Igp0W9OXChrwsRakFzq4kluLrDOIys4BwwbR93Xyd1-kNwbBG2Hlk8T0yUJqjY7IlUJKIHmKgUhDqoVhhhoMDxDlD5Y2rQEq7Z0Wtpj127FB8utNh3P6Zmh8FF3yE2eGrPENPGqldGiOMdHJ0w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Dhaba Indian Kitchen', 'Novi', 'dhaba-indian-kitchen-novi', 'North Indian, Punjabi', 'Both', '$$', 'Dhaba-style North Indian', 'Dhaba-style North Indian', '{"North Indian","Punjabi"}', '{}', '37700 six mile road, Mall Food Court, N Laurel Park Dr, Livonia, MI 48152, USA', '(248) 277-3250', 'http://www.dhabaindiankitchen.com/', 4.1, 363, 'Monday: Closed | Tuesday: 11:00 AM – 2:00 PM, 4:00 – 8:00 PM | Wednesday: 11:00 AM – 2:00 PM, 4:00 – 8:00 PM | Thursday: 11:00 AM – 2:00 PM, 4:00 – 8:00 PM | Friday: 11:00 AM – 2:00 PM, 4:00 – 8:00 PM | Saturday: 12:00 – 8:00 PM | Sunday: 12:00 – 6:00 PM', 'ChIJn-UzbAiuJIgRnLEdy403LJE', 42.4131607, -83.41695519999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGZRQV4NIk5I349xc_RDK5EQVvWhkRpqCotvOrrlSBY4JGeFQJ_ghzIT79LFjtuZqwQFU8SMpqrCBrffKV-FzkF7hz5vGJ_WSSmCFS5qLfV9KBADFzkoibajzyoMteBeQNxGYvo5Ex86j9hiEloubvFoc4vt6YgPJL1FwnX6LzV6O3p3KncoC5ntV8r6_bpo5luGyUDOZ4HzMMDY1MCYDZVGvFLlJ82-gAl1jwHYJK3a4nRmkrSnXRvDWT8Mi0_AggDXNchCsQPLs7-hFuNlipBRpc5MIVsrM5rMuoy7kXCOjdqrh1T4M6pXOHfT0_c4tg9oO02wi7KztxjCDitkXFkpnXK0NDx5KFBnBTqbgnehnTOf8owKC8GvPStHYkkvEwvmE0zB2LEEL3pJYkBlZUJBZa5qFJ3OEhG22lGvgb4OA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHPkdE9i5yh_ogdv0PsrwdCK1w3Tjrtk_J446GSCl37IOxKYSTIrJJt9A_JyBI8diiT3z1bQBp04wU6-muBUFNTnvscCUdjusjoN8gmSLPSSVuoB8jyamnU_v76Gyl59Gtwp-JuUa-KVX1EJrSI0wY4IXJFyovmQlcL39DXgkEctx_YWBNY8sPDCLVBkt1hsMqIrFlWDyzr5Gw1PyYulnzCP6V1yyhuD2CcYumpEOn3VxIywIjXWo8ZGPUDCpN-0KwFmVL6x5FX_qp1LeUquC6YaytaeZAhikahnPUz5EPMbg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF1yb5mlJSCyHfMBwKhLrdS5GEvgciT-oso7HHttk9JVqdHE9x5ClweFkljxV_6S-14yrFE9U_JaDWIWv43gF7NjxCKmbeHDqZRdClK2J1QIrYV0ICDpDUxcJwU--lHjScLpIHK9kodkEBGuoh-M2OAxHQ0_nt3PRUksfNwaCcHZIpa6PsObKWKD-a4kZ2n0N72d7ydvQKf1-idCl1ivKaW8mGXE40gSRiSQurk-M5fCvo8dZ3lsR9Kp-wvgvjtMlXZjep7i7ZLc0bj_nGZwsQ1d2_n0TWv9SWMgfLkngLDpw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Kabab N Curry', 'Farmington Hills', 'kabab-n-curry-farmington-hills', 'Pakistani, North Indian', 'Both', '$$', 'Beef bihari kebabs, chicken tikka biryani, halwa puri', 'Beef bihari kebabs, chicken tikka biryani, halwa puri', '{"Pakistani","North Indian"}', '{}', '28853 Orchard Lake Rd, Farmington Hills, MI 48334, USA', '(248) 957-6933', 'http://www.kncurry.net/', 4.2, 505, 'Monday: 12:00 – 9:00 PM | Tuesday: Closed | Wednesday: 12:00 – 9:00 PM | Thursday: 12:00 – 9:00 PM | Friday: 12:00 – 9:00 PM | Saturday: 11:00 AM – 9:00 PM | Sunday: 11:00 AM – 9:00 PM', 'ChIJOabYQpiwJIgRFrJyUfOF_aI', 42.5096147, -83.35972989999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHTY1KZc01WWIWlcfNRkRNVR0gYjmVsAM84s4tD1-fVH4rkToR6hCNv4B31otl51CR8_Ztufg43CUI1-GSJik0kkCjX2_Lhhfr_xGeN_Q7w5s0xm6bCFfgAgbIpR5X6HqvFRVAK4h3iJcFZ2O7oqHZgbWrp9a9G1T-9SHZJ19tyS9XAiRXjfFoQ_CK8rX6GDgICWS8qcSSqbjxr5fyP6D_SgKzuFuYOfHMBNmRd2JzsLZGi0uDY9lhXF6-KCFHcOK4kKf-C9Go04OE7VoR-d2uY02eoOsaspDNFKKe9-RhMJxQmwzG_TrSHTgHOoM6KBonkRu1psNyYwlQJN095q7VKLEv6UWkqWOmb2zg-bf1pW2qYLnnT2rLslO7TsRIQrMyxRf2uyc-sPMFJH9AmxtVojsgSfYcOZlffs9iQYv5NpmrH&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG0fNhnaR9DLaV2XEjxx5Lkdv4120BwMoMF8qDVaT96TJgZhrjDh-sVWa3lQEdfQ92Ck-G7vImi-4aTzOdVkjrnoEOOP-yEFOoJMjswcWpagEQ6squ9iw3bNXzs5J1tB9OUdIbmeVTf2hcqMFP81dM3HizY51tyZ7q91BCLUTp58R-7RUxDYkTgbcsZS0NSm0VefAKPG1BM159Y1DK1EBYdbNhKrOXHEg4D_xiDzmM9nWTVvJUnIfOYn_uxFHAiZMsEzXqq3R6g5NfChVbSnAQST9Hfe0js62rOvjJR57eEKw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFQv9zBiGeLXQRWkaWCmravMQ5YnMiGhk4VLEWKsGb_WsaTzQNwLra-O_oLD-k3V2oP3nxzsUv6RrcwCMvk2mrkEnWERdink_ac7j9i6ZAOlhyIWWuWX1tOhammSMfIlX5Au-OJEOEJEftTkHraC1WTU2KPSU3Xh5fZ_tqB0NGCfFTNu2qArmssnddvB7vEv4WewQvbYF65Ge6OSv74UqaZEXOu9FIHzbcZ6YIDjpJyt_jaW0EXCkBnl6bqW3eLXxnLxlz-RDXybwOFLbQA6BxD3Zs65xJGyz1JXJU_x1XYDvxlp_f0mo-veS1SFsyxonChb1VTCkLh9rCzXNEx2Nqd4Bv5tUXblh35OrG9G2NfLFeJpVTX7Tn9CltGqe4dPY92yFwmMFG6jjP47gHx9Kk_lT1cWrlQDNkzlKH08kHCSUitOX-a6dBIWUomirwg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Zayeqa Restaurant', 'Farmington Hills', 'zayeqa-restaurant-farmington-hills', 'Pakistani, North Indian, Indo-Chinese', 'Both', '$$', 'Halal Pakistani/Indian/Chinese, samosas, kebabs', 'Halal Pakistani/Indian/Chinese, samosas, kebabs', '{"Pakistani","North Indian","Indo-Chinese"}', '{}', '29208 Orchard Lake Rd, Farmington Hills, MI 48334, USA', '(248) 851-5557', 'http://www.zayeqainc.com/', 4.2, 412, 'Monday: 12:00 – 9:00 PM | Tuesday: Closed | Wednesday: 12:00 – 9:00 PM | Thursday: 12:00 – 9:00 PM | Friday: 12:00 – 9:00 PM | Saturday: 12:00 – 9:00 PM | Sunday: 12:00 – 9:00 PM', 'ChIJf2y9RJ-wJIgRmzamtTBKjUs', 42.511334, -83.3582653, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHbYrx2FHp2tMeINOe_UwJxHAjqIleRSuKMbTebgi8RfL0B1mz5vGDbshYIVZKQgB2yueAyLWRFeCjDnTbxlQEAuiTaAXVUHpIEALkuciMpieGYeN5pMSCHUoY8udscyfn1r6JQxVg8GIlm863DadypFW1Vo1yiHJIsiYM0A2EMoG10QMx8pHF0PUx6xq7O0rNWIVzxOiJbrsZAfTxDPVgwyrSXGGVQzJw41ZQZaASUlUfmWOGebay-fzDYF11TBviqJ9PT9fNWN79azzR0zl7dn-LdejUg8frBlNX0FNPXTIP1eGpuJITx5V7lfwV44rwrRqgGCgaS6CT7AG3aECl5LjSvDOq2rNmA4JcUkISY0q99jQsU5X6N7p6WEccQhby9A_Iamobk_o3L6nRehFgsYLeAyP9ccwayT_PQW1lVU1I&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFUmffqq_-5nF9hwu8ow7RbWX5dX2frhO3PUnpMNJlUHngebH6TOKFb-ewnGW2bReshy8CwNeoqX1FVrS64NvxLpQixm8Au-09zuJaS9PC31i-gruNP14CplFp125RuRo1XNyDxZVkET57BNKbMbbJBD8lgrharAi97a5TFCIW119jAkytcNT0t0XeeKp2C-N9FPQOvsPmEmrCitLlqVT9RIjgxnrIc2woHHgNBpzJyfUyQxVHGFMZshLtpMrhmcUJowRKEH3m7E_OHD3Iy-0SB18Bdf2iqrMu1W215S9Jm3Bayy9fe4UwH98igwXyaBc4TgXbI813eWsrfN91AVrrVXasnwI0UtnjyL0uq7SjZDEekZkeI2XYxbBGAx_-qaIXKGYWcBco2rRSfb3wt6LXDkL4xlReG__HCIQEhYrjlAQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHn_B0Mkz2iLV630pYJZ4qlCniFFUGVsvjs-2ApXX63ygBiqGFiC73kACOKrvg-tz46VaUavJZ901conVO3OvZnWn0aMVwUidcLUhd4lS9DMWKAvJYGB8nG4pGbce-eu-uiPDC3psPnXwLleo9yMxPDpelUnKnH3N6jhukfl6jPL7x96h4g9g3FtdubSlgnmYviknw72bf8-nB2kOwCXldbfjVAymTVnOFBPH00coVIUEtmznejVltf6VrDP-rJ7rNIxy1McMgIh63rSVLzkZ9BEYiavb1GqsGCKdqXrczHF221fC-xAZ8S90zJpfISjUOmVY9hY8GCk_QKxcwr4MlMRvcGFyFMes9kYiz2BJkrw3J6DebkWb4_w21N9aWuCk9ZcISE2RfCrTXY1aZptL75JMWklWcqiv_1iJWWX4EhBc4&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Akshaya Patra', 'Farmington Hills', 'akshaya-patra-farmington-hills', 'Pan-Indian', 'Both', '$$', 'Biryani, Indian cuisine', 'Biryani, Indian cuisine', '{"Pan-Indian"}', '{}', '30701 W 12 Mile Rd, Farmington Hills, MI 48334, USA', '(248) 987-6382', 'https://akshayapatrafarmington.com/', 4.7, 1695, 'Monday: Closed | Tuesday: 11:30 AM – 2:30 PM, 5:30 – 10:00 PM | Wednesday: 11:30 AM – 2:30 PM, 5:30 – 10:00 PM | Thursday: 11:30 AM – 2:30 PM, 5:30 – 10:00 PM | Friday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM', 'ChIJ8_JnlK2xJIgRyg-nJ-x7-d0', 42.4988709, -83.3557927, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFFEMBvmT2farV_XaK87U9917iNLBfa1yxUB2IubFzhb0FO4Dgi3k9FP4HpfLiWOF52vV9m7FI5smr8i1Gfgyfg5ouV-uRAGUPzIPZlwB_ET5LBzjkOQ5Q5UOw6HzOpBqP5lvAKg4OVVF9FyrQcUUG36cP2z0w4PBmVGz84FO-UBaNpA5KYJaiZPIfIDUiUgM3Sn6-U_k4O2ym8UtwsmFrEXX-Zh2uZQCUlOlKsKCjcKiMZaFYPOboKjOrXSExwEjAxkduuruMVz3PkvwVGnwf7PPtEq7rP1kpGwYxjTnb4Zmm57FywchCHTDukX2qo8rnzY7WnzMV-lO9Oyk_jj5LKEsAW6Khn1rW1E1hfIPOkdouZgjVp-Miy84rQo8ee3too9bhP9uYLA_lmEa_AZlMpaYAGRu5H37ufD6lZVdg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGgYyL2azKEkK5bD4SmgNoPa_YaC4s2OVxQwC8pmbbth6n7JZpxJW8ynrpGAfqeLatCiM6dyaLM7YCTqVMSm-Qtj3oq9bow0rqk3v-Sx0mMeI-mpYtusKuh3rgxU43G669x1lh5Q_HdT7ZnRcXHlDWyFd62fh0k3NCkKw2x9Ixzr07emMp07hUC2CGF9PQi0J5w0dFQ5XCD-G8bPPIMqQ7rs-P2xxzFrhsT1D3E24uZS1sbwjm8llknEneOpFe0HmhlBvmDRbNqJlVA_fW51r5iAY2aSl-jytxKEOiRzkNJERdEEV0ENGNK0DKcYQ_U2kE6Cb-IsnvB9Gbt__La6X7yUzXX8bvrFDE8HSHNADm1K6KWLP6pT9nMMxWM2EKAa0EY2VocOW4wxbGN_Dc-3HJu8N9fybFKKs9qmsUeCiQInvkhnMpK9vBCrnUjyw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEjFzoKp0MjRdGZATBwXaLZeoxLVmqke1ck7jQJMeRTLpkdhXj7shXBxZ027yGIF_43NiDU0E-roWlVTIPxA6gPwymSiwCl3Os95P8LrZ71odcNxWdnE2UrKrPcEqDIyJeS5rWmCYojOtQEwLDHFDsbTe2emaE2uFcxYyza4LreykW3uDi5Cob0FJxtbBKV9lq0NZa5-Bp05vWmtW45fKIgUutHmRoc-0_kGH-1bYEAUcgV2kfXg0olkv_aFcMz5MYKY06KGOAnnqvqTrdM_jQQbtrdiTsk0etyYBVp8nP_OTN6zwrNes-icarzZoJwfVnFImYzqvmPA1bvisp8TvVKPk7Kwzik3AueTWAkTnnDqiBM6NIdZrm9x2GiU_BQFAFbqU2fHjQgOSTRUiOZ-mhQYQ307Ykc2TUQGEqClsBZIMQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Saffron Indian Cuisine', 'Farmington Hills', 'saffron-indian-cuisine-farmington-hills', 'North Indian', 'Both', '$$', 'Traditional Indian with modern touch', 'Traditional Indian with modern touch', '{"North Indian"}', '{}', '29200 Orchard Lake Rd, Farmington Hills, MI 48334, USA', '(248) 626-2982', 'http://www.saffronmi.com/', 4.1, 458, 'Monday: Closed | Tuesday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Wednesday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 12:00 – 3:00 PM, 5:00 – 10:00 PM | Sunday: 12:00 – 3:00 PM, 5:00 – 10:00 PM', 'ChIJO1LGTZ-wJIgRoiFCrMsIQhY', 42.51073, -83.358352, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGS7qC16YWFWb0Oc6PdbxTKmutB87fxE4jBdyCXNECylNWiCoWj17QnuauVWbhwldqzBl1-tSV3AOIr0LaC3sWJXAiNBxZ5KWqlG2hTE5Xiahgfu2ajWjwAcVvPIsi9NSbhxITQ_i1Q1ymD8iPDQ2chODR2UsAyCTu8v59T63gbkfDbvh5FyQl-JYb9u9fVkIgVs73i13YAx2DtBulzhd_GU4reFvsfQu2GWwpvYiBoaERUERWGbEf0cGa3L53FuR5lplbsw5EMa0V3nmqmYAs45AdB_Ls3ehHKtlzU3QbWXG1Ju-rVwJBh0gw5xBS0z1NOhTBmtKdkVz8p9A6kxtyDL99x-3VZ6XKwTfkbEnXMwaI4x8ObJNXjIHgXtVyqON_UwaPf-CbKV1MOVHt9lmZGfkkm2aHzodROlfSzCLM&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG75LIsw_nEqGQcuAKkeGWd8AJmZ97wHN_njBwgKlab2u5qbAfXH6xz7r50kNMDsmUmfhmXq_anxpU2z_C1pQltshoMwDDtVDTG4Pm1-GDq_lpARWT_jV9W5HMbNvDLZjM-Uk8_kyKPyn26-XNJAJlUb9PDMqtLeqDTunUI1zFZhq1AG5E8xgrhc8ZMW9q7Ul5F1-udmsUG0lgE4EnzFNzjJPXK7_PoYnRhhp3-tCMo8Tob-vMK_oaXhh0LtQYzvgxdPmwtS7pItujUUxi0z6yUG84Z8SIt95dsmbmdUuW0C-zPm3v4EzrMfdoY7hQ6_I7w-29ZpHUri4__QKkrqJj-0dT-RUmH8JTU7BLit8jZQHFDCXHNg4H6POOyv3DK_FEzA6AAusyPcPGMGVahQSMslRWtl68PZLYhxamE_w9jBug&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHnzhhWfTBd1Nod4GZaulpmcScQCJEkqUXbbbpqfzmdaPL21eUVG51TwBVc0-_OESIlyTL7zm_fUWzmlQbulCjILvDFEhW7sDeoQP1XbbORODMMrlDP2nOzAIEM37cBmk_HgXy_vI3Wb8MoP3S2_N8NMzAjVUppoyoCgTmKu7T1_UTTxg7rblj0yiJNTsWa5xJsPkUgmH1QBgmQhzfjFANWHChuw6QUQT-UGQGv4t_aOI2H7lAx5LCuA8a-oramqZqpG6yaOfjyjY7UbybDrKnnThNsbUj0OBUzCdhHbvBWRDUJzirOuYPZs3GVxyXlhMauZfBVfLEaSvZMxeWAfFmEweHb7N2ry_A61x-5UZ3VJDfHiRvlxyaQrzl1RV0vLS2uA4cgX4V1UGuMoTcD3lTZiqDzb8aPy5YSOQXOdnYGFfqD&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Chutneys', 'Farmington Hills', 'chutneys-farmington-hills', 'Gujarati, South Indian', 'Veg', '$$', 'Vegetarian Indian, wide variety', 'Vegetarian Indian, wide variety', '{"Gujarati","South Indian"}', '{}', '38259 W 10 Mile Rd, Farmington, MI 48335, USA', '(248) 476-9900', 'http://www.chutneysmi.com/', 3.8, 1173, 'Monday: 11:00 AM – 2:30 PM, 5:00 – 9:30 PM | Tuesday: Closed | Wednesday: 11:00 AM – 2:30 PM, 5:00 – 9:30 PM | Thursday: 11:00 AM – 2:30 PM, 5:00 – 9:30 PM | Friday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Saturday: 9:00 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 9:00 AM – 3:00 PM, 5:00 – 9:45 PM', 'ChIJBS-D7SauJIgRZUll5jOj74g', 42.4679205, -83.425726, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH_p8q8E8hPgj_LF73HoUzOBlA_ASXN0qcq7_MtXdeXYVbogTN8EhdeiM_Kw3RdtBb5Hpw6EUrFAfGYd4JXaK41jyI3GREjsfG4ZHKp8wLsQSHQpwUxxASpFTw0XXCv5HtgODzVIUcJXPegAzAq1x-EWQcAOVYytVWYog7TX8UNs3_hKvQeF2tg5b0MfSMAAXuFLToLE_s2Yf3Od0mJPAX2w1DVk5BXVgzZPJqILAauKs3Mg9wlXgQiGU6s-JwF-kAFi98c96gnQGmSMX3S3y5PVsK5FtJzHAisygL0CqGbC5jTse_ueq6bcyFRgqQp3owJpPbA6UV_MJvs-6QifwAL7hx7d3JaW4hcQ8Jmjk1KSwKtMhxcQ05Db-i1r6GHhsj6RaT0cFvNlLPyiI93Duc4pq8TGH7V42OedSpM33dU9YjVZCC9a7ANNMflj0IJ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGMLrZ2r4Ge6XETrt0F6MO0-Fvocqa_bU9C7E8l3w4vRdbeaQGxx78Cx0xIE-uZGDdbN4cyOm4QEQq_siJI4gcn0rVEsthpcJMy7rq48aqCVLHA7K0BunrJkfMm1wXOEAdL10OTwbuIEuVD8iQFvlceJF7u0uYxL69ExnQcPprG9HPVnBWnUErR5hUhdS2gZ5Nzo4dXjS7E4WJaOOUPQ63M8wZrisgpeDlL0pHZutmqcvAdZStj8jP1WWz4XcoK-tvmGlIxa70fUI9y-dkJMZHvkdbKjwQ7jGdFfIbet5vXwQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFDRxju2ZD0raMxYDAMDrdiN88z8RIThWw5AjnxENw4_vU98nJ6n9WfHmTLOhRkFbJqwS9qQJothOnHG40vTLZorxoUyasb5DmXhMfPA0jjfnncLHLr2D8Jv-gdVPvJ72PVF8FnMZdRHF3p_gCyKET8BVXnzQi0L0f7PIcLMb1uMcHasTGjFcL8Xig0pN2HZkrXGsIjIb9o7PwAa3OIM_8Q3I5lA9q0J-V7mzGkWQYOM-0nPukbJNfGvwbYPW0-cYgQkEE8snrItuz5G4-wBe3dbVdUjDCEy2Thjm0ccbTwr3z1amg-oHFchSDzqGsHKqQO9-zIOXyUAH82M856wRByskX2ILieyNMw8p8Wc7yyRmE9oAfrcW2_Slj1Es8Kd6mHeTDcoHoLwJji9ITFVRM6IN8cYNScAyMIor5abqoD4otGuzJWeTDCnJ8gmhFI&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Noorjahan Indian Cuisine', 'Farmington Hills', 'noorjahan-indian-cuisine-farmington-hills', 'North Indian', 'Both', '$$', '16 curries, fresh naan, halal', '16 curries, fresh naan, halal', '{"North Indian"}', '{}', '2937 Crooks Rd, Rochester Hills, MI 48309, USA', '(248) 829-1975', 'https://www.noorjahanrochester.com/', 4.6, 136, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 12:00 – 8:00 PM', 'ChIJ1Z6zQKbBJIgRklC8mJD_vOU', 42.6364438, -83.1696944, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEdXJogWaXGwMpjPTB8JAsBmiezGbckdFrVhrnjywSidFPzQ1Y7OhjVDqTiAXxDTdNZoAhs6zK83WHXvxBO1OowiXgmVPG3MdFVCfu_soxMlvbOVo90FoOXkAsBdilej998JmVOkMjPwRbut1cpok0lb-Ah3Jg2hxb4VTTH8gq1C38ySb6gv92mbw0hmked8kFKpOoB5nMWu5fmp841SP9xD0bJO3_wt9uBWTgGU1C6rIE0DH8KXadBmrgHMfPpEYWF30Tw95sAOpMteI-LvSGX1G8biCOlm3dxdcbaSjJDR-tH-Q2VBgRHlaTdvPWzgMRrZXeIiQ3blef-jHLK_9TrBTt7o06BKIrW5dkZhutQY7i9CPgo1Lk8bYfsOFgT83Q8EUgh3YuMIommVrYnV4syfb0kiogKYUhAxuZ3T5APuVU7e5goY0zI2nB3VQU9&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFWGoPe-wM-sEhFNRfJjIQMMyeY_Cb20BtzwR8K5Jajq4FajAOw3CZd8gwsdix0PevsKYmbMoiHOnC22JwJKcLBiTHrycE-gf-WSOfTw2FrYlpqCKqA3TbjuO5ErhEDTLGIV6M8nTzqwLEb1AH2K22wxQZhpnnt5k1U08gFodzYmlVEDrBIjYJboxHOhEg9novaXYhwV6AlhSc8zXZzBbevfgDnIAjjoN7S37ut8x6qxYtyHz_lYQDFJ0-bgBL1L1aoqm_XC0TcmKj-u1jR697S4FZDIxPkpL-IbDP2QUvyGQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFU2NzAxQPt8zhgmUhqbzXFm4PoiIllg3_xVuicRf9zgLgd5j8DQDrKQsVQZBEQQmcNSnKlnFYV2GHBfL8Jvlcb1vWE2xVMdkYqqqh4vly5iO3eifdF9QKljtcK6wgmeSxXwBN8PwgbfuVr8LzzbMTcwDvSmlX8if6vWcHynWWQWSx3-kfw52_B1-0tL9mLNRfqcHEDsKKh60GNVfB9wXCfBQkiHZvEtIPtGRWoA_u5xo0kl-yVkuhAiOqM3CvL189IfyYE4IOk8GZxd6lO2pKcRptiWsIemQg2NrBoP_woDA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Daawat Cuisine', 'Farmington Hills', 'daawat-cuisine-farmington-hills', 'North Indian, South Indian', 'Both', '$$', 'North and South Indian dishes', 'North and South Indian dishes', '{"North Indian","South Indian"}', '{}', '29210 Orchard Lake Rd, Farmington Hills, MI 48334, USA', '(248) 266-1866', 'https://farmingtonhills.ahabiryanis.com/', 4.4, 116, 'Monday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Tuesday: Closed | Wednesday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Thursday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Friday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Saturday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Sunday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM', 'ChIJURETUBqxJIgRyOvoyLZu0CU', 42.51156779999999, -83.35817240000002, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGEmFXgd4XjvIpGnFRnVcuHsRWcIRI5-sYnFHVRms5biiuwY-KkUiMmq548PReVWEmJW1sbNkF5yZx9VFarqGEPaqHrhf0ll-ShJWjGq-2UdugEnQWP24f82uup9S41p5gBV8qsTDafvO1IZSTPaf83TmzK2lahkdcpeXUSQRdJPB823savx3mdSpQSUIhkejcx67wkJ6sT0HngnIJfd9GjFSc7IbLMGODQIsbPMi2h-yY1km-fHB4rlfnQAcM-1Hhslj--Nvts3AnsjlEc-mu0nnwmZVS6Z2MEaLsyH9su4g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHE4hxYbMqnROs1qAgrf52KoowFyFbiAyzbExjD4HlVqCkHb0S0ntbqi6T2H-zCkI9Ssc_Qh5GgLRvEfvNQFCDgw-hwnPLFwhP-FqXoMMdl2ZtFlk9gzLLzHc25Ty2NcjZZlJddCet2Z8jndNhfRXmC38MeuGP0MzhEQK5C4BDBAAcnLR54XLEZWHr4YiO-siJ2NXN9Nr_GLpwbQoq-WopHkKrwjiRmd9huKGar4wABUpgfRRbxpCCUhu5xVaiFr7C0vX7yr36i1eMctVHkRvcv7xUGgcCozlUY40aRBf0iVA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFZo5CZKqt64lijHuPwmQnZYOcr8-KeBRH5l0IovpgiRKdzPKs-EsCfN6vUzpeQat5Q-rAQ80LxnYO2kcABvX3d5SiT-VejxF_5IwcY1X1b9pKMq-HuMsbuZpdJ8bvnG8RsZ6hSPDwtVg7tGJ8ebj3ZruwvnhfqLm48bRH1NpeFqenvMpLBhjCt5Ta-JpFoepEixSVmwAD4ApuvlPWdrepXjIGHgDfDMXbyEJGmdtdPEQhX3PiIcEk9ZUxs6G_U3zzcej2n9kx90vxursJ36gaOSJmOkojCuBYfq-DNzHnWhg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Nihari Cafe', 'Farmington Hills', 'nihari-cafe-farmington-hills', 'Pakistani, North Indian', 'Both', '$', 'Pakistani, Indian, Chinese since 2007', 'Pakistani, Indian, Chinese since 2007', '{"Pakistani","North Indian"}', '{}', '29410 Orchard Lake Rd, Farmington Hills, MI 48334, USA', '(248) 254-1667', 'http://niharicafe.weebly.com/', 3.4, 87, NULL, 'ChIJz-fppp-wJIgRJ_lv29vZ73g', 42.5131333, -83.35817779999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEJ-wXfkUyewcnhEeWY18-whtbF3hlShCY3043IjVQBqQ63mYX7t8Ry9nmTYJN2UqKNhlEKCJIBwhmTg0j9rPxVy-aKe4lrLW5ImRQa-S0pfPvI7iuZGMK_PZK5FVA4_l7JVcFcwfsfiMUNHFgLthJjNMKj2k-NZnqPck5wghjXx_TAmCBcP3HkO9-fEjjCv9tGVqLVpZzXES6jXHIF0vEnBjGfwBNpzCFYiewSOdlqYnbMcq1qrkhHwpBMp5xWjZeX1ZV-QCI7NhGghbMtLOeM1KOf9SNA1xzNsQdh9u-OQdemx-JMyQKJoc7YoSMUHr74JmtceOWIowM8vi3Z43KhzkTcGhRLY0FidBs_vakFhUd5go4l05ehJurcyGk0TfUbdp5LTLeqyYv4g47iAzl3RhcEuOGXDecObAhVEic&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEE4-benGoq6rPZzli2KObeH87OuDXmwl_7s3P5eRD6tzY3cvPHvEWLNB-6DDWWvYcxQnLLbCR_CADuCPVCPlqh4hmXFi0UIx8iq6IfqaS2oYh-9ljYEfn2JctNyrLxwvWsdB7VgCg6-KKr4NNvCihxWUqf3e3j23Pr_LKV3KvpYlmAfSuPrK8B7NcKCizIDEsn1Cr3tFRIStQMC4HIFWULpzTyLh2cAc8VjL8TYRfaTg-8-jD5xTlgewOJfRpxfx-T4CM24vKu8dpMDi6kAwEv8p4ANBhvt_NjVtb0IMn3SLky2vkpLESFkkE5BnAEOsrwmbpEG6FtxVJsGN8tMptzmUbprWuBcLGU07EirwWYQoeYTyQOhBe3HZKZUjShgk4hkIV6KA8RyA1d8OiygI5duB-n3QxKaa6f0t5aNQbEpQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF9Dtut6gSAtgsGIs4LY0NW3huagJpVLGz-wBU4ZBi4S3sJtDSx64PvTRR9BFtv5eFFKyIot4P93HGNVLs8haMNS-cwPEtA9kD45S9gpUZ1GSbjbS4buv-f4FUNysMecDXlwQWx2JEv5O92TuMWdQtkpNwQc3w8j12nMMnjZzDmQ6CaV7QrORi9E-SH1m2W8dgzztZK8_m17fplX7hpkHnz3E8INqQxhbxAWstWAgZfPbnR4wo2br-9sYRKKkzNlLkZz6B_cZHySjgJIr_g1y9nZgbdSSLcqZvFfn9TUR9hK0_Y-6R5Vb_WCHWxM6ub09o2C_H_svAGLfddvZkwUPxdjPIwcldFRGK6cxIM38XoaUn6adtHFneoFhV30YiXkVwtYhvKU0bsdahpw5ZJyNGWD8NryjzkUvDRKZk7ZkyqU4mh&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('MamaEatz', 'Farmington Hills', 'mamaeatz-farmington-hills', 'Pan-Indian, Fusion', 'Both', '$$', 'Malai kofta, biryani, paneer tikka masala, dosa', 'Malai kofta, biryani, paneer tikka masala, dosa', '{"Pan-Indian","Fusion"}', '{}', '35203 Grand River Ave, Farmington, MI 48335, USA', '(248) 987-1123', 'http://www.mamaeatz.com/', 4.2, 913, 'Monday: 11:30 AM – 2:30 PM, 5:00 PM – 12:00 AM | Tuesday: 11:30 AM – 2:30 PM, 5:00 PM – 12:00 AM | Wednesday: 11:30 AM – 2:30 PM, 5:00 PM – 12:00 AM | Thursday: 11:30 AM – 2:30 PM, 5:00 PM – 12:00 AM | Friday: 11:30 AM – 2:30 PM, 5:00 PM – 12:00 AM | Saturday: 9:00 AM – 2:30 PM, 5:00 PM – 12:00 AM | Sunday: 9:00 AM – 2:30 PM, 5:00 PM – 12:00 AM', 'ChIJFUeXQkGxJIgRyYJvqVJ09pU', 42.4682408, -83.3951316, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEOWAjxfJBcFUCO11GvcJBtWWH11k-3Nd5EkIp1E_S0G6bJgrgwTb2kGQ1m1U0VZWsfA1_zhfnvVjaBrAaQ5hX69--2f0m1AVEu0NOvqkRitWCzdYFAvs6KG6erg3ZT-LVFqfztjwSil3hSQmvlRQQsvOuuN1g6kyqm1JpLasCG6MypSO6uRdCB__K1vuYCHYH-xhUGfM8cpOZMHB0lCVu6OtZ35Z9M2pTGLhAwoj2eMNF-XUUJ_F-XB9y6Uzsia2Ui6vdUvMriJ-Gt_VvEm5vKr0-KaCvSPm8nyqm6k-M8m9sxn9HZgtMf5wt5LyK7LN3xEmDQUft9x80-3FJR8EA8j7iwjSUhHbp_11JUvoSLAOkjXCMkd-0DC3KIiUSZjCrOFnzvwt5fi4S13NzbCb2Jd11uZAjAdSnIKd9fTCGe4DcU&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFG0uqV6tehEzSBwzokQCBEJdLdnc6d8G_Lmgf6rI40lc7U46v6NnbiqEWfCnNaKeUm6FJgiU3Lb6P3qXxLSCbAcu_m0ry_t_fWchcKT8mA1FdO6qk2_sWMBfn_efxuGp-8d1Yd2Rb_1XLsphTQb1bT14J0vpMgeYXK6pK4IwGUF3COie_LbHHvsZ7R50rpJ_e1SbPb2WCv3eHDiMhi5K69GrVTgpK3nVtc1Yub0Aci299QSV3WzgwJKqlz_PSd1jH4O_glovPNfoK5HnJ30VULKdO_TTnCsReynj0f30JmOg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEEnfGkpz11KesdHV1x4k7F3dtZR90JMbhe-jGo2dqdtcXbhCdiLiMrEHASuprHyK8UIl5gSnho7uXK5w-k6T1Yg9LJinkOpnTO3GRLmuTVFeNDAUjZvXBRP0DMWih01tNflgyajihKMNn3-Hm0RCAWgNDmq5uZGapb6jPK0VfkDRQnWX0L0GzZxyIgrdwlbu8WsLPbiT-a579ncLPO9zOUZ7xM0FvgfxkmKhBaeblJe1erpXdky3S2KRgJBGVMa3FTeL7VKz4k2FIHMSAjkkSb-oZM__BxfwJQGUKzE23EevGs2-Joh2oc14gZHGfzLpnbK5oGHqC3_W6OuDkOpzu2y_CIU2F0wGWQg8gufWYwrNB8Xm-V_tnu-pkvuSaWi-xOtF6iMf4HZSx1AtM9QVLKx389MhEO-lMj3iRcLccGHg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Paradise Biryani Pointe', 'Farmington Hills', 'paradise-biryani-pointe-farmington-hills', 'Hyderabadi/Biryani', 'Both', '$$', 'Hyderabadi dum biryani, Mughlai, tandoor', 'Hyderabadi dum biryani, Mughlai, tandoor', '{"Hyderabadi","Biryani"}', '{}', '24305 Halsted Rd, Farmington Hills, MI 48335, USA', '(248) 385-3451', NULL, 3.5, 1356, NULL, 'ChIJqcjTtiGwJIgRXi5gsUKnWCU', 42.4694537, -83.41657160000001, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEAzrPzVipFdhn8BWV2_SKxqQeg01-onKFkol4zjCq0GrT6odmOtgTZSvTxgv9NzVC2JHBk8qREDmTWQNdSvd7HO1W2cc88BsEInX94AQhMdxEt2qBuVm0WsVEzjRzvTl3kgZbzDsCQPf-Ta7gc_7UIYsPj0bFwa7P3M2arym-C3L2FIEEkPAhY2gBa-BpFFcDmNwk-v0jWKQdLt-tcSMEYyLcI5oabh522ZYFySZN2Jbvzk8yiGWZxS886OiTGX5-EdQqIEfx0fZc_pEzq8ZTWicdRQ0TLV549JlK5mAVT6pyTn4I8jhb44DUJ8kXYg8a0VhFcPkN7O1-MyMZZjl_ILmkjkX1ykpeFKQ-7UoLhQmxAoWlvPfrfRxW32zyDq_eNX2BF6feDYvLLleg3En8PCUiGAQY0azrn_ouIWB18DW64&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFtT9P92xtbgMxCgyRGtSqwAeXK79b7c1QJTjS4waOrB0ZD7j7g7-42nvKesQpWmBfwsE_w1xapxbO_eLnvnmtcpA6kJI7w2goK-Ke7kxlcGHs_LAJ5qAVFyarJ5zuXmCSdMtypfvuZiK0ckN5eR6hzm1hWXXUweh7Nv7hHcd-9FCG2e7rNCB8O8A9Q7aR30-MXAJg4Teuail13I42vbBCukuYuWMKHbPlqCMnPz43jNbcTQwc3BKeSi8GRFhgqj4pmPijL4f0ikO1hRPY6XoSB8F9KoTHqaEcNt5ePwMTRZlEi42BdZ2HPVA4sfCUlrbiTTzSFuU2CNvYm7vjzcrp-swe9UUN-dOifa-T1gDfysao7TGxfCdTURi5jrLl_FiUCyHJOAH00UDgJUnuSH1HEDyEM64klpHKV3ASrc29bZdCX&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFss8MnNxILBNM9wb9PsdZCKwiApXUgS6_IFSOOq_-T57uJ9nm0PGR77s1B4av6rtyuRulmUmoKy3mdcqiDdVBWH5aFOHkQyJhLi5EYPfkJNNEpC3bJfwvDhq06i0RkWcojs5v_gXV3siDUFshbLUZu-DaF3kTCI2Fjx3R_K2CCoaKD7g5Vr3qGnT_HXWvt0ZqNWJg-hGePYlZpuNVATq2UPpmac50b9pyGfNFu1ev3U2U6t9imY7goX26oZc5vBmo0QbDSO11Y-U01KVkmOWwNp4XYr29VDgtdPO-WH4dIVtE81UCTopknzUaclK71n_8DeiszhpkzLAKivnVJ7WNfprAlsVQEEC6BaOIUAdFkuboLHnr9fOEZqUIVIi6goLBtvrS3cX-KnMUNmB23iXD8UIvQga6e4obcWpfLK9BWPeFf&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Namaste Flavors', 'Farmington', 'namaste-flavors-farmington', 'Pan-Indian', 'Both', '$$', 'Samosa, biryani, dosa, bhindi masala, aloo gobi', 'Samosa, biryani, dosa, bhindi masala, aloo gobi', '{"Pan-Indian"}', '{}', '34749 Grand River Ave, Farmington, MI 48335, USA', '(248) 471-5555', 'https://www.namasteflavours.com/Menu?promos=1', 3.9, 1171, 'Monday: Closed | Tuesday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Wednesday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 12:00 – 3:00 PM, 5:00 – 10:00 PM | Sunday: 12:00 – 3:00 PM, 5:00 – 9:00 PM', 'ChIJlcb0ArCxJIgRZq-rHvOCCXI', 42.4681778, -83.3902139, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHIE_ftcyDJ6VfI0vaDzPcr6P8_x5m5AK2QUCKnIbZronlmNK0RNUAdf-7yEW8SpDeDX_mDjEl_Hh4yAa3h28Ocg-K2Jw5LsP7PNZVqKtqqF9CMU-DHg8o-CZyKrY2TGMT0oUrI1dFL4aBBk3WbilT-ofCzwLOtuJX4BohKv8GRUBv7kqcvfJm9BgNEuEevadiM7ApjqmgbuacrAampQSAqaV5XRRx8OyLfAD8GLOJy9VWyrBUNAS5H25WGbUeJ9qNUUwNPA2ltrzQabN-hQgyKBgC9rQ3hncCbpU3HXiEuTvI2ZNcPU5qhSgtLAdm1LKslbWEwyy5AUmTvoq73eFyt76eKeGmaGIsbM7i7t1DquMQPzMpZELS9acRp7V8MJqaydxz9-cldobz_J8ev6TAyaq0jrsGyjcjQtz7VulfgjWUN&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEYkzaQAzLHSMp0OAXIvsGn_9oTyrL6g6uHm_F8248zm0NcNY60enrMTqFasUw4FQsGLdrhAajYzdzjZ43_vP_ZMfuXKd9dMlTX3k-jxrOwafncpczG-ne-vHHwfIIgCuckPg8Ih88z8pqT1mtcoB4Ks4TGRHhcs_4nggAfqc3Bv158FlCmKUQoGI7UhMx3_sLcfGn2YRqwJ43zTZ8VsWnq8y9qY8AOLibNA2_xSBjX0yt7Ml70l8Ym6v-imlkymSexL5aSzkeByVdDkC0jrROGU4Uipyq5ILoh5v6KIfmrps4f0r3k5viRt02pFoIUgAIAi2vkMLntALB016wLX88TYWBukFJVBvQiBCFSDv1q5jQBCyU-vRNx9z5NijhJhM07Rr4as_A578FepbOwFYzuWhgCMVA0BS6yS09T5e4wwyHnVcaKpZfJDG8zI0s3&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGLpMFTEB_v7gDQn_f0kL6J8Jie2flCrrzZUcGCRu3-mLHZ9j1RWeQ79kIiKFP1OasyuugDVFKf_p46w0_-D6MOMQ4WI3rANkz_GlxA2pQEVSIMvqg2BoJNjGf6i66cfaGPIHKyd9hRlIrSspC0jzEP0F1_pbK8HL6tozsaHgssKutXtMn-v--NP541Ps08_zwmXfo-Pfy7t0mUpNdGy8lOmd0sbcO2HGKcQVjAa4aQbAw-we2cgg0_Ivb2pBzNTR_c_IAzFg33N7MsFtPvZuPnggkD5tnWGM7MCmbLZeMb_KRmJEzzR7q5AMb-_YbQzJwgjDhofzpd34hCgRBRybCk2HzN0EMu4ACUM_vry-1HYHISxd4JG6TJxVoTjcgW3PydWYJQ-1_URKipZA8CGX13PW9jXNnKjolP2y-RBNNqntd0JrwLezCWtVrN9A&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Pakwaan Fine Indian Cuisine', 'Farmington Hills', 'pakwaan-fine-indian-cuisine-farmington-hills', 'Pan-Indian', 'Both', '$$', 'Authentic Indian, generous portions', 'Authentic Indian, generous portions', '{"Pan-Indian"}', '{}', '447 Forest Ave, Plymouth, MI 48170, USA', '(734) 892-2548', 'https://www.447pakwaan.com/', 4.2, 1059, 'Monday: 5:00 – 9:00 PM | Tuesday: 11:00 AM – 2:00 PM, 5:00 – 9:00 PM | Wednesday: 11:00 AM – 2:00 PM, 5:00 – 9:00 PM | Thursday: 11:00 AM – 2:00 PM, 5:00 – 9:00 PM | Friday: 11:00 AM – 2:00 PM, 5:00 – 9:30 PM | Saturday: 11:00 AM – 2:00 PM, 5:00 – 9:30 PM | Sunday: 11:00 AM – 2:00 PM, 5:00 – 9:00 PM', 'ChIJt8c47tOsJIgRyhNUNxzl5BM', 42.3694544, -83.4705145, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFtxVt-kPcUMMhVv76na84HgP8Jw_vcjI1bdHWsM7Im4vMW2KhkgO-47JINAzEnxfT-L8Qblhi3CK2SB4Y-IA0QJ17UQ9pS1Of9fBZeVu-2ougndf7jmdBPTd-3WXP5Lj3mg5p3AEWztgCgGLoq4IkX9-1VHZaclEvmc_KjNnk0qqXL_SYvamTvL58XHhnaAuagdu18vSx7ig7FsEK76cC0ClbPOijoibtxgkKJyiBtiJfpMamrqhV1WEJ1ENjj_hGKPkGlJJrsxpKzi9h-WTZxFLnLYXcBa27k3QwOO3Jpxl7oHMar8V2EaG9iugF2gNNMPsR05p0zgcbPYDNBM59FjsmRKLiPgip8mfqR0Z856lqM83hu5HTvfrpIaXKweS7zSHBYOk8C1_ZS7SfV26XY0YthvVyTW2dw-AtAq1eyL5eY&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEAozLWdDPYKC1_VrLoLRCrFLuiRrjQUSG0Bl9j7OTHu7GuLVIQCbhxZZ4sI9U_orxhSrc23V6Jl8_gfNz5m_fN4jFFZdhog7syMTexCGrzwpDnGScVUsDWGqcNvK-5JUA4KOC-33MER08YCpdL8PhE6C0Ytisrkneu6Gw8mhI_6TmLsDnN1U0Dgx-Qtvexf1VMCBltUYxvxl1ti8C7VhxE3GWSYK7bcpxDcR13pLnlYN3dqWmNCAtRO2jTWyf65rGX96WJpIXhPhdmVFu4tCWQbUqypJO1kChnskPnUfpym7IFbFyB4QVx0Av0ZpmJAmlL_5jQsZfKqe65TIITr8PPz0iPsgn5kjnR2Vf3iudDLoYh75E86-2z8GIgO9r8o3FdvohtYGNsjdO4VYPAqynKCEsIWA3eqolSvnj5S5oE3GJSmBhfUGZiixcuY2B1&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGjhkaS8PK1SP3Jh52LgsYQQWnUiwiD-a4H4I2ekX8kooZrnzlLqGXJAhVQ9oAKvZeieMTt4AN1U0BgQHS4SeK-3IbESFzLz_ILn6MMl8YiyWaGyNavnXCutsbprhWH63PlYAioRatYaw-6Nk0OyqsH_2Ecmj8r8jgIYm22W0wXNJqxsG4OrrXgexOtk1viy0NS-xGz6XsddW4iyxZ5w6No2pkRjTDPqxAeRQzsd3XXVGqHuOgtQ1NU7ndzFaZ4kyNVDIdCHpaRZM3qO9uPcuKKP9CTpMSDQAaA2BCBjnC6Jp0FItdHn6WRt_aezFTEGRI_JX-Bu7dTp7zw3gEV87Vv1DoX8-ZWDy2b-sE7eoklkErqwaMPNjWPRai4w7B7INDze2gU7Jfw-LtRISnqgEW3vaj3e3fY_Xyzew91YrBTzQBswOo-jZqRK7XypL9w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Tandoori Corner', 'Farmington Hills', 'tandoori-corner-farmington-hills', 'Pakistani, North Indian', 'Both', '$', 'Pakistani/Indian food counter', 'Pakistani/Indian food counter', '{"Pakistani","North Indian"}', '{}', '6 S Washington St, Ypsilanti, MI 48197, USA', '(734) 254-1071', 'https://www.tandurikornermi.com/', 3.7, 586, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 9:00 PM', 'ChIJSYRpYnRTO4gRJxllqjNX8_o', 42.2405802, -83.614763, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFixEbCKD6GQH2ijsPEkpr9TsEyFQUBFIufxXaTTtmKFtH0WqvkzHhK4_FdF8wduskIDZGKZXQqn1p23THRePstb5wHhjfqK9M-eROOT-RYxuBZnWZIeiv1A-AyTJT4iwrHwkihzAiZ0ohTWS4-yoNMpBhl97YZCFIzwl-SoQQ93f-UkKD8vqaGBU4l7bUORN4o58-x0DovZ0m99A5ZIm6GUeF_DLpWFukuQHCHwZg6M_ChlwNADsPuuSCRJghSj4xclz54e61p7ajI26F0l6vrtezeMQ36xl0WgsAj7IwpZw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFcUhlY0cjsLn1TUwsdT8TivCSt-383qMgk5FFNpU4HciM4qvoor6kEBQBbz30yuLbDcnvGmNRoZNv6koSwDj-KsAv1yEPXJHVu_cwt1hMiD3se3VBXQ6jSI9ytFV-cxuWGgmBPHSCWwRjvzBRMBe5rdWjXAlVNiRlM4rIQHzmdiF4b5nXI4MMaXS9vV369RWDtGLTk6doklD3CwwEuzVSCtspZIXsbD04KCkW9OUGWmMlDoXgSetEBNptt2AIPKtkLodMOTgPX9OAS2svwURuwcncSLWs2FageCxz4TDeK2w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEPcizjMnfcj8BIgGtkPhTaMrO1SvJX0DeIHwUAlVKPwXdCe5pwYyrqC0sip08bmmhAWzJhudhgqprpKfUAw3uHOAgtH3A_leec6e21uEHUpZWNPI-EceOiNic6OI4hZ3EYtwFxs_0wxAdNeLPlUHKR0dfHR0O1D2ZF_1DyNIzSVil24FXSYDj8QdBMpE9DmoDlFtpyrk74WGEGYfXxct56MCCdw-G9SB6oTPYe5Jzb-6IllFtwM6tDVTfxxP8IoXBun_HSHI4k9YesOakHXlrOd4UklMvSQWq3X7rGdL_gBYWAo8gkred0mNvtwxdqWNauXcSJYq3KX-7ghJfuYJhdvpBw3QFd-fZ0Npi-pfEwOpuG4q5UGRhh3U2KYrbzzS5dw71QXGuCnSh6_AKq11L29Zyc2cKrHIS4fC2YVI0ZgXZwxxYc9xTRQblTYoce&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Kolachi Kitchen', 'Farmington Hills', 'kolachi-kitchen-farmington-hills', 'Pakistani', 'Both', '$$', 'Pakistani cuisine', 'Pakistani cuisine', '{"Pakistani"}', '{}', '45300 Hanford Rd, Canton Township, MI 48187, USA', '(734) 331-7909', 'https://kolachikitchen.com/?utm_source=google', 4.4, 683, 'Monday: Closed | Tuesday: 2:00 – 9:00 PM | Wednesday: 2:00 – 9:00 PM | Thursday: 2:00 – 9:00 PM | Friday: 2:00 – 10:00 PM | Saturday: 11:00 AM – 2:00 PM, 6:00 – 10:00 PM | Sunday: 11:00 AM – 2:00 PM, 6:00 – 10:00 PM', 'ChIJdciDbw9TO4gRmM8Kx59AgcU', 42.3295676, -83.4872329, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGgrr2DFqFkATnnrKj-YfqVM8WCWzH3b4o-osmSqOnARTE8wRbasiKHK7qpebFizO1R-oH4qdJ2aOUr25UFKwA_Kf2IN-K3y82sXZeHCmbt5GFrU8POwFV4vFtmd_1cd-o_wRKgMVn1TCZL-Ci4zTlolA-m56XjlkxFsECME8Ww2wrCbwPS1KrAh3huirhhxh3nTxo_Mh6kNHR6Il_c5zxsUz7T4ZPFbgtSEWXSRjpn6Pdd_dxaohFowK1yUrEK9eHgx5j3pVWaPgVaB0t7aWMaky0Azy2uNqdd6_WXKjqYaQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGauj8YGe338wuDEvhfIHvbhmLxI_H5VBYi5j2ch8HAcIURUIL6vjlxHKG13ctFLMSQdLpAGuS5fYlQGuzMoB_biO6vC5HCdHCpBbNqozozDdEA_qt-zz3BhQUafpTFfHpkLOD2AjqMavKZ1SvKSPlAq3A3nhTnDg-ueJzlo-Wy7DLR4tpdmxnTY6xrJS1cFstUY5b13NUPgY5XuAFDcoIqWblK6oZQtRRsTcaGQSB4y1s1EZSvljPYXH9Q0fdpvQ5JP9gLBoBVdz0laU2jyDTCrVBl3lotWro9cUXWXMXCDfaqWW6nsCMQU3COOCJseGqnJoVamMWbYS4daYepkA0pTiGrr2WGOd8-UFuxC1vkRu-MsLmt3un0d8YiCDwn-X7EF5QyJ4FShLojPogPUAQSe9weaNYgAsKsVN_BWVXRpMYd7JhsqczN214l_ABM&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHnwEEe8ENRrXMVasPo2xVWRYYU6Vw67IuoODVmW-uqG9CiV6iINumWTo3k6Zk2qsxo6qvqpTk_sfSaB97IJRjFbYb0tYvT4dwzdWYdKTckeVUzFBRItPWW37SG4EJZCZ6R6A2yfFEfoY26yu1xzDiZaMjXAx5lWJ5Q9Ki0TYxlBbXdwYWNYwsHvUG31Pg8w1Q6Ct7D8_xx4l_pm5scGSwCyRdGqillmT0wXj_wQoyZs4n7kEz3Tedq8ajo-Hfq4DNQ76MsJjdb-VhftCcgs6kYH-wMGOYTO3d-TYtgr0_iEg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Sweet Timez Bakery', 'Farmington Hills', 'sweet-timez-bakery-farmington-hills', 'Sweets & Bakery', 'Veg', '$', 'Cakes, pastries with desi twist', 'Cakes, pastries with desi twist', '{"Sweets & Bakery"}', '{}', '34767 Grand River Ave, Farmington, MI 48335, USA', '(248) 987-4898', 'https://www.sweettimezusa.com/', 3.9, 459, 'Monday: 11:00 AM – 10:00 PM | Tuesday: 11:00 AM – 10:00 PM | Wednesday: 11:00 AM – 10:00 PM | Thursday: 11:00 AM – 10:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 10:00 PM', 'ChIJ3_3bVIyxJIgRnYtvzopV3ko', 42.468305, -83.3903806, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHeQdUEG-Ybs-gNuq_nSH5DQi_wC-yzQ40JVR23e68onQfSBHjhxn7qJQT3lrG00Y3xQApjJxcrepLrKzl3_ZhHE3tAM5-HftFXZQ2illppUXYgbyZGojEJe8ClE_2dOW9w4d8-0NtY7nqbp7l1nk8bMLjpZbQ6sJGRrH8RqXYdQa6eqhN1VvVMpwmKVHC6DOEsUPwALGsliHiebNUgnuTm-Z7bN0XHyk5yTBNywiampOWy82hpPXxZLo3QQChKm01itmUObUQ0e-a9hAMVfcTDXgRTRwgONX0NSj4x9xOU0Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE-7h7yIOU5Cx68HNMCKxLe5dm8OzvZvK0md6OSD-8rl5OkzhgX6n252l95h8Sf0V_-2B_0uwzs7iAxCfk8e8HmobdvCoyg9NJcRoTATeA2saEF0XMF2t-sHeKASEihSCRaibd0g48CrC82Vi9M8jhBRKHZWVbFWPdFdHpLHAal5nW-pbAXNxIxpRGEHF4bdkdn-aXghicd-lHLf84K7yuGXcr7HhYyZQYoMJYaYIGYfuTupPnc2E68mOatouQL879qb3buE8j3J6ntLRh6WxEHDA0t0omDxjW4PceYHNtaXQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFQNJQ0OrDnAHded9TJ-Fb8Q7Kj5pioGrl8_WgPjAcnPF50qTh0SIwid3ixHrtKpeveQhxGjkonIXpLWjWteWRKOwiKyr5W3OpqHfF6AQllPZvhq8PYJG_1S4XO-r5gu9c7GQepXVcZa6Q2tvWXc63GrudNudOojJ6SHStVt8hKzSxLn8NM3g9ZL7ZFyhfKX3me2ns3d8XG0TWY9I7U392TUqShuR5pYznyOR76Ts63uzMHsxmP6rSynx5u8WNn1soumIZK1QRIqU18fF3Amh1Sdmw9EyAfJVMGLqsL1kuL9pxWXDmV3akyaKjLL4jpyhtofC-NUBPf3HTwU3LKT985ajSy3n6u1rSbJsN8B-3O40GpuWMvdUczq6mPb8R4g5Ib9N15uTtJDEWS6yS4VLMCZgPxFsmEQIFZf_RTTmx4js4VdBXDhPORl7GXLfww&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Kakatiya Indian Cuisine', 'Canton', 'kakatiya-indian-cuisine-canton', 'South Indian, Hyderabadi', 'Both', '$$', 'South Indian, Hyderabadi specialties', 'South Indian, Hyderabadi specialties', '{"South Indian","Hyderabadi"}', '{}', '45380 Hanford Rd, Canton Township, MI 48187, USA', '(734) 927-4019', 'https://kakatiyacusine.com/?y_source=1_MTA5NjYxNjU0Ny03MTUtbG9jYXRpb24ud2Vic2l0ZQ%3D%3D', 4.3, 134, 'Monday: Closed | Tuesday: 5:00 – 9:30 PM | Wednesday: 5:00 – 9:30 PM | Thursday: 5:30 – 9:30 PM | Friday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 5:00 – 10:00 PM | Sunday: 11:30 AM – 2:30 PM, 5:00 – 9:30 PM', 'ChIJMxdmAQBTO4gRw0D-w_AVsKg', 42.3295818, -83.48748289999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEc5bhhuf_yD7FXPCXdP98btnwISN7jtc7Amzsr0CfoFbQn2XbxrDAO2s7baUxCDOCW_CnmWCpq5vEXHbLyqH67lFWyZ0CdkGB0qLYEtRl2w3BXplJ32HnTRXH3qgbTK1BU4G0Rwyb4HJwlNettMxXh6hx6QzAZG99SujoM0SQkT2zbjal8Sa3FmbkGcWJgjMAvbwr_uDBKfGqlghZXZAkaAKYnQulGmD8zaqSNpR3VzM24J7YGv3ytXcGVbrknmLwyIMQM8kbmp6nohBvoutMiIpth1Sydvi8lqan4Bkt3qA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEg4Mk2hul5IGGgMEd8dsrO3stvuKDrSHLWd6i3WoAZYerB980qiUWa3_CsgKdTllzH-7c6XSskwYPQKSAebajJqEhBtfLLoZCFjKXEfUMFb5P-m1ox3mQ1B_3atnYKDIMGeTVdXl6EF3j52ewphhSLwBgGievaZkpftkjwFzSTGFWN7Go9Qj_N4QKqjub3fIldcbHR5sML5azAjyL8Gzzn2Zrqhgd8Z5Q7GJy2kr_6xIkDlW9RSqE9JRpUXdmCWEOONkPsv5KWOq4ZJLlAVuxBeo-88HdaX8F6rMPPyKUNvQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGFheUGvJdAnZArwic-EQBsb5VkqK7ppn9p31GMbEhlPsnFQMLlizE6u7Y9IZ3slbYFNI-mxYpQXvshIG4gpJOUrCPdWP3hchjTAjRu50b2psG0RhTxs-Y-UTiAfJMn82m1eYiI3WHnyOx1sJmd6tr9TqRvm014EIp-D1vbsSO4qd8SXOKJJJNzrNlXwli38s61-wNOMJT_TyJqeVIWT7s8Ktwj6txxWxbkobjvuQH2SdLob9tb2EUdEU1SR6x_RW-cfM_IEeY1McPRVeQ7-uKZBHJtgLnr8IGkzC9fHrGpCA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Delhi Hut Indian Cuisine', 'Canton', 'delhi-hut-indian-cuisine-canton', 'North Indian', 'Both', '$$', 'North Indian cuisine', 'North Indian cuisine', '{"North Indian"}', '{}', '8491 N Lilley Rd, Canton Township, MI 48187, USA', '(734) 254-1423', 'http://www.delhihutcanton.com/', 4, 508, 'Monday: 11:00 AM – 3:00 PM, 5:00 – 9:00 PM | Tuesday: Closed | Wednesday: 11:00 AM – 3:00 PM, 5:00 – 9:00 PM | Thursday: 11:00 AM – 3:00 PM, 5:00 – 9:00 PM | Friday: 11:00 AM – 3:00 PM, 5:00 – 9:00 PM | Saturday: 12:00 – 10:00 PM | Sunday: 12:00 – 9:00 PM', 'ChIJj1NM_XRTO4gRylq-aog9woA', 42.3483125, -83.46102520000001, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH0ncmLzqkSvlAqAnO3iMb3V_hcrHb-aMUvTLgEWmJ2tq5NgS4deUa4rX9nq3JxWR3IArXprnnTyIiP5UsqDqtVJSKBl9UF_yz3oRc6V9TZX9I8L8yZmd4v9Oeai66Tf7q4ezn3iG0B1qpTd6ei8cOwa9wJIggI2yRPGr8LLw_AtBMFszyV365BgyJqAWpMZidc1IJl_ro997hUTTN2Uh6G6ySz88pFP0lZa-SoRxz2kLiI-o3szExPa2VS4aftaAiXDHDbokgsbn1EDsKknBn3eullRsKlURFNA2dEGRMfBO2cNGWedWsBVTPy6ckZpLBfwTG5-xy3nmvFHUCHn4X9QfdN2OalBzB0t6VurL737sOPRrhoglD_qNAlb2vnfLIHTdjm9RTR_8vB-pOvFBr3eixYGu1zEpNXk51g71Ryn7z-&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEIQnD5rtZ_GHDHjM5rTsMHzBQ7jc3GlRYHhpEC87PDn9lvnogIABXax3LfkVsIxTOADPxZkJXf7hbN_i5WauUCsHpjdyOFCkRPmwl_8Cip4_wAFAkQPwMgGX9riVFACiA_UcqF0y9SG_-bvI2FxGdlvBxCD77S2nKPpvNsssFYf5WJ1eVF2GvzrtqpV85SRadYB0iGhgVPPOr6ut8lw7YkPwSvAIdMXJqET3ixl34NjD68I_Q2RuKLG7AGP-haohYVBC0073KfIlTz9DA5yzTvdKLWnrwxhJLWm2rPWgXq-HvA1L0FOo6PzvC4BFP2jRQHYK0nTIaZABGwDM9OdN78yFN_dKDKDyNC9HJNEbvE-VY4pBDSTbA9aKqV6x7rxfA8bOsb7-9-0NuhWHJxDmXxoBX1s-AdmMBWa27Zj4w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHtQyehwK3RviZGulMhn9gg7JzVoRMapKVSIpVHwpeawRgNXPnuQ8N6ndCO_z_V7EqVYOL7-kR7D2bftU73UWpYg9rBhVazjeAnVeX6Qg-PRC2oWfV0HazE2jkIaa3xP2bvAR8lhN2dIlQ_o9toXCA9UYXZHvItLrudUuy6wHHru8w1ghtjXKx1tewQVN1ORPFiF_TCwOgEbBdSTtl-WoOitDwAu7TN8YMxLpch_aQFMTEn46OHHz4BKU37zd5OZPNNCTD10JFXNjpZJYjKDmC9SO2GNvZFq0Zi3e_X-Tl0qbzHQyAwV4Z2ztrTMiuWXOz1BQQ3Sp7eeIsHgfNrQERC03B1HrmJOytT7Ts1JaXmGeqQs4IzTxhl7_xuW6f5bs8w_lmMafKX0tfnxSWoH3ndEcl2120QXKNP8JWgA20jVQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Raja Rani Indian Restaurant', 'Canton', 'raja-rani-indian-restaurant-canton', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '45172 Ford Rd, Canton Township, MI 48187, USA', '(734) 404-5523', 'http://rajaranimichigan.com/', 4.6, 662, 'Monday: Closed | Tuesday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Wednesday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Thursday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Friday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Saturday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 11:30 AM – 3:00 PM, 5:00 – 9:00 PM', 'ChIJIxLZNx1TO4gRO48CGGIhids', 42.322587, -83.4853504, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGlg8XZh5clPDA-RTH6lqiRwnhvUY-C5lFguDlJi_sc_f3tILI_XE4LPHS9MpTnl4uK9aFmgIV4cljG3IzrwJico3j2ItFHDKOTOEjnmNPmf4Pf_a1M6uQH-rZGUftFXX2RCWNjLd9zqOhQU0ip0KreOqv5hoXkW-csPb7QLlwG94WTD-VPJDa7EvkfKCTeV2SHaTOR6ycgkA5lD6Br0FH6k1L5Cc-o6H7rVDXTXOjtINPm7VWNk0lAqDWC247F1vRXR9OiN1IcjGIgeq959koI9_AfPNyOVrhbYgpNZVBVaQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGbkE6QgdsFdT24vzk3bb-3GkUWYfqYV-PoSpp9LPYKp7WmbMpEJafdKFCvub9hpig0Vawl8dxSAulFYSHxWIeiNuwKR-ICrMo1kg13gUhh4J87LgB8yam166pMteP74O_Fe08NGbX9X1k0rpXNtj-q_9cLt7XZ0cmMFVr4S-Xv2mf4w0YQNGWHGh6oQm1ZiP9Waa_ZVA_H5JDSD9R6EmQ1crekg8jqv-cvGkyJA4nHT3BA_FmKpcVxPnfb-Y4jzuFNb0Nx2ewnSjImBzi_8M5K2t7twcDwnDGGKk8gxzO4sQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGxXTEKH1MLop_RkWNixAzruRIQGDNRpIAmyGQR26CmBTiBis3dtafLCIH-OnMBYZTxvny5Ywp50PI6NwR97upymtnxraHvGCefVZgYIHtyXT1F3YPHIQyRsFSizWYARJu4sAVEC_Xe_Vo6NCSltL4Oo6-FJqudCjuT2wO8ML4Vo5q7bZa-knuIh-9YNaLt8oSDDKVpvHdKmZjwRTU4dH6BNGSSR0McMX41qEMWBpd9jIT31RwANpJPylrnOcyQ4R4gGvOUC53QGIZ3RxK7OAZDbs_ObXzwwqehtofyOWdC9Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Authentikka Indian Cuisine', 'Canton', 'authentikka-indian-cuisine-canton', 'Pan-Indian, Fusion', 'Both', '$$', 'Curries, tandoori, full bar, banquet, catering', 'Curries, tandoori, full bar, banquet, catering', '{"Pan-Indian","Fusion"}', '{}', '42070 Ford Rd, Canton Township, MI 48187, USA', '(734) 892-2997', 'https://www.miauthentikka.com/', 4.3, 1708, 'Monday: 11:30 AM – 2:30 PM, 5:00 – 9:30 PM | Tuesday: 11:30 AM – 2:30 PM, 5:00 – 9:30 PM | Wednesday: 11:30 AM – 2:30 PM, 5:00 – 9:30 PM | Thursday: 11:30 AM – 2:30 PM, 5:00 – 9:30 PM | Friday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 9:00 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 9:00 AM – 3:00 PM, 5:00 – 9:30 PM', 'ChIJEx3iIUFTO4gRz9hJQU_a-cA', 42.3246275, -83.45720639999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFLy0UrOBsdhlwDAW4OFTNDUYHNliS9hi0rSzBiM3nbCOWNMdYrUFl1X6p9i0vhw2IOKjI3aql0HanMg-3EUvSoK0XRepS7cgZEgOGG8Lk6TpzTTVFDCQh6PJi9beIbh2dfI9LmS1ykf6Z1X7pRXVpnMf1HhqbZukBNOiZIiHSu7fD0TPE2P7DPe47YKe2qMttWCJTQKi1MAwAcYkCr44zTOmBpAc3GBL8BZFoYA6LvOoGUZmlBItm509x_vwsUXUYfvf_f44ro_Bu0vSj2hTiefKcD-SWd8A2gPcKzFvY&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGEmslHwFizqSe2XQVab4tidwoBUHzRYuQ2TYUAkx4YusikavkkxNFIXSvP6zjfPkru-Eh70zqI7Jqo-cAPL3EGPf_KnFn6FCVbEnG6H3wl1fSoq8PyEozucDzBcgV7kVOWs036R17cX3LSbPezZ-iEgLKNs1t9VbKScFqlrh5XBO70eQlGpIapZPU4vjhX97FOfTjnkoAcUi_AnAVcXlSJf1XMw62go9a0GkJa7pw1NOZnRpuUONIKmtd-XE0kYadBt6nK5r8JQpYhGRqLt7TUJ02mstXX2C29W6jYzJ--buFupQrKtW5N2UbeGE-zqbKLecRvoZNZ25-i_VuHsRSlOnAZXHOxyTYmNS6EgR9HfHMHA8HN2YNaO4tBsPvIe4V0d6U48BWexFyBCNW4LAfGPk9AhCw9I9zn0jS4cW26Cw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGsjzO4g-5Ltx8Dq1fhz1e2fju97P1Er-p0_7LpRdWPFnMyYBHF4-MvmSl8P6DzHYbMzp0HPqtQy6kKfZSZfYb-20Nj9d3LPHyrmkk__ngWk1LsBC5WP6thoJnuaCHPCmYJ1wbKB80edwvER_-ozc7g71vgaoxTxJdTOdyqlX8tKqclKY_TYxNgTW8Mxjp94PIMJaLGYeuTuf72O6BgqJbNzrqwBFWpW6u86jAY-FhTUJTA-gJxHtekEwFdN0v7L4PvlMQ_EhuRWCGXTJEuCNfaM7XGxmSJq49VN54Uj4yKPUbt5-HDqufLKdTpDAjByK95q2g0F6_PCslRgx2PrSi7d0YRwBcIp0LbS7LxOOxLQ4F99x-ugoa5GXOY_orJmQxQF_pxn30eGBoaetSQZAfz4ci0kZytfGYhZ5NRTz2zEL0&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Namaste Flavours Canton', 'Canton', 'namaste-flavours-canton-canton', 'South Indian, Pan-Indian', 'Both', '$$', 'South Indian specialties', 'South Indian specialties', '{"South Indian","Pan-Indian"}', '{}', '44954 Ford Rd, Canton Township, MI 48187, USA', '(248) 476-5555', 'http://namasteflavourscanton.com/', 4.3, 1310, 'Monday: Closed | Tuesday: 11:30 AM – 9:30 PM | Wednesday: 11:30 AM – 9:30 PM | Thursday: 11:30 AM – 9:30 PM | Friday: 11:30 AM – 9:30 PM | Saturday: 11:30 AM – 9:30 PM | Sunday: 11:30 AM – 9:00 PM', 'ChIJbVHtB6FTO4gRNH32eZ4pIyI', 42.3237696, -83.4829812, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF74df5aLuDaxqTlz9aBFeDOJlfjlF08LNhuPkMry5D7AkvaLuVOaIq4K-7B9oCy3TxjMxTNAapuDbmtnHJZnxWcBuvIWCR_opm3ijdT6-HjssW9HIGhQmIeSYhh7UFSIWXgFaLhnHiBcoy278ndzSuQ5PHkaUSBl3T0jgw7l6EfRHcrS0RyOvaJXHI46a-6QHRKPs3L4KxFnsMWYEj0zcJGMr8eifbWm0NfTx5RDq4Kq55I-rmKwJqdfckvtaHh955A081ifwqF05636CO2PQhF05SagZHzZbsleIdp0YsaQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGQeKvjkbjx86uw4in5LamvHHjIyJ3Kxb0yCUlEWU8snvbHve85WAMgFc-gskDYmIVAolzjr_rFVuZ0njmfauykJ0kq-Pf3gtfROloo59YvgVaY82MyWEDPknQ8-wNNI0LS5WOttC8gau0hnUEco6CXUZCQhPHSMlfU5az3jGDSgcSrBFg4eoPOEvATnZxMizeVoeKmTT_BleVtPilA9klQ4s9M3WTnmB8iXTe7okJlisHJjU1pQWyQynjMsptriu9qFSx1OUVZvKlmrrTrWklDsXJf0YF5-IvSjw-vyewHEA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHOkxkSrM0xoeHs4LLzDpVhY3-3sr7F0XY1u3YdsnnmXTIM5jmwymyosRKYHOHvjFTMAez3OG1HaN-AIgou5J9wL8-VcN5w-_liW-ciaGr8haMT_cCIksoD_Bfc96aRVXCnFG9uFcF1XiK_xmz5AK_T1aoWJmWLIf9nynbL0YarWC1CcpFddNryd7mwrYsQJqWxgq4tHIDCqIVYDX_YzYRa8SvXE70FTQwxjGWy5tDcn9UJWMVkveHMf29v0ijlq-IFOZA11CJBQB5MD_PyFdWYMTaRCdB85nFY25UQCxe0bQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Neehee''s Canton', 'Canton', 'neehees-canton-canton', 'Gujarati, Chaat/Street Food', 'Veg', '$', 'Chaat, dosas, Indo-Chinese, street food', 'Chaat, dosas, Indo-Chinese, street food', '{"Gujarati","Chaat","Street Food"}', '{}', '45656 Ford Rd, Canton Township, MI 48187, USA', '(734) 737-9777', 'https://www.neehees.com/?utm_source=gbp+listing&utm_medium=gbp+listing&utm_campaign=gbp+canton', 4.3, 3365, 'Monday: 11:00 AM – 9:30 PM | Tuesday: 11:00 AM – 9:30 PM | Wednesday: 11:00 AM – 9:30 PM | Thursday: 11:00 AM – 9:30 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: Closed', 'ChIJM4IENplTO4gRU_eMcp_ozFM', 42.3225067, -83.4895682, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE9dyLC8bXUIsuYnrm0a4g-VnIeQFTIExi8ToS1-__GOHjXInoSfqxtNCowyPejBbXuA9dt7I-HpM6SgOHxBDrQs0eXGd1O4aiouRdPNj4A4EvePMlC6k0tZWGbRXI-CjymOQ4IW-psOrx2Cq2J7scu55KHi15rcCFGSvmE_6_g41F6dzUqmSpx2iI38NFmK81-R8qBg28k2uzy23sf6fF5DrLGG8_tS8NOfbPiz2V2V0GcVQDiZQCuXo45E2rsdxzuFDeNIUejoiALY1gLdB0k63rnwV5A9GS4APMetpD4ykggIXI_HMbtG3FCADYKxR6nFTfjBlh5vRsjWarePaSgvT6vXuXVsg8Shcg4mvo6TWW9GmB-97oxdEJEKuMTZSdnk_Kw5yVU7F7BqBEBoF_Gayuiw5-Hkb0N4QaTWJedGHA2Ow1lxI5V4-zj-llv&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHbRV6K6EGmQ77NEQffg7xbYAvDFFfTCnFg7ZSG6jYI1cdpcetqng0mFxve94KA1tjlCywH9983olfGseoz5T8jWeBlBPtakFEsdAIOTEnStUaTNEmWTAscqCcwkaWbJZqafxrnDygBeoNa3AbNH_TiBrxCocbhr2451A-1PEv0n_deoMtdWkTGja_Q_LM41bbC5p7crampuPnJ-XjChh38ICpdik1oFwqcUxSNAbBVNNUcHKeQsjLo3c4I7CW3YAi7MlPKW3Gf_sPScpI7whdQF9PSASgZaYwm6miaUIy_QQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHvT5rRINCAA4Xtb9P5fCyxP0y9HGyOPhz51ANhIymwHJd3kcmnqxZQSuaSiEEIVfNpqdi_YB-knCSEypTrewwwNdyMI6DPARzR2VkjmXEhCIjJoRLyIlWvXXDZuma3l0UX6d1Nwtf9TXS1nvX-C3tLml-qlKjsotzs9o90Ecu2cIuNMv1wuXpJvg5xW1GzDl872bb_mHuHgub9kQOdm6CcEtR7aRp_yCH9fqF3FBPk6mIsk-Kc3yJR5iIo2yqgKl0OaLZVe7Ifo2nrGtR0t9lVB7CX3SUNG4ft2wG8GUbgC0W0wm-LBkhOqhdAyHeSOcQ1kKkVhHjRDdT2jsOgnXZqYg4QLpA_xotkkYLBUnXv18w79J1fuc2SVaAnEWbI5nYRMTEUVlbAMWJa7E4Yot0AGrqstAljYshFMG2pcEhPJTkTrI-7bVQV_Lui5PGA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Chennai Express', 'Canton', 'chennai-express-canton', 'South Indian', 'Both', '$$', 'South Indian, Tamil Nadu style', 'South Indian, Tamil Nadu style', '{"South Indian"}', '{}', '1440 S Sheldon Rd, Plymouth, MI 48170, USA', '(734) 927-4620', 'http://www.thechennaiexpress.com/', 4.7, 771, 'Monday: 11:30 AM – 3:00 PM, 4:30 – 9:00 PM | Tuesday: 11:30 AM – 3:00 PM, 4:30 – 9:00 PM | Wednesday: Closed | Thursday: 11:30 AM – 3:00 PM, 4:30 – 9:00 PM | Friday: 11:30 AM – 3:00 PM, 4:30 – 9:00 PM | Saturday: 11:30 AM – 3:00 PM, 4:30 – 9:00 PM | Sunday: 11:30 AM – 3:00 PM, 4:30 – 9:00 PM', 'ChIJR6YxsXNTO4gR32p7JXIBcAw', 42.3593704, -83.4802191, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEESOtED5du_T3453zXvCoLfybYiyD1buvz8NgkkZCDtZkNCA0s4-RcFqkHcogxl4qNodTzbSPwE_bwr1kMy7rPQt1G2zck5oUApX__uMJig2yMkGTXxfbLWS4OhkUc4lVC5STbk2ikur9qCQS1TwEQD_N0KSfmKbLziCKno4RqS-vqr80hJgEQy8MQvvIXnJYVeO_tPPg9mrPg1PPYlCZaf-_97Ap52iIqJMnd9qkN-sX2ptRpMEq_DOb88nSp_Ohsp4s48Kg3ul3TMHbvKdYDTBnJwkRUi59cgEd8oGNINig&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGkyIpXWr4jMOc3p5q5sNTKnRR1fdZRjxdNmBx-yl3H5W9k8p8TN06MSv_tzOW7Nd1MyufIVskN7pBvEkpR847dNLRecPE4CzBsXjky1yIJ8bGe6LfHQcCQmLpvPebmKD_tihpqk8rW4TzYlwWz4Zq43IFRNx2xroxwyb2ra1eJfnNqcKd66IRR5RR5q23JOHzE6A561Z-a8ShgGyz5u9DjtgaaVgsd7l12pkeK9stWY9BkWMSGbYh7nH56tlaD1rkHJ2v7V6oRUWws_rvls_K4hwzbPSvL_hKuVroi_Vq8bw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG3mdeXuJKWODArMdQ4Rhg3ei2R2XmtuJDY0WE3n6CWoinJjwC2V5Vg6wBNwQe0dNPM9Bfwujnyy0G6GAVPZWT4xSXehDL3QujGYZVd_FmmC1LQUbv9d-z9DB9otosMel6dLFoKYo-s6Nczhw13OupTSW9DWo-1zD21k9IINCN6gU7o5BVeuHHCDKZ-rIHjXcKl9IiA11t5G2okl-K425XxFQeaa6vfDYI_iOPXni6gQTK9-dYzGDC8zJaV02ElBKGskLj4uUI8IDtZkduNdwi-VoYHBuEcAE5TZrPD9wB1EdwxKacumgQA_f19PTUh3A4yZsuosFnpQ7cKpHctFLk_-XmnfDzyBiDpNXmSeyVwqVF9-35_AQLfmdYp2wsj0YJkQOMRVYlW7uimUnVcWMU62cPT__l7_8Oftr8eJEnucG6eh6QCISMYp6vMSQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Kumkum Indian Vegetarian', 'Canton', 'kumkum-indian-vegetarian-canton', 'Pan-Indian', 'Veg', '$', 'Vegetarian Indian street food', 'Vegetarian Indian street food', '{"Pan-Indian"}', '{}', '36520 Ford Rd, Westland, MI 48185, USA', '(912) 571-0725', 'https://kumkumcatering.com/', 4.7, 62, 'Monday: Closed | Tuesday: 11:00 AM – 7:00 PM | Wednesday: 11:00 AM – 7:00 PM | Thursday: 11:00 AM – 7:00 PM | Friday: 11:00 AM – 9:00 PM | Saturday: 11:00 AM – 9:00 PM | Sunday: 11:00 AM – 8:00 PM', 'ChIJ08cyIkhNO4gRDq2-n55AWPs', 42.3258905, -83.40120069999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEsEKq-nh0xFf0i0bbefUWkPJq_6Ou_L8ZI1eO3BekUJg0GtJ7bI1si2546yAXLSIp_N39WyzBEKEsle7ypeKWwh_ZEI3vPrVORB1LHVgiyRXByIAvWCOC_1htKuHt48zyWFlv6vIXdIG9WuIJCD3cmWu9HDaNbtxMfFFlAktAyOQXsEHKvQgKoyK-4B1hjjKw9llSPd77bI81LW8U9zwK9u8xOsFEfYR1q17OOy-jcINLy-xSZaXH5uerkdaKNnVZMjvJPYcOQHPdEhmwYLvV9qm7cSWNjHDW1t83U2kVaZA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEYTRoFiHS5TYEiOqmFpkiHLVAr5NRSZAP8j_POwuZXQ6zt25SbXwFoU_31zMGwY7SsP-134HBMKknt4sSfvZb-qq2eDQvEmnv8Whz5Jx_sF5aHSRzeJlzMXX3ECFFkEMoXyY6JZ9vp19wxI3o4-LeEa4RCA4CzHHBNwdUbx095HxpO36c2WW84QXhSauf_RcFLmvoDm0Y4icg5m0xuwimBtvoLb0akOIE3fFXx0QGnnYhHDOZXIkFLowlX22b_ewroY2xupmWx6oqwe65UBDtncvQoUy9ntkjEnUFH4Uf8wA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHFPSbMQtpUwLsvUV-VEStaepSRyZNaepxnzQw6kN6glwb5bJKQA1wWTcbOPKOe0x5CHqWi1lie7L7gF4p7-JHkk3PPfpItYixbVuLenAGAj98d3TB1eWXOnJkJR-2pW7-sO9NJKIJrhDwlVf6170cUIlfCN5Ugavdk_T7QOnmE-PklOV_ylfdnZREGcq77s64bejnuns3esMtvCC4Jxq8HPUFZvEP37hF3ssOKOYOpDAG0wX-7xMpLFo0jr_JyDDpnNqEJctrmPClK-ZOZzdcKDxjf7aA6TVtsE150Ji59pg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Honest Restaurant Canton', 'Canton', 'honest-restaurant-canton-canton', 'Gujarati, Chaat/Street Food', 'Veg', '$', 'Same as Troy Honest - street food, chaat, dosas', 'Same as Troy Honest - street food, chaat, dosas', '{"Gujarati","Chaat","Street Food"}', '{}', '7664 N Canton Center Rd, Canton Township, MI 48187, USA', '(734) 892-5956', 'https://honestcantonmi.com/', 4.7, 449, 'Monday: 11:00 AM – 9:30 PM | Tuesday: 11:00 AM – 9:30 PM | Wednesday: 11:00 AM – 9:30 PM | Thursday: 11:00 AM – 9:30 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 9:30 PM', 'ChIJy4zD41ZTO4gR0SmHYjzu7gI', 42.3414874, -83.4879271, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEUCsdFGCilOLFKuVrSQGANJPkk1Dd0lA790qSL7vJenifGzov3ikp6C7zyGtf4g-Q_1rwiqtd29VxHskuOyhT-8Hlozth1I6ZBmOLrRtA2HJ0GeuiSxCEOSqY5We_baX8uTyKFtZmq75crAqmwIKNSCXh7Jo-S-EOMvLVR_vELv3lbPRnbRgaaKv9mGkW9hmwrD1nOQCZzB0Jck-b8eB6hSoCON9kUEzBSbj58dSfuI9QT1tovflgFSrW0oUIUHWvmwEgJwL299qPnWi1BhDWdFwsRX4h3PzDbVlGzIVqEzOBy9Ig-XHBYzn9XlcvAPoWW7nE6Mr50F4KKH_v1iypTzUUG8dTUBFANTcihoPJ6uJaiY1cbN_PbF0mFWfvdg0fUGuA96wb4e9c8Hev65c--BbFVIgmxPPg7ylgF6eGfBYaLL5DUvVqPtaZ8Btnc&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGRp-uup9Ci9ajieNkaFXBXp3d8IRICDAGS17OgDYu2K102OgQpCnAeKKeodtp8BleatGGhKX7RCtjMf64UIFc-UdB-JbDlcYi2BMJfyZj25pYdKNVeJs_Loft82jfabdQO6_66rF0WZG5hYt7r5tHPl-V50FixbZcfcyTRZ2m1EKw1LNUGwlu21Yid_GWucfJAOV9QDtqdWIHHChV5dVEg2DfbH8XH91OiKwmWIEnm6XmPpZCqoAKvG2weEQ1Aoub3sdeq4D8XW7zQK0-GWPJetgonsOEk1tyQ0K-LTOyaCQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGTs1vk7nnU836gnt3zXoN-eoozikWEohFdrwbZ0xK1ieeSas8Wo-WTz1rpTZ2Yedq2hNYPB6QET7coDhY9ZowowHCvw3EgfEK5NyR105H-OOIoICrDMzc9qmKYL9pCy3NrIQ-p6wsFpgmKC1ppvPkmoCSy1X-hrkUSnIBdPhwgLPbzKOue9IdM5l3QjOogTOyD-6HAcGNOGiXCjABG-6R8H_jPtu4UkdFfm8tQwIadzcWLFlHI6jM7yqG7TgidYlH3lhBJIFHMCRCUavFFP5OctBDT1oD4XLv2RoRBTRevaQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('BarBQ Nite', 'Canton', 'barbq-nite-canton', 'Pakistani', 'Both', '$$', 'Goat chops, spring rolls, chicken patties, BBQ', 'Goat chops, spring rolls, chicken patties, BBQ', '{"Pakistani"}', '{}', '40339 Michigan Ave, Canton Township, MI 48188, USA', '(313) 500-9760', 'http://www.barbqnite.com/', 4.3, 534, 'Monday: 11:30 AM – 9:00 PM | Tuesday: 11:30 AM – 9:00 PM | Wednesday: Closed | Thursday: 11:30 AM – 9:00 PM | Friday: 11:30 AM – 9:00 PM | Saturday: 11:30 AM – 9:30 PM | Sunday: 11:30 AM – 9:30 PM', 'ChIJv51jaQBRO4gRyrno1v-OcxY', 42.2790519, -83.4360193, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG_yS4LvGd_nzS3e9DQmU-Gerk07_4SDdWfoT5H2mejJ50Hr_LJcEZGaZURtK8EkOQIaWVRRaevhIpjBYeqEfgAPiExEdUCFYZDDWZbyqe5AiRtFqgH69EHWVpKwXk7DeZF79befr6Yu-Tc_55vffyS3P4QK_UaPuiOlpKkAASpepvfWJVSqPtqk40oFchmmVK2JujIugOXezlky_OHujApyM5WfwuXPgbzxYG64q_bygTOwqF8qRx7nix6mReKiEAkW_gA7yG6VAVaz1fc_g3w7kF1P5MKv9hhuBVcZJOhRg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFR4Mw0ZCGTdmwXIFll4ASl1JL9I98iBasd_HQlAQYiGb4P2HnaFg-4VNosdZHsAtoVCw2gcOU-fxfQHinzMKwLBqwhXHFoDa5snqULWjJMKdJY1oB4kIkRAptVi09CwyXbrMVmfQcYAT87UvPLnwFMZfUA5Cj-MT3xUYyFlK2AoFJtm_Eu5FF2BFpbqULWjTUPQBGENWiARSAKwTUKej9_DCJN0ZOYjQ0b_783bUVgl8N-LFLjpgafEQkb9fU1Ehh2AU3cveQDdSEVE2baFIO8EmXJcTG05NPOdwUPh7LQnhWBvGl2FA6f7xItRFEoGbBcgw4wdYb8Z7kkdFztvAoHaYzzGRhWB5RV-urrx5m6h8TyqY-So_dLuMDN1XlGgM5IDgHUxHgVx_p5RSOnb-XCEbWj6t05TW87Zi1paY8IUHOl0Z6Nj5IBsydSxiZv&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFYC2OJwj8k6dkAmG7CpeUMBuvwsmprU-kyvk_PEuJwiRupO6YZWYgm1ssZgTrlsg2ZzVJOX7w6CjkEmLIUhX3mUyCkDwJxmqqnwVKgpSOf_TqctWRZf0kkkkTCNrD9h5jdPnPER4DT2W1UvAC9Lkg2GPc-smE2fyGwdhgUVR1UPRCL25aL6oAFGbt5d1L-UBwZo01ryQiJ_JY_ZrRK94VbeqeWpdpX78S97W-ZtgksB2BriXUrMNLVqu6iyktfdpldhM72KEZqNIduv2kqOnKLtu_IqHuorVc169OUbQwB6A&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Pizzawala''s', 'Canton', 'pizzawalas-canton', 'Indo-Chinese, Fusion', 'Both', '$', 'Indian pizza, fusion', 'Indian pizza, fusion', '{"Indo-Chinese","Fusion"}', '{}', '45490 Ford Rd, Canton, MI 48187, USA', '(734) 354-8700', 'https://pizzawalas.com/?utm_source=gmb_listing&utm_medium=gmb_listing&utm_campaign=gmb-canton', 4.4, 1343, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 9:00 PM', 'ChIJn938M5lTO4gRviAtOnXAPDc', 42.3225405, -83.4888776, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFRYO8tEIcgLaO80OvWgbID5fjm2mGoUXBgcqNgQlYAlEcRXkBTu7UB0i5KavNxyuybqUaxZke7xSqWPGJ7noAHAMeBY_UaDM9PeiZ1AGQD8wEmFjRadwe4mzLwuqUplLH0p-aAArDPya5g2hDQp6Yax7JF92ywQNDte1xxLluMr4IUHH-RxFGypl2hehAcd2bupHN6UX94VVMZYWQpWgiK9VLKQGvtz9gPRkZjQdG3CWGWkJGFscP-z6eVEIOh7Yd0Iqpv9-_Zpcv1r-ZNcCnnoP8iRGW1rKf5hddMy3xbSguLXYj-wksoQ8freyJ4taINIooijfkWAOdV_v9DqkpV-wJN0rtDYMN46L6oWfWAEM876rzOAsHU3oEMXga6Orb8RQ2jPgE6PMx7X_KEi0hNMCNo-S-Dtc8vU1xpQoJ0sexD&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFFNyneRTW2Bn_4TXQFg9QACpSxEoYhol5IcNjV34GUkWLvWGNXuE4RfzWHP8kIkJ1evnPvbTNnkHE8EJA5YhEgxfUqYQqnUjxi5-kQcu2wOVD38sk_fy0M4ih2DUdCy_DTr9n5ELNsh4DdLxiJ6-TiCiawo21gqhhlt0zWVHRbJXbMe-dpLaFUkWpHzY_KerXJ1FSiafwTyQj1s-z8NXP7k3L7lXnSeZIeDnfl_XIjgIpSPwYR66CSHUtrVJL1aP06NTj8KUC5ZF1vFi3HFWyysVaA3CTn7bGUkNitoL6Fyg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG9-BTXVwDKRd09zGrcgAKdRDGITxnBbZN81_U6Ftwloe9U5HCHirM5Bmh61QJuup-t-GLhv6WusdQZRszIUkMDMAK--fMKyUKgyKQ-Xb6kgB20pkd-0vIhJK7D-D84Fw15ZpewCLIWdNISxXg6_pPtoaWwFoZDgq7hH7bzz6pmiYh4PLr8JoH-rv87-tfSdqB2qXW593sqFJ3yK4KWwOPpwpG6WWfPDPtJWXGo20jWcWTZMhXPsAFBZ38CC8_vwy1-FrJBAkHEg1aZOpNeoRu0yhdSsKDW2mOcb8Q-quV75A&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Punjab Indian Cuisine', 'Livonia', 'punjab-indian-cuisine-livonia', 'North Indian, Punjabi', 'Both', '$$', 'Catering, buffet, patio dining, Punjabi', 'Catering, buffet, patio dining, Punjabi', '{"North Indian","Punjabi"}', '{}', '36071 Plymouth Rd, Livonia, MI 48150, USA', '(248) 622-5489', 'https://punjabcuisinemi.com/', 4.5, 1570, 'Monday: Closed | Tuesday: 11:00 AM – 10:00 PM | Wednesday: 11:00 AM – 10:00 PM | Thursday: 11:00 AM – 10:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 10:00 PM', 'ChIJU-IGkgOzJIgRAo8kyZngfek', 42.3672386, -83.39870739999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEImWLPbs_ht3NWIHNmOhIyoR9tiForMVzUAVcngkWWS6GBfnc9fYlbPUHEnozG17Y_EeE6SX5BbfgTlYSs_VLLrOW_kYsUDn-kzjsHVR_ZDKVDJYAnOltvItzYG1PbRE-gBt4mSCoBEqwSYrSZq4sJycWC3BUAlG6SLFcuqVnZUFwQF-vceEfB19ULNFdumT8ryhaT5xTo_V4W6HNHcpLnlr2y0idXjKBI1yprNsc4vwpkll-2U0yD7fJmVswYVtv-4_WgzQq3pqZEBxgdQyc8703J7crSoHqiqJc0bU6DyA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH23AaNWkaOE7ysukgVnH4BpW1dD8MYLVwUyVWazgScMbfup-JATcXGnEVql1ZIz8kzhjCCDwBf5V7SSxJuDj0jpGjWiHUwCZ2HJgp9Qq5Zuy7XT1e5GRnVSghPDo0qz6iB1JW6oAuJV1mV8PzrZGgFlcSFhGWBulFnBw1qglliWioQwP8zyGYCyr_17TLtfK9_sItIiFQpSZ79amhdyHEs9iLwfJXn3xYn9alSNFK1zm3iNK5RI-leQjTU9ZUNqJRlixid_dahGs_StGfVjsGZjs5hL8Yr_5jDOzYEt9mnzA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHFwMrd6FjtYRMwYtKvY8AASApZFyl7y-QqnhzRL9nKQHJt6IikxVcH3vqb15eEDPoXVhcU_8gYaiVNis7YmVp37sHKKOmpcXg_-V0x3nQn_nWTJMX3Zva4Qvb_zFWmTFZ41NFp3EYdW0QRjM--7yLciuLGGTytSc3Yjnm0RKAuZcIsH_SEn6WCzVNHt_eJRcPHHPF3H4t_Zt-nRx3UYWoJi0wmakZ0QYVq0jMy0yOHObjKVQOtMOiJpfjdf2TWbA6qH7Td7XClhOunShWQKSmPSUt9QYrtxaWipnUCYv2KbYFZZVjFnctpMKRL23_fDdiyarjHcOobtLuL7arIJHWEE4qM6cxB1iIjiBPeZHY2YBaOlRQxUU1JSbqwLGe1LxeugZTQhXqOGBw9Y2gbSfHeBgl4eH-MGNW1OfdNuUzH01z45PErFBUWZdJb-xn0&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Raj Palace Indian Cuisine', 'Livonia', 'raj-palace-indian-cuisine-livonia', 'North Indian, Punjabi', 'Both', '$$', 'Northern Indian Punjabi, since 2015', 'Northern Indian Punjabi, since 2015', '{"North Indian","Punjabi"}', '{}', '37116 Six Mile Rd, Livonia, MI 48152, USA', '(734) 462-1111', 'https://rajpalacemi.com/?utm_source=google', 4.2, 1139, 'Monday: 11:00 AM – 9:30 PM | Tuesday: 11:00 AM – 9:30 PM | Wednesday: 11:00 AM – 9:30 PM | Thursday: 11:00 AM – 9:30 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 12:00 – 9:30 PM', 'ChIJjfjp_m-yJIgRpgVW9Wz31Bk', 42.4116607, -83.4107894, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGTAkISZ5Rc15f-CEHEEv2JULKrrut3y295gTMMmiFPFqdvX41VVF0MNMDt79l58LcSQ061kEInUt6DwZSYhW-1ugIX8M9eGIzg7oLuOuyFYXgJTfRM4GCAXh-i7WpxSqbr1wg6-Hyabi0miS8FE9v5PbuZAKIjclUMt6OUmq7AzUACty37dc08wl-_sdDTf6noP80ypNByBIICgRjrBhlNidwrVMXmnZG1DkSDoTg1rfiMbtzi8seVFb6UQKDiTeTSyMee6WTUPABzs5hJO6d2C0cJBQGXYgU2_lv7YjVcuOw4E4iLulNolK2_S7mP3BrtDhzoRWEOyu1_UGuCGIWECmexHHZAjTkj2kq7M07dvbwbvkwIXUaPx9oG8-gRpQjsd9_8ahLzoG3gTT5jjvVkb9RxDuPdArm8xPWfgyk&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH4QDWRsow-x74FHCIY7I_dK6d_XQdjEQnyE6Qrn0zAGECKwhRG7jtQHozkeIoSECL6iuSFRYlonu5UB_QWTtICkHouPbGimixpDm-EQzH0Kv5GXQ0mD7RHQbNHJ8UmtAidI3vZi8q7fA__aWv-Z6zR-Ee4fgocnL7PVwC3SDRKo5pvbqm1AZmQw0oiPckbfrqEUgmKfyWwVzCDNupKg4uzrpY_8K_BttMq6aQwATYqq5612zn2Dzo-c7b57kjr4Mk7zUtlHKZA1JlLYG1JsJJKsYBDU232ZgHHKp19l4EdVg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHLGtScealABQYPOatTNWO2sj1ac3XPcQ8AY9xXrYJ-GNo3_ppPdySNHdOTmO4BYNFyt46l0w4emqbcIXUCssVMkzTfnCnAdfgjqmhs32c7S6ic2J3ZCbTIQF-8VEBSGsSsLcffK5Zivn_5Fy26U6hz2hNh5MJ2wqpBAVIZ1myUIl0yeWxlcOpZyF4ZP2crfgKKHLxub2HJTgQBrrrj_SiaKnWaBf4wydPfMjoXg2CchHg4we94oTVlJq4lKsRaV9rXVjMNVl2E6cMaiSbv_rAXXHNv8JZiRWdvqJgclKnxYA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Deccan Bawarchi', 'Livonia', 'deccan-bawarchi-livonia', 'Hyderabadi/Biryani, South Indian', 'Both', '$$', 'Hyderabadi biryani, South Indian', 'Hyderabadi biryani, South Indian', '{"Hyderabadi","Biryani","South Indian"}', '{}', '17933 Haggerty Rd, Northville Township, MI 48168, USA', '(248) 985-7209', 'https://deccanbawarchi.com/?utm_source=google', 4.4, 1975, 'Monday: Closed | Tuesday: 11:30 AM – 11:00 PM | Wednesday: 11:30 AM – 11:00 PM | Thursday: 11:30 AM – 11:00 PM | Friday: 11:30 AM – 11:00 PM | Saturday: 11:30 AM – 11:00 PM | Sunday: 11:30 AM – 11:00 PM', 'ChIJe4lP5LmtJIgR5puN0YQBADI', 42.4157749, -83.4345663, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGJaYbi-i8DC0Z1ejLCvdvZ6MUBrPIVxad1A_n7omYO4M7lzfAGOVt2tUcHpj8z35c3MNS1whYDoynxSxMatezMV5Z0Io_htfvI-jnyh70dJ3vd9bgKRpU57_gFs-Vx716XpI2iurO5D9_5jdDzB65D6__1MU-Ifw3Hh5Uk28uInqUmy1A5e66GdLQtN63xMxz7ZQRG8Hy5WTEo6f9wdfaZoMInJkDgwXkxCYwUuKoqmt6LBOgdxJy8DI79NDvqcQazlALfvgrfA8_9Q4AiMD3lK0yuk_GySD8qQbPDgwIDAg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFLVp3ITkU0gOCG6HuE7vHDgSjQi2fmrNjIjutyHZs6Le-NBqZem_-bar9tqQQoz63IGoJFk-7Xgqt6uHJYBpDXApU41i1n2NsEIreuTp0vR6XjDKolW3_Q0jh9E9tCGsNOeKzUcAR6l9-5rpVd4xzYi_sqYGSIpGJEv8DveSzYmTpTIajLoLEfVLexnmlF1PUH6CykaIVx3xwrLqBZC0Lw7yHWmplTliA8pDALfbn5BgJWKKfVHp-GI7BhnT_xG5cY6iuS_vangvlzj3kzuK9U8jgEDEIinM7wYR0TFV8JYw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHGqhJu-OCGIDOlNY0Ypg8HUUBnZEHXAnv32mxvxTzW2kaKgf7JBKhwH2MWGPeHeuTmJ2umcjxiZPFLAYubA1SBv6G_ZEGsS0QLKk-bbwGqanht27r1KFzMa37q-pZhU085dUTRrAQWdhoIpi3rYqQXghrIGhC8Q53K82mLStzCVeBSalxBmdbZIw0W8JemEyxNdO4hCuQzdirVEguSFTO-MqOwDrgHXF0hirjst6ERXOD7tNoi1MBmBuuvosJaoOQowaE6l1uZa6YWMLsukbeVTCvBfGjcpXStgGvaoK3Ggw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Madhur''s Royal South Indian Cuisine', 'Livonia', 'madhurs-royal-south-indian-cuisine-livonia', 'South Indian', 'Both', '$$', 'South Indian specialties', 'South Indian specialties', '{"South Indian"}', '{}', '24234 Orchard Lake Rd, Farmington Hills, MI 48336, USA', '(201) 565-7339', 'http://www.madhursroyal.com/', 4.2, 176, NULL, 'ChIJ5-x1egCxJIgRlabaAp7TeQk', 42.471029, -83.35675979999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEbzxQIou3a69Q-95B7VqnNr1D5YxbdSCmoWrEXerBiimltO5-N0n8X2WmVx7gvkxemiHScYPPW_l5ywF8r5qXoK2my5JCGsmzuv5FkaQ4o57YWvTKASgfsW-LTeNQk63OOeLDbtTq_BbCk_ADOVEPH9q-y-7A7HyYn1N9n85mIqHGvSayflDdmzThXNgtP31yVL_VlNf37xyqPysIkqg9gIPCtunbEqG-fsOyBij0DPCFnvnqac4BUuTXkvAqmRxJ_YQSu6qeFhJE4FtykreBV9FD7-gwad8rHa1GipA_stw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFy64jSdmFsVPJuN5saSet6ZmvwWsvUX-UNSChv0BtAi_o5kDL3Z0IhLFlstQ51zCvpBaS64-Ef89esqTnXgNIBZXDs8yQhkNb_hiQFeOuPiVPZ8Q4SD6gM51djfneip7v6LAGTcIx2fou5uoNbRbWmN0_h_ga0PdYOhm__ya0SQZqjv260BpkKX25byHHy_wy9XAD47fYbhiTCcJuCdhARjArM1AB9FCIeI43FHurZOtLNv3eMStO3YTOOKL6z7YyzHav5tRu4bhGIiGLvAIi9FE0d0EquzdtSSwpY2KcNBA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEErl2Hl7flEBS63gIweWekSaf5fHCTjhG_NrryA_D6tTxsVepXvW9sK6i9VgUZddX0w-JoqgRajv-CtpsVDTGH2yX1QG9o6U8iorsVcL-sEJDYukKmJHBIJNrZUmU-F5NtH8xjAv3buz4yl36vkz9LRctO-AEvyApJUbvRUs1KnyViXjyOBHG_9zn9_DH03_PqRBiYit_aziMwRPuNLZDqH7QDskoZoLBocQbIN6Zn_e0iHA0hWTbKTbdeLqdL9JU_vWR0PRRjJm3J2XMHe4YP6WMl_LrZm9CFnPG3NyI2iNQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Aahar Indian Cuisine', 'Livonia', 'aahar-indian-cuisine-livonia', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '35564 Grand River Ave, Farmington Hills, MI 48335, USA', '(248) 473-4500', 'http://www.miaahar.com/', 4.1, 2099, 'Monday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Tuesday: Closed | Wednesday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 11:30 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 12:00 – 3:00 PM, 5:00 – 10:00 PM | Sunday: 12:00 – 3:00 PM, 5:00 – 10:00 PM', 'ChIJdXXJe7exJIgRitP0fgXDgeI', 42.4700723, -83.3978035, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHQ3qe4ppV9vYHw-sE1diJpJ09W3iVoKS2Wd-0Phrbr1heboJ51ZeDtlK1X4Oa1_yAAtCt-D-oNuJwTvoMXXrktDMDmS1ZnfK6bJQrptfRRT8-Vtr3RX0RKRoskdujYr2YUipA-pFS_iEimuvcemtNlm9UKdCEaoiFjYd4sAl-zgs24BMcm0SrUFxVFlE0-L5wXBRVAPSNzf-6Z-JAaqdxXtS4rhEd_LGLcBfNgmu-fX7LbS7QTtzcaYsEZ-DysijxZzoy322XDrjXIBsydQZgqhPfrfS_oS1CH3cza-S7bSlqgwZgDGB-Uywt_yQ_6GUfWvN3oehOAlHWEfhK2pxK-K8TC5Mn2Cd_76hPkzW8ANXIuPQnET2LBfu2-v6FJzrnXHBgDIEdULaVKBrjt3Xh5x703qGFE6ZqzASqoYp8OLxpx&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGHYrhv1MKIHkLZPjyCK-6RQo2QJIh7GqqOsjvoZqJkjaTr2NqGjlRG7AxJki6GxXm9dCWHPBnYL5o5S9wvziHVAAFmS5ROYbOQLXvN35VVNClGL-0kr4rQiGBnZD80xXAsJuamWsF7pDixxt5Y5RhYZmtqp8j4o5Iih4YFv3kXQSAsMHn2TfrZ6kd73w8CRG0kIk1O8QWb5pEm5LyMMGEvOC-j7TAFKFcZWaoCZkM45j4Uqc2Ys50FIVkSQnILm4h1nEWHHmfQxjKtSA1XELMe2XxLPcvn0gFCWHZcb6u6LTeIDNNt6cOJWIASsWMgpN8_lhsCxqFGOUTWvSbxctuAEDFYvGqjW5bjmbCaC9n9p7a1tDxtGuM7LZLWJ0GnSyf7HQNXzPNY9ED75lK7mRqLhgnHX6PBDu7NxGJNm3OUzAcOKlpkuZELoFrDivuA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEH_QMWuWUFKikASgrRf53KF86J7GacYL3QqrT9bWfSI5rjCg6RqENFBvJzfEQM_v0oDX4huh5Ihtsw7QLWF00gfjBk5_-Dx8WNkLFbjMXRdv4lv7nTYPvYBBX0xc0FQ3gQ95Ia7pm7bkDk3tbSZ_FeGCPkziVnN_DD5FmKGJzA6S06g8jsosQ5yrzaptiWFCrCWwUBXCW1y6AEDyTzoDmlwSZXIq2LgcdgUzR7tdk1DBmiHhX6S5-yw_2Ez5x0i4ft0l9_HFi0200T2RbVWJnZ51a2VTLs70tiv-Qb4MP7rfq_v-0CJHOqpbdfX9olOinVenUJfH82hj4UY_M_eTa9FVbmk8kymRVy9JPbcBbU80aHclWUIIcJmJea60z7ZNj2oFG7uyb_LbZRDvMa10llDqE7yWLSr1cyQFjH8QeVuw2ZlMJAK04e4qxcuJlv&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Pista House', 'Livonia', 'pista-house-livonia', 'Hyderabadi/Biryani', 'Both', '$$', 'Biryani, kebabs, Hyderabadi', 'Biryani, kebabs, Hyderabadi', '{"Hyderabadi","Biryani"}', '{}', '17933 Haggerty Rd, Northville Township, MI 48168, USA', '(919) 665-1888', 'https://deccanbawarchi.com/', 2.7, 23, 'Monday: 11:30 AM – 1:00 AM | Tuesday: 11:30 AM – 1:00 AM | Wednesday: 11:30 AM – 1:00 AM | Thursday: 11:30 AM – 1:00 AM | Friday: 11:30 AM – 1:00 AM | Saturday: 11:30 AM – 1:00 AM | Sunday: 11:30 AM – 1:00 AM', 'ChIJ4TOANWutJIgRvazxxJjRQRE', 42.4157749, -83.4345663, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEaHMkIVDpGiWIdKLJxMy1IV2ntxqlkINO4xs_8yzl04lqVA8WkSE4hLvfWpqcdnX9pgQkPEtxz65pnLDVouRUoXC8wiq6vMJlOLskpLnS9AYxy3xBI1y0L30dN_B-7guAeODbVFTjGik3H-YMP6xFbF1pd6z6cvk9r042GtMBLZMUIlHwuMgzQ4tcuzazaoK5hmdrxmhNqwgR5mYAsjHPUnFIYYq3phnWEpAl5ecO3Pt3nh5K1VklNqmoC6_iwAQxNu9bZV3Cra6XIwOU-j9GfMtUG2KK51YqOunR449Ma-A&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF7XGgsf3HUxsA0Qwa5Ta7lbStPRNWNcVmQn4TudIlNJWGztGDisiFaKZZJJr-n86VFPdKJBxKMhwUIfe1RcfhaiAiBDXIlk2P_z_SyhP0sXOrJFt9ignOJ82Snni9uMwS1WgFvkFXkQ_fEtN8JOrIr1Zv11CzUk9cehzGFvsNF8YfXDw7_xdAROiAA5z1cIdKCti_QwfLILo_jWtoV1R812A5k-rW9oY9Q6aQ-_68Zbr_M4qQMsivVj8LeEndPMJuYPp0L2w4Mmy4qxrGjefFCrAX5ZPA6tfI53XMW4HvTnZllBOpd4t8_CDBcrNWYx86oytxJoKmNj4wI8qkOpyqyyV43qBIa8Ru6-KBJ1mLtvpMtZiLu42IvGQJkD9roNO3VVw_6KYU75itBBZp4akzSF_C8gcDJbrFRB68SBG8iW8zc&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHNg-mTZocJ2NREB8S3ItiQwrwdobPvbq3a51XyY2ut0UCNXCNZnf8Vqyy3DrLfl9Qlq4E5nP9yYPbK4NAMBWkMqj88j7AbnjrqRjHsBFI8ZSm_GIAt_lcdKDC7_T5SAXzkFJqORPVQQNvEVbD0iZzK_VEquTJzmXUKkoWub04Oras3C82Al4jOm-G56V7SiclvYhF3kBvimyVovkYluIgUnkTkxLWuYtuENVm6Ya_GZLcpieV4Ts-aXhXTKlj3rnTfznp1_TtEAg0e5XTht2nSy1ZzrWC2tP2h4e2Ehh6Qcw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Athidhi Indian Cuisine', 'Northville', 'athidhi-indian-cuisine-northville', 'Pan-Indian', 'Both', '$$', 'Egg biryani, diverse menu', 'Egg biryani, diverse menu', '{"Pan-Indian"}', '{}', '16923 Ridge Rd, Northville, MI 48168, USA', '(248) 773-7259', 'http://athidhimi.com/', 4.1, 152, 'Monday: Closed | Tuesday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Wednesday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Thursday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Friday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Saturday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM', 'ChIJbSzjy2OrJIgRNGAg3aEnGag', 42.40604159999999, -83.53131069999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGMyZG2nurj16zHclAxiVR1-iY2xW3lGq4V46pTuQoucz84POM-WKHdX7Rai3XN8660qCChch-KfYz8dMpYA-899bw4dJqHXgBLhzp5OBcvSsR0k2baQNlAGuyhwD4AEJPJe6xnvuceEs9lekUBJib_5EqRhbdDFhDGOB-kjfMvjl1SD9ZnpyrBsydbpNU4yA9nDwNTGHLqWOnuOPprxGCa0uEex3sri3Th6a-AwxsctzulnqFK6EVxb9LwOAiTpBvNdS4v_P5qUid1xtpLbaxGA4BYCtu8egIJi1j-4g1w2g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEaw9Q6I7lQgQRfDBQTy-TRFa5q5sc2oFqKf5nfLeJPSRcAzPzMmJFXxQ6VlACaacSwUaWv2TEogcJ5z3Ghktov4noRwFe1EJjckUh4nUgZVLoG7RI-JU-umeRyeiPExL02jQgCYeROeZlX-c5y0eQ6S9FchpxprtyAGcpXNjf_xGouNcrEfStk-ALyq8wh7QF-lUzYQL1eQSQmJ9Orawa5Q0eDVEwrRuXfErAfou7x56x0t8u2VfnxIwYaXzZed2bZKTN-e6ATbIxfGoPhjTNREGy1qIAgRCjGtGpvgg_d-Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFoceahUXMUGrDZhi0LF3MN-LJFlsUZkKts690SBOrtV-iatn9zWQ6cmcTaXCvBaUPC-fVbyL8RpRIK9nsMjpdF_iVssWT1qByedG8HeBCHIqOhWTfyq4FhIlkUmE-tmtljX43JI3c2AAuICy0_oPOnKqhsV-krbnWGT1E6zEfyyKbd7reJY6k909aMhCnPWGc5VqcdKuzZvhfW10uTc05b_RTFyHl2oA_XU7ZmPmeel_4XjwAQ2py87wN0_8Teu5zYNcr6hlXv9OWUVqG1vtsBfHKpmcb5ejmV_IFevVrmdLrNZ7uMKJdpmleE-kJ9LlM8hH1FY69x3ABwIyXK0Ylptz0s65JSaPw4DBDP5HMo2EbZQsji9SPpT0UdEutzI7f0mKEu0n9E04aqdmaSsvqNueBZ7Qt3z8um_UJrAEEwQg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Basil Indian Bistro', 'Northville', 'basil-indian-bistro-northville', 'Pan-Indian', 'Both', '$$', 'Indian bistro', 'Indian bistro', '{"Pan-Indian"}', '{}', '32621 Northwestern Hwy, Farmington Hills, MI 48334, USA', '(248) 562-7179', 'https://basilindianbistro.com/', 4.4, 201, 'Monday: Closed | Tuesday: Closed | Wednesday: 5:00 – 10:00 PM | Thursday: 5:00 – 10:00 PM | Friday: 5:00 – 10:00 PM | Saturday: 5:00 – 10:00 PM | Sunday: 5:00 – 10:00 PM', 'ChIJzQmtViG7JIgRd5nfTqwfn0s', 42.5248218, -83.3534337, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHtU07pz5aVN4pqBgXzQnLcRbiXEtl4UDphgroNhxoT27Of08osSF1s42hIjGgdez4NLnokyvrYYSLZSNJuCNTRNys0jx0hj6QSREYW0t28rwD5qqJAa6u7SkVJqMg_JtpPQCeQqp0fzSTBwjFFM8PXK7C3ddDvwGLJoSPxWsHs21bcVz37csb2-Q04zi3KFHlbZUAAI8Cak7YIfoSZHMNyuvjeFlOQ5eqrvWJHzJpxpiUU9OrqhubKDgMyn8JocPiAVb45w8LAYrgaKYL37AqoNJWtWMzNBBSiutIaqQZQkA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFbA46EaaRYzKaPNyrbg_NUyMeN2AuOZ5atWedX4QF2_8R1csAZEeHkKEvOKDdM4xD5h6SZcWYvjgzbdwa74qDITyub2AtH1teIG6tRwrehEUZLD5yCaCKcwRxvYEoYQ6sivkgRgxihFvaUBZyHMkhqE4KE3WXGImsD3GR51rk-jWM7zddkfUUlp1uU96MkV9T03zEGiKBTHspQkt-k7yTJSqAjDxbLdXhrENfT0scNTgYnQN9rOnfpCVckDwxKa4sUxyGrdFZNGLBJr8QfBbg1fgsl0NF4B9wZKDKPwrd66w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFTU_lBOURzd1_y8BXm_86AX1CWKZuytlx4QqHGxQ5CR2IE3Q1Hf1jwInzrOs2JY7cSMlprtqIMMn8XDjIM1u_p0wRoBhdbWgccfbu_X_LIYFJPNZCv7WlHbUFmdeo7f1Ltw1NWoP0KZNqiBvYVdnUMD5VE6ir8euHrRaqJdRKBpMV8MhYx3lrk2u0NLHkOr5_u6NqrB4qIbOp-c86KrIiYEodqtq1PepYB2t88lBMzWPxKyxbfGRseucWTcvfH_qcg7c1DCRlmXBQCo_cydAVJJoZXOxN6sKFFlCuYarYyZBnmPor2MjdwcmBxKrPZ5ZDHoZWKsIRQOZyp-AXUdPfGzB6nLNJbdv-iRBNTYXY--5OirBoUZRWl9qkhZpoJ4ykc51I7CNObZ4_vW0BQPeEWjx8WD3bMNY3qzqbOe2Vk8rjzWoCeWwI-ZwxFKC91&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('CupsnChai', 'Northville', 'cupsnchai-northville', 'Chai/Tea House', 'Both', '$', 'Chai, Indian snacks', 'Chai, Indian snacks', '{"Chai","Tea House"}', '{}', '43339 Joy Rd, Canton Township, MI 48187, USA', '(734) 667-2196', 'https://cupsnchai.com/?y_source=1_MTAyMjc1MTM0MS03MTUtbG9jYXRpb24ud2Vic2l0ZQ%3D%3D', 4.8, 634, 'Monday: 10:00 AM – 10:00 PM | Tuesday: 10:00 AM – 10:00 PM | Wednesday: 10:00 AM – 10:00 PM | Thursday: 10:00 AM – 10:00 PM | Friday: 10:00 AM – 12:00 AM | Saturday: 9:00 AM – 12:00 AM | Sunday: 9:00 AM – 10:00 PM', 'ChIJd44gs7FTO4gR2jISQ9k3vf0', 42.3500664, -83.4676732, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGzHKpKmwnwec600Yl_DLCli-1riGg7H4fqNWVlPAjNs_KlZKUHYFqcGviMTmQ-U7BkaH_1GImzkjIeDmHPLayG6rgZ_XDJr0UWagU63igL4ESSueovRdHvXm2f3kc5_Yl36Ui6gy4wgDGpbUbX_nqrojRsmVqAueBhYpQL0LOy3wXvTCyRh464FoJnnvzZ5Kvj0H1CQk-afdRmfmmerlP7iuVF9v5wYbTyNM_OugLr4ft8Hc5iz42PM3gTEp_vrQrialxySU0e6kup6hOSyAe3IC2bTQbEg2nLhQthWBao5w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHSlWTB1emyZ4WrNiek5Chyveq6EVSn3MjM6IRZNLD7-uAN22V2q4Z-VewuM_81T3uuAdz8DVtmbfjhkYGoFLWqvQxoyli-0j3OJGBiH7uK4_RqsbRyejVQDRBSdWJdm7J9lSo5OyMuHlu7F6hmBSjyyub6HjDgBiUD5AdYlM5vGImUwB3qpHisjU5PDSNV-TgUJCjd3pUFLx-_z8qZPvmY0sE52XcjYuTnBMCn_bh3J-X8AoTjkj-i7MghZTqkHjIRakP_0JVHFp9TqS27tjhovg2v4OfVbSdm9Z73eqngDA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFkFNs9KfOaXk8qqVkb-Z0j-Kc9b8Ngn_Lag_K-dhDqeH06H104yMk1KUCGJkAnWmEkpY0aTDMhdiYrEJoild2uA8bVNZ3ScHNFWD3W5zlllUdtqPn1NsCJd4hgZ2B9mEg2tKS0QNsT_ZA-b5fmPbA9qLq2ClJQ9uKQ1iS7f4GhM4Y-W7ExXMFOno9sMjc-J5VrZZI5wsXkiavw0N1HelLvHPdDr1HRRI81ihiMIHN7ZzdFBRqn9jahXsthYcVWxrorr2Qbak3TOdrzx6tdgzOmUeSTI036rLke91OnfrTPy5KkHqA3xHUkZMsqQ4SEqUJMi54u79USkGfUqssJtmnsVkrAy1bXLY9CE76rzURct7EYX44f8JtfUg_3-s41V9wqfIzrqkNRaRYXpx4quibrWs7spwHTNUFj3b5Jdh7ie8HvCkZX-NjJR6kVPI9Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Deshi Kitchen Indian Cuisine', 'Sterling Heights', 'deshi-kitchen-indian-cuisine-sterling-heights', 'Bangladeshi, Pan-Indian', 'Both', '$$', 'Bangladeshi/Indian, buffet', 'Bangladeshi/Indian, buffet', '{"Bangladeshi","Pan-Indian"}', '{}', '43095 Hayes Rd, Sterling Heights, MI 48313, USA', '(586) 566-1006', 'https://www.clover.com/online-ordering/deshi-kitchen-sterling-heights', 4.5, 442, 'Monday: 11:00 AM – 9:30 PM | Tuesday: 11:00 AM – 9:30 PM | Wednesday: 11:00 AM – 9:30 PM | Thursday: 11:00 AM – 9:30 PM | Friday: 11:00 AM – 9:30 PM | Saturday: 11:00 AM – 9:30 PM | Sunday: 11:00 AM – 9:30 PM', 'ChIJwZ4NScDfJIgR_tiKePVAxw0', 42.6136567, -82.97332229999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFhofjxK0btlr3hTTidUUmtRXoOCC0Ymcqw7wn2SC-XdsytO0GvY7YfWd6UNdfdBviw2qWRBNDN3N9Y2pB580qltSvx1zQHzU_cHyHcA96OepTDEgOpwrn86da2IOS1V4eTlBpOkaKXBHh3V6x6dz-e0nIGor7VMYdKkGDndY7P-OXKJT8USJvannlI2dM7-qoxXGruXGFv1TCqOAyD67cwxLx3VcX06rYcsUQuksItIZ5TaiPXUTRfgzQjOxlhJLuaNgQA55SdaU7TcRkbmZfQAjxyge3LijAll-vgYEFTmpjiwUIfiIs4zOpwU5xbsdW3nUuoUFELpjcS0F1Vu5Zk0CWOYxiPSw2I3VSNkoUY2O6YF968gCm29yN1fFPl7Qcy7MFIDnk79HcfsgvP_JLXU8GmFcxYlhpkiz4Ub0oL7Ls&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGX22Vm9jXAr1q843M_uUxZXFEww9RvWsn2c1YnoCONKiKgfDncAKSNpmf_WZkYJzfe2v9bSK1EWWRF6a_KKlaZyfljPzk19-Pxqd9JkGfch--tQakTomyp-5OPJHMcmdFhvTspPYHqdK6uY_CWJknsT90blf3RpxElL1iU43ZmsVqk_8CHEQUR41qGk5tJteVqOo3kAI72-PDpNCnAmU6ITqtaY23rpwQfLK2blI_nUh-3WMKmXfJ8HxFS5FPHbhKKCjUU4uXcsZcd_ol8KP8akf4m1__rD4MjUA8LPXXfgw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG5NzZ55oP0XTiAUWIC3nMut9fCgkfpfyMMGKwd31PNOo_CF7qMsUlSNdopvTomnj0qxYA4T66nGhA2DNkt199_wEKul2HJ9DhqDp93SCpGACB44BVcWpQKxc8IAIQlK4jXuqM-JYsU8HnIiRiWaIwZ14EZDdPqE4DvBjnAid_xa4Us6PU5DzWyZIkJfR1LxAbiDkwTXaYkXcaMUYNVlcfcKB4JzegYrwNVLrUMeoik3PvciuCuul8Cf0rcXPo7l-Ub09TZuOfqKv18NufIzabdgLldUByxmY_Gow3bRL42GNNwFTk6fSwV7sDtseUGEuuQHLksFJ7qZgB7R1k7dhKdWnB7z1r25HCJaV-AfO8RjGGQkKZBb3QNg2kk32KSgBPg0VpACXKR5o80G8b5eM1EvKO_wOpoXcExyLDRO4dv9rAu&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Kashmiri Kitchen', 'Sterling Heights', 'kashmiri-kitchen-sterling-heights', 'North Indian, Kashmiri, Indo-Chinese', 'Both', '$$', 'Lamb rogan josh, butter chicken, biryani', 'Lamb rogan josh, butter chicken, biryani', '{"North Indian","Kashmiri","Indo-Chinese"}', '{}', '44631 Mound Rd, Sterling Heights, MI 48314, USA', '(586) 726-8811', 'https://www.kashmirikitchenmichigan.com/', 4.4, 676, 'Monday: 12:00 – 10:00 PM | Tuesday: 12:00 – 10:00 PM | Wednesday: 12:00 – 10:00 PM | Thursday: 12:00 – 10:00 PM | Friday: 12:00 – 10:00 PM | Saturday: 12:00 – 10:00 PM | Sunday: 12:00 – 10:00 PM', 'ChIJoZoOqTDdJIgR5nXC_D50Pyw', 42.6216014, -83.05626029999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHUn_qU4gZ77HLIoRj2ZPC3iRHC-1Snz0_Im4cIw9tXOi0ppKfYJPzWswSGdikZM_VfPse6y5QpIEO6SP82QWCwPo8dpwior6YeWDIHWT_e4pwkTCeyZGJ6OQp3XNIAug8RsyRnVgyyWNQlHe_MwcRPhwEzvSvEhqtyhITjpJ6CebZQCQrwqXLcck-O3CSdyj0NrHLuKWWgSCa2zq5Gnw35HxWw96zZII16T7XV05soYd5yoQiGnN_NoHgEcjZNciAxWGxXkWsWLfTjcbKOr3Yxa8qOh7lb01AFyDq8A4HBuQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE-DHlTv6dai-SFzfYmB1rEJq5Im_hc4SC2E5mz-ts_QbpiVM3FDqbpxshG6EeJORypCjBI0aqApxZ2q2Ic7XIP2KrcEnve4InVfKMg4ga4fVe5lwDr0-X-Jdalwpa-qKko1U74ANTn1W-ND2V6uflm4rX9rdtkKx8KE4mGVN0aCuGzEwS70j94FLgg9J6CWMfWLiOblAhKoYcVg29MkoVpjkMwodVMaLD5MFVkzUOEFtuqlOKO5MWIKhuiDK7KJo5Qkd42OvicPQfbC_ltgr7_Jai7knU0R6Bmzu0_WgZaYA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEfUYNroSn0DToCOnLb5TIMMMwloqCdbvJVJAbsDP7SvGsWQC0-NsIb0cdKbSN_eVpS25fGedgi5j8oRuN_yOnVkp1nxFgACVTMbzk03sgEO4zqhruF9wLv7UFcoJePyeoDDiEpGPHb7Iluy3jRIhWZcBKSk4T7TARvBfkJtsYUTqdIJKIw9YVKoHGg6moiaEHAD-A84HHrh3WPnUDbLY_btxIUcTZJ0KzFw7IbNZNbSq5mQuGybKwOYEFFdhf5PWnbDMJ2lJXG03i6SMByA8hLf0UwcdwcFdWzXq-fJE09Lg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('New Delhi Indian Restaurant', 'Sterling Heights', 'new-delhi-indian-restaurant-sterling-heights', 'North Indian', 'Both', '$$', 'North Indian, halal available', 'North Indian, halal available', '{"North Indian"}', '{}', '37206 Dequindre Rd, Sterling Heights, MI 48310, USA', '(586) 264-3333', 'http://www.newdelhiindiancuisine.com/', 4, 271, 'Monday: Closed | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 9:00 PM | Saturday: 12:00 – 9:00 PM | Sunday: 1:00 – 8:00 PM', 'ChIJ7VfPlbDEJIgRt_IELgOMjdk', 42.56556, -83.0877201, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFeKgAwAFjL3BOYvRJnETRoBotSz00wS6-UdreGWxitxBMdbFbNOGKHvbFP0uAVdxaKrGtCRBvijNqnooctlG0mraYzxRc07jh0xNDs6u0Qer68VZJ7NE0sj2CLON1b2b4kuqwQk6qAB2cCs8NroFeXk3qDQh59grrKRKNeJy_McC8y3aGUtKZ6RBlvgOmhSZWiTGi8VohWSHhDQryQ8guqlDHdLXMwF5bj10cx_QMLeuB_noONc9d5TZVRWZn1IZkaOtr2PB11yM-VnVt5RmRcDN9ILDxhN9DVqsLvt0hEgQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGZ_l3_TX93eOxw7bVtQ_44GBL-gV7ZyL1FxNHpdK9n9OFf0k5N0sKvs1Jrs18-urmtnZqNUAbbk4ek8xrzac6JjMecNY90CNW5Kr5yPAZFU5UDVDd4jbWSLCAABhglGyURn6waDGeWCACPr4G3c3GX5EYD3Rl2xtFuV8zD_sQEIKD-nXMxphREjyu9hCh1_kZKEE9AD7Xl8NiYQbLkS_6NBXEAK_dXK5WCSIW31EPzIsMBKfxHT6Mp4KT63AvXTl1jpKmI3nSUADMha71jDK4VD_tzOCj6PfqTG6jzNRBeRA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGCkBFTjZ9udlqx0A_EA1mP5Y5MeVwao5w6BJhByGfpy5Pbr4GCrqq4j46feZ6iUrXscAHwT5L6q4FZldz03i7IbwUSB2gAaWBoSLN8Ero5kRqPaD7Wv-9-Ozkt4-VH1yAeXi4aWynALjR81nRgbsDJEN9B3SCq85AG9MtNXSm2wwcKprhn4_MuIaR163DBEChr33FvJBmLrHe1GVeZm5Ld1L7mh07tzkHobxJaX6d-frFISTisymG3zvvgcKcaX_VCD-0IEpK6uJH8fSCbgWg0hudKw8IzG8DjMNHBUvPQvg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Red Chillies', 'Sterling Heights', 'red-chillies-sterling-heights', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '43743 Van Dyke Ave, Sterling Heights, MI 48314, USA', '(586) 803-4388', NULL, 4.3, 259, 'Monday: Closed | Tuesday: 11:30 AM – 2:00 PM, 5:00 – 9:00 PM | Wednesday: 11:30 AM – 2:00 PM, 5:00 – 9:00 PM | Thursday: 11:30 AM – 2:00 PM, 5:00 – 9:00 PM | Friday: 11:30 AM – 2:00 PM, 5:00 – 9:30 PM | Saturday: 11:30 AM – 2:00 PM, 5:00 – 9:00 PM | Sunday: Closed', 'ChIJi6fcB6vdJIgRXplPErYqU80', 42.615476, -83.03282, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHfyKBYHDC8feP21GAd0yZGrH6k1uWKVK3I6-pyDfRLxzZqx0aBMHsS346MOwFs1ndtdgpJ9wlS3LFf8rh1xqQsjxeFCgE7EPrZ4NnCnqfKDHFYJ9UDA9X7MP7J6RyOB9Pz3XHkye8OJxa6arnYrHwGTVHf9s7kRBo1YVvyOMZjINZgvXQ15lOIL4g6yk7Zbk_d5Mw_AfSd7qeJtCbFwD-qO8tOlNXFRa9v5yWYRZl1_VYB-l2bb9CxO2r9UIjkshvw6szZt-Epajb3CrECsoZbRYCdqSs2Obf1wyirBjYYlw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEe0wyB6CouNXir_q3fwR-5ccXtiOyO1pEr0gxxl_OQQiyKxvX01z0K3qHiHr5kNJo9zH-tLqSegFrah7KtYws_jwKBEu8M3VvBDuc40-3tQMJEKiSIBQPxUWwe-HodBVER5HlgcUYJGT5TEZ_ZRgo9vauKBy3JUzZn8C_dCYSZiAka52RUmXKtTC2ZskteNSqW298dBJ3DclwTlJ8I7rhxuNsJMtl_k_Xi4OGctMWgrx5jStyvFcKdXOzMa_i-Ry1KGWypRYvYDGn7FgjVPNQUFQoE5Koc95ylKGE6_8ohyKmM5WDXJn3bi2Qy2csItbWqzotXf-YGbpqUynQqsVd8wlUUze73BvyAfehHix0iMR_fy81e6Fzsw_vImkfWO8zYe9yoyVlW7QAetaMZbFbTnQWJDubLD1znWBbAWYdHh4h7&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHRVh1Ff_yLlEsHFN9lqMAE42RnScp8vwYBSPMzFfeLHATMiOa0h2hB-R1hgSudQAYRtRWLh2KEWQwkyzyuGSWunDmhxxSP3KVMv7TjyD9CL4j6tvUtAYkcW-j8Hut7UpMSEz6gbB0l5jcw28Q6LFMn2oh9liaYQWT8vtf4wGMBQt-WvKCqUGZTtlZSUGLsT70oImXlOJDXg6ikEmJN5IJ8dfIFdoYJEfY8LnKPUSoUmMxCKhSPUlLxEBeKtgopNA3oSFhKqHXwuffuDoI1izesmO68_eKgGQ5-Q14jUpIPVA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Masala Junction', 'Sterling Heights', 'masala-junction-sterling-heights', 'Pan-Indian', 'Both', '$$', 'Butter chicken, samosa chaat, masala chai', 'Butter chicken, samosa chaat, masala chai', '{"Pan-Indian"}', '{}', '34869 Mound Rd, Sterling Heights, MI 48310, USA', '(586) 838-4330', 'https://www.masalaajunction.com/', 4.8, 612, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 9:00 PM | Saturday: 11:00 AM – 9:00 PM | Sunday: 11:00 AM – 9:00 PM', 'ChIJUbR-ulPbJIgReFQc0UDRh8Q', 42.5494891, -83.04932099999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGgZADUXPCCaQ5CbfexzIkwHQxck15D149D9Mg8Fdn2bsfB0WRJlMtcrJdZql4B2_lwOu9GOw_c3dhgQ5_WizWdUCuTAij0pguONY1IbaulGkaGntgZGKfshvzoU9GX_tR7DMwxZKJhacIG8lWfU6AgckcRKhEEl4CZjoHF50knyXiq8nDBdCxtyC4r9YSahtvNNIbSfF4KhsKjPH3LNmFCC9W65eIcj-xVpWbIypvn6btPWAabDisdsrN6wNJa_9jKfgfN3rdLygzVU5JrFoQS2A4opdvFn8SWqvR3_1K7Gd0tdMO4_kj3qq8T5OZkL0GjSunzEi7AsV8MkMjUAnybWfIVtaykpFF1kdbvv33sbV8ObkrSkkUI8YnqtZ7cVwUCbCYKBNa4jBXhLl3Uk-MiH9YSHHCQQIPiEC5lKwmFQuXm&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH_CkMxS1nOtgwjqNBCi93cDO7XL1kNxqVB--jXHRYEKgMO1UAqjyrl-cGUz0nkpOr04EZUvSkV04adbd7YaWis-viWTKXfGo9PsQjo4A0Dw2_i_7ZEfsa16cmOb8IL4m1gkY97tpVYA-A1JoJiYPHiO9Tc0lhoddiFSt8glj7EkwKjW5bKO_lm_fO4Ws1nCRJ7Vr6mZu7kGJv4r9AsxGo-xLSdOv3ZkJlNvZwHOKw9X396AmwzIh8sgk4dGQ_sqogNq4jdifqbVNVrRESgbFeDj9NaSZGjEGo1l6203QpphQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH0Sk_GNNxdzsX4x5w72q_RsvE16DJN07-u_PfgH2EhSISJbyRAhyX4hCqVJWhR_YqErsPCSdGmBmJCHPaqfDBoeP2yxMBQBpwBlTQYCxjBWsVD_Oh-r4sMRPZAu_NYcsTlc6YIcqmMbZ0E-_JCVJDH0sGgU34NAeCdiAqtJkQpkn6oYz6us6BVdL3D6MJ3LPFsiCWssS7-T2Zs32J2Kw3qxNcW0LWaUWht-vEZc-wJ_OrF8UjyW4Z-Y9xTl7dEjs49wlV1MyHwJuQQ8-SK0FlDjc5whEDgR1YoOrq9FpfaFysFqob4KXM47ZZFKiryBsk9aj9ssF-sii6mFOTC_kHqVzh2pzUlPSstX6sG2hkuXhJNNixn04vfludFMRdpc5D9ojhlNoY4gwpt8UNjwPlEyvIwdfUEB1jnWncJArUukOgVLsbzZIIlx3v2C_lh&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Shahi Palace Indian Kabab and Cuisine', 'Sterling Heights', 'shahi-palace-indian-kabab-and-cuisine-sterling-heights', 'North Indian, Mughlai', 'Both', '$$', 'Kababs, Mughlai cuisine', 'Kababs, Mughlai cuisine', '{"North Indian","Mughlai"}', '{}', '2079 15 Mile Rd, Sterling Heights, MI 48310, USA', '(586) 722-7363', 'http://www.shahipalacemi.com/', 4.4, 295, NULL, 'ChIJqUXjxe3FJIgRSACBDdDvrzg', 42.5499144, -83.08681519999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHX-GI6KsQEvjkns3zpYC8Nn7f4jZAqLDZpzDuWVDax_h_BQGhuivTdAykT4szmhzEznQG29BWvrIYcmlsbxOJ8-GlBTTMe_HO7HSMxfrKyJNnog7y1VItQI3wJt0xsBkU5s3gyn9kTG_IA5k87lPuO4lER3kH0NM0dTLVP4SzbLLZapMO_EnSEuEa5K4umAhnrKC2cf25t8XWZcDXojaWgtXFcLUs-44BpSmD_GthhnphPcv-IF-V6k2NYQ0L0zM0m1AS21yK0PRRnclYaDjRs3DIhBf1CvE2_uWvBQJxoCA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF9yAjXKmHTmmQo0Z4Guhgbn3yV_hELhoUxnZ53RzRd8qpg5YPHYfYbSClqV4GfPIElyCR-8Cj4VF1F7tdgCXxnzPx4nA2JOo0QFpy6HO00WW2zZZzma1Zx-M_DcjtAKw9D55rNMveNrCFepwKv1keLjRqaHis1VfCzQYBh2AkAkp8N3uXFsVfJrIX5N38fY3ewALPjjFlHrW9TOjjljiTLmk6nnzG7lPqnNqNmUUq_8l6EKSqg25LHObpzNGwPSsY8kNOf_hh64NN58K139Q-tG3cwVZhbMRS5-NZQ8Ryy4w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFLWbWdevgH3_JoZPn3Yjhe4Mqmp4PYaz2CLdh8afiwhr3rK31ZhPYECs-_yx3PYQDKZ7vbmEK6GMdLRPCsvtEW8JH70yeK3jLyppuLk347F-Y-ueJ6ngZHEDytKd10XlQ9lEYZoSQGIZHOyEj16qRMfC6WPuczACZ-9V6wvV4ncVERCA9Uipxp2mAJXt5W3QxfVJ1sLx2oPeg7eCq_yTc7hL5cQXqC9oBsW83SHc3hVleGgm6sxo7CqjBYJOZSUzxyr0pcQRj82Sw5bpyQhLI9Z6Yv3BrC5D0LHUcQguIjzJAFqUDCa36CvQPb6vrfgToDwpKZAXJsqrXrGeiGbf05EEP1SC22F8UVyAZAYSydPRKNp4T5zIUGsBf0PGFcJXwWNxGjrt68Ro1YhiA9CkjukjNTCfVCxI_v7yzD6IX2ug&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('New Little India', 'Shelby Township', 'new-little-india-shelby-township', 'Pan-Indian', 'Both', '$$', 'Indian cuisine, serves wide area', 'Indian cuisine, serves wide area', '{"Pan-Indian"}', '{}', '8194 23 Mile Rd, Shelby Township, MI 48316, USA', '(586) 932-6111', 'https://littleindiami.com/?utm_source=google', 4.6, 1884, 'Monday: 11:30 AM – 9:30 PM | Tuesday: 11:30 AM – 9:30 PM | Wednesday: 11:30 AM – 9:30 PM | Thursday: 11:30 AM – 9:30 PM | Friday: 11:30 AM – 9:30 PM | Saturday: 12:00 – 9:30 PM | Sunday: 12:00 – 9:30 PM', 'ChIJQVZljnTnJIgRlNHUcRZxCmk', 42.6681361, -83.031733, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHb7sFrPg1ENJkZokCIvlqYySgTcYtEteZ-k9ivQyAABCcwismYBdK07K-EUUNToTaYRoSisUQXl2_E3rho3utAxbuTiMFcazcKS2qyHzBv5JAuZDLVZa8I8Xo5sI-wZ0gd5CBcouzr5t7M8b4VeDt2ELU6kaZfVCTVDEx4S6HJy2Hm2rq9pMjuZ5YuEFwPgagrkWXStqCbMhIVtuAvHIaqFpgfyp1Xt6UUGZNI-2igNAa2A06RK_9jK_quBF9qncNdykSPpq8Y8n341s54MS1VLQ_uwfvuar9b5KOY9dBnlg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH2D3yvIQCApUEQLf1UQfOcRIoNX58zsWWulcYOgUU4fvzeC1n9GmbU4x6_IisTDeaL6fzRvgZeOQwVc-bXdW32nrWl24QuIhja7ODsuaGRrvDB1iaFBWe7qv5q9IJ2VQmubr7LnzVTsX38u87dW852k3LY4-gRs_MVyonnHC5aKhiUGZImBKsJOgnZB2NBkHcqzpVHGZFm6mwJWA5BfDdtlVK7fQJs7zCFyQe919NVrKlOaPmbZbB0nzCITPE8yy-QQV8mAT2ZaaUafK0dmsBJyLG2LNhwGVa4l2FgX8qOdw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEEJS6_Etozqpmo3fdeyX_gvZ1IW2K0F1NL-g3pRXSQIqErIMqh5_RMshk7gIPa2uv57qRRiylg3rjzg7wA7UUkt4wmSKrmwHwN0bbbhzjKBNRIlm3CPPNxZAgkNmzNHDPW_6fus_jdXXOJ3io5Dnp4YjnRPwwcsG4Htfro1ssEmyiaN6W-8FZTlcMQ0QF7wCrZQujAt15P4hSRO_mufqbXx_9t091KO5v4ucVJDBhzFe5IwSH33yrLpYL3cqjQi-cbZK3OYgivAZNWpePgS7bAiVWxiUxCxZs2PiQSe_OaTg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Pink Garlic Indian Cuisine', 'Shelby Township', 'pink-garlic-indian-cuisine-shelby-township', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '48935 Hayes Rd, Shelby Township, MI 48315, USA', '(586) 980-5142', 'https://pink-garlic-indian-cuisine.square.site/?owg-fulfillment=pickup&location=11eed80c9218c835941e3cecef6dbac6&rwg_token=AJKvS9VKFa3TzWYWcsQ5RR2rc5ymLVqQ1GPhrTkjd2RyDNNdPVZkmtwztGN5WWYobqvqLJGEUDiE-z21nvZCog038JbZ1Vu0pg==#most-popular', 4.8, 516, 'Monday: 1:00 – 10:00 PM | Tuesday: 1:00 – 10:00 PM | Wednesday: 1:00 – 10:00 PM | Thursday: 1:00 – 10:00 PM | Friday: 2:00 – 10:00 PM | Saturday: 1:00 – 10:00 PM | Sunday: 1:00 – 10:00 PM', 'ChIJu-RWpBvhJIgRMp6bEk-1R_U', 42.6558754, -82.97644140000001, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHssZOALw50pN1X3jC2Q8tX0Tyoq4FH4mohotW-d_wCjVWZdkBsHu0VD2kAPOOLbd-VAy5U1G9KEmqWpqGMDT9s8cSdGpVi7WEeSiyiwUgV8FWrwMzZPFKXyXxE9P--hZ2aJi_7J_qeY-MbjRVDJ9DCCgi6Zff8v1HedkeAGAym5L2vLsiPvmQ0YWOUS6nYvFQOk5hMVxphy2xN_qbe6sidRD3CxhSvAWbT08oOKwPeu5NWO7FrbVxgfhEsTjcKhSCCS7-x7bmAKA_skRD51QN8PL4jDbKm6HiEebRy46rd5Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGRhaFPE6osAUc6272qtnX_C7fOK2LxbB2IzJryWtXKe7P1kRNc-Pahh9pjfGCqgYrLE1WqZZVEzBgersshEH5LOznnyvaq16WUxn9_gKsSqGOP_HPaFek73Qfw1fC3weOHV6k2n3_EK-mx_k75ocQs_o7YUiCQN64WTo2n2rHse1ws4hf56-slFcGMHwLSKoDsA9KUDjwCY7sVoEuWd9TkPKeRsXPrkxmODdOQGobGbDISgaVW7ipX2bfe0PGVnjM5dMLQaiqtCqYHvSmmF4GR0u-YfZIonmiiddEBpsNaiw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEn8F8ryn-QgTbJqh5tHgKEPYDr9vG5ddHtleQuRwgha9BJyO2B77lXthAFam6eGe-LOZxfwlaMYCExVSQBoQ4WQOZng9jV34E76XCiOQOt5n-kiUSXQpj8xm-Vs1js_KuIFCfvR7323Y6Vn29ffaXULHwYgborNjwOAufqP7I-vCnIvAT4p5gZ2RA6d1OYAg-Bw0WJZ_nbbwtNPvfynOIe6A7885nZN4tl6CwTFg-tVwM1K5FJqTOSmAwEIxo5YcaiXu4uAUkzYlMwwFicVGcT1Li24ZUrFvvHqhKYkiswFQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('La Peri Peri', 'Sterling Heights', 'la-peri-peri-sterling-heights', 'Indo-Chinese, Fusion', 'Both', '$$', 'Peri peri chicken, fusion', 'Peri peri chicken, fusion', '{"Indo-Chinese","Fusion"}', '{}', '37891 Mound Rd, Sterling Heights, MI 48310, USA', '(586) 883-7515', 'https://laperiperi.com/', 4.8, 397, 'Monday: 11:00 AM – 9:30 PM | Tuesday: 11:00 AM – 9:30 PM | Wednesday: 11:00 AM – 9:30 PM | Thursday: 11:00 AM – 9:30 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 9:30 PM', 'ChIJN8OqrmLbJIgRH1Kadn4Trq4', 42.571921, -83.0504773, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFboS7Y36q5XP21MIoI9p81o9Ps42IT5uvMBErPgAr7YixFTF5toJp7NKzX_IT9VejI604XaaI1K4tgf02D7m0_D-FGUrUqFpRWP6bE8lx_UpN7DNPEfG4E1glx4NOpVcUqKFnAZk4N0zgYjE-l09_AY43PwED9IdvLgs9p299q4XoZwStuSkmOJELpQrhsrm4Q8MF5y9-vpXWpdRF5weG3KmjdlUogJLLZPuOk_g_KjV2BP__cczj5Yl96qvXJWqwTek-NwXGSjBfJA0-tTu8ZESBeWgKxWNaau5wBCZh8vA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEBsYR4YOB7NLdrbgiexlGQNokqSKMJlLLdm47WADnSCDoTJaCER1a3YTOqYp9zrd3RLMHKfPvrvaniWeLoD6O6uGKlebf5LNIoF3uVx027T9Cg5QphSxf1WoS1Ge49CC8o8cP8qAX-FbzEPFj6yBv_39dD7Hh532saId6Vc8xRis42aI1bJKTwp2d0cS1_sEoENyCOzQSD_pnwkNV6IjEhHCCX3JTlB9_fYIxB35QQnhlCjMqWB4VHYPyJqZgOdot7BD5xn7YgBA7WZiYpLkvHPBf7fJPj_mazcCm35SzO7A&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGLbTcd50kqAMxqBfMMy4h9bZIRXN7kYdJ6RXXYy3tFU3HMwT_72iB0f7SW1WWuU34byZi1aPkyHFgTBakgb46bSgBZgwFFzmrvotI6tsAp0-M0fxF5h_Uy01lpzkV8XLF47Ao-B-UHORaAfQVvDx6ioh9xz-XcCx7tSiylFZDbzLt9V0hfSrlh26zdQTsL-KXMKq4sTVgqcNukXNXyvtQjhEZqxtR9FvAgWQ8WseSK7rUl4cW_UiPiEtHNmY3UjcCbialTRd8wGKCUpXw5eT-HzgTw2u5GmdwwG1jrRWcLtQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Shaad Deshi Cuisine', 'Warren', 'shaad-deshi-cuisine-warren', 'Bangladeshi, Pan-Indian', 'Both', '$$', 'Curries, biryani, tandoori, delivery', 'Curries, biryani, tandoori, delivery', '{"Bangladeshi","Pan-Indian"}', '{}', '6060 12 Mile Rd, Warren, MI 48092, USA', '(586) 576-7913', 'https://shaadcuisine.com/?utm_source=google', 4.8, 775, 'Monday: 11:00 AM – 10:00 PM | Tuesday: 11:00 AM – 10:00 PM | Wednesday: 11:00 AM – 10:00 PM | Thursday: 11:00 AM – 10:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 12:00 – 10:00 PM | Sunday: 12:00 – 10:00 PM', 'ChIJ7fmtM2LbJIgR6s8inf7pLoU', 42.5057356, -83.04404590000001, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE6PcKuu80hhUjR4X0vL2ixw7VpF8NegbS7bu3bnDOeE1JLPNXii1YXAR9ydUEBxJClbokMiw3bpFkPYm-z8fxjvAsUQ0HVgeRBZfHyTpLRzRUSa4gmIoSDjkmxkQymWfAEo3NXvcp78AdmeNZ4FyH6poHRn555skmAYd6hf7D0sz3nKstFOk6Vk3lET7ZwBB5xcKR41BemVpfB3CEzi5ZrZwMv8l-vSOoJaXI79yZPxCbzg2juxAWBYVVIGlUtYQeP-JDFW-S2A78-TJ_LNQyHvV88EDKHZxHOlGoYqk_sBA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEHGCVDm4Y8r-9E12D5HVIQRmE7OudXcy84vJJEhCBRLX32J0Zu1zqdRnWGCC1RpcefGxV1v3bD0RFeIqLU9ur99ekDNFMjqn1Pv5QXU_yJh55PMjLI8396a-RB5XGKcFBCWsgF7xhruLC5QOSQFJdOvSUN5vyk-TTykNFAgVEiEzh3jsHxvkD1C6WLCZ9Y8FBwgxAGfyl5PlTm9imUHcCNlcl8AVJlkZfME8CUHJr_BSHouuxSxCmVKFphGD6HWtTEpITltz0hfk8EVK8zDWMfUlHJ9kb7P34NO1mcVy9SXA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFAdzWhmfdo_Ht75edkfptd0vQA6pfqoj2QvnWlz9hzd2cNzEu3iBXtasw9MdRPkQV1kC17wSS4svdr1ruOUHLJDN1aFF_QpDpyYeXyxCQ6kwHwcyLqT0ZeUe6n9R5ZmIy9Stw9J1oSyvyH0U6jqHeHEEdvERT0_TbW3N8mc8iCiweYJId5nfMi81Jrq3tWITHYSbylAw0ZDiCFS7VmitS5VCuYAzWY0RTzvGeCYrNX_Pb7nJ0BMxlwJVnEAj9msAqUPATVEZtEV8v9hKpoa5aEb-NRdMppM8sy5coX8lfHEN62_AlaVwB-nWhAFnDoZMuuOVJnrPNofVNFLYsYx5-GS5PvTo508vDpC3jlhRI4a3r-WSdFhcOSzktpj2hf7eEIAI7qF__YptqiR8R0pjjpnJ6uUt1_M9hlxt-3sjpN3w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Royal Oak Masala', 'Royal Oak', 'royal-oak-masala-royal-oak', 'Pan-Indian', 'Both', '$$', 'Indian cuisine, carry-out', 'Indian cuisine, carry-out', '{"Pan-Indian"}', '{}', '106 S Main St, Royal Oak, MI 48067, USA', '(248) 850-8284', 'https://royaloakmasala.co/', 4.7, 1473, 'Monday: 11:00 AM – 2:30 PM, 4:30 – 10:00 PM | Tuesday: 11:00 AM – 2:30 PM, 4:30 – 10:00 PM | Wednesday: 11:00 AM – 2:30 PM, 4:30 – 10:00 PM | Thursday: 11:00 AM – 2:30 PM, 4:30 – 10:00 PM | Friday: 11:00 AM – 2:30 PM, 4:30 – 11:00 PM | Saturday: 12:00 – 11:00 PM | Sunday: 12:00 – 9:30 PM', 'ChIJB0pBc9nPJIgRiQXEeiz-MC8', 42.4894801, -83.1446485, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEqLIIYbPkI3GU-RS81_ynewVex6y6fALyvD--zLrw4x09bCU8dhm5aE09kFdPpR3G99nMkzI42duZfq1eGMi_Bl7JD0mGC-a7wzRtRBgGZZXghYVPUS8KM11zFgl_0td8XlSyDtWzBMgd7RhFfvQxVgUy0HsXwaK2PjiN-3XaV9iP2bOu-5OBgQtYTd3VLO1E7t3Y8i9XRsC-htDzpBRXoEVKK_ILlppmapf0azmQypEjKA3Iy1wGqKYeYdItL9qC_Bk9YEODHvAgfhpdTUpOYx2jU3MC8GlHi6u2sPB7Fog&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGOkwR0CbpidCiDQQ8eyQq4HTG3pJ4LOe_vWJFoBi6qKH9M-EQI1jRvRMKj98Uauydlk0Nb1Q1UFdahPm_cz3mxPwdmzHDBx4D4-Slb4kLKfQKtstftAK0YSCxMmQy7rOylZU5gQqUwWGaAX-KBA_Q4_0-Ex6ERdYmg1Y4Mxfw_LA7UZINQY_7fuqy3-KHSKbus2ooWTj8umLNdFO0p7USCAAnu176gbEd12Qkq0iGKF5VSTDKcMrtdWMgfnQvqC6_qYnAk9j5Tl5JLmn8nMkNG_XwuusCqyeshWQIOzv4E5A&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFa_CGt9NRlSxlLBi4OMMBpWuqgeDhw4Nksscyed8IVyVELEUhSIYuJTQv0_diXmnpeMl72ovnQM4mOCjRQn4xX3ILspbBxIMt7LJ_dT203E3Gdbjh4Vfs3i3CwMV8E98g_NtA7hgCpsKvbk6A1RAp1uCd6PhPK1r-IlM1nQBXUah1FVzD0MG8NJYJb9rsQumEqSgs1UnVDieyW3zEdp1ZJs4H0gP4j6h_VFEmZSHQjBBijUuwAoh85xvwWSZwR2i00i-T30mIiSmA_ebLTZzM-BObt6UL3FR2aE44AFCZqJLaQFiWtKcCqSdzSDBQ4Mwb7AzFEBjstl7nULIUleye2matRCCN5kqelkUsrT9MascktYJNdZ1Y6V9l3_kvhtZhpwXjQbTx4zKNZ-0I4FPdALzx02xpMY04sHwPh-KgvtQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Nawab British Indian Cuisine', 'Royal Oak', 'nawab-british-indian-cuisine-royal-oak', 'North Indian, British-Indian', 'Both', '$$$', 'British-Indian fusion, upscale', 'British-Indian fusion, upscale', '{"North Indian","British-Indian"}', '{}', '3354 12 Mile Rd, Berkley, MI 48072, USA', '(248) 629-4090', 'http://www.nawabcuisine.com/', 4.9, 488, 'Monday: 11:30 AM – 10:00 PM | Tuesday: 11:30 AM – 10:00 PM | Wednesday: 11:30 AM – 10:00 PM | Thursday: 11:30 AM – 10:00 PM | Friday: 2:00 – 10:00 PM | Saturday: 11:30 AM – 10:00 PM | Sunday: 11:30 AM – 10:00 PM', 'ChIJ042CrufJJIgRQxGuSpxYeGg', 42.5032113, -83.1931377, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHX7MVA0y9jjjj6Dk_roVyqpIkLNM3zJQ3P-ek-2d4t7to1FcQPWdaofm_k7UwJxHvgUk1zN-hiHKtzgy2NdrnxRCDPN4y_bjVOYj5n9SkRMkGS7lXO3IDrCwdYStl2sbiPDxaAkVsZg9Ykndq3BCp-qYOHNDOQuCwroXryjoYiLGyTf2IQsCKKEsUQMs5qxSrFG00ZgYXeH4gtJ5OOgIefSD_puGjoYY9TK8ME5i4xNSGZUhikPLTBSg59zhsuaWffPqfI3JWs5udUlez-HBgMfYTeuqj_VVRRCaEP1NHZF32_Q11bUNZoM7JloUYE_23G9Jy5aKEg1zLC6XFKqnrliplrN0xC5rNEvxrIA2Seb4Dkr7HBKIMHyDeI57AZrBBM4wL4unZCf50nKzW-mBYK22iO46DziH4c9DpNDWDO9cwQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFub_Z3nkWkos5WEiwScxXekWNn9zvC1DfVQlY2f63ipfrfkEt5Lxu8yQRokSFLRJxVo2zynV7Kd_-R0_9zpEVAMTba5QUrJyIK4BMrkv5QA1WnCxpiROjfNXMd8DNq3rJWnUtAl4nQIL-W5bDYOSokG0STvV0B0QzDg8rmnOv5xIBA6GrMRXt3ysXJ9W-xIMxDqwkmG10GY7pu5ttCY8LKDp58WruUNljM5Vdaauhb-cBSV9vkCX38A8qgxjf33z3ZAEK_i00b_i-vjroef4E9B5HHZx9Z1bMKMyNH-Ktc0AjvhH6x4PJkblgPOh_KTR3sChAKex5gM9o1pvowi_jdacd2O1Exs9BWHZaYV0Tknm2nE46J2z3Nvc3ooyuPnu5JFuCzCjRztWzF5ALaoBdq223SPx_gv5fat40soopfJ8M6&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH_ImOGvcmERBg-DYROO6zGDld7mtSliCrOBXLRa8WzFr9Cnw41qRVbXupa_6q1Nz_UGRpJW25Cr056WPOa2mnGNDwSXx7sYJ7-AGkUOH-VyEpPiSiuda-hyuFPP2rre7f0OofpIDs7HWeErupLpoFsWJs7EQBdvw22WCIFa2YkIF_VcmqApCnzn1MCbWj5QLxGZl6D6bbvqwvZL7uB2YxHdCqOxEigpLgzLbUYTi_xCDsvVBl7gNJjYEvTytvsigUUUCHql5XxVSKMIzngYztUASWIlqXNaDRmNFJMs4w4_gmwYwxnHNY-ybpjI9XqNBDUANUzkr73Rzgcdf3F4sxxlFXdiMNe8A89jYNNlFCO_EC-IHX2yG-OkiGWk5rQwZQqCyGSto-px_PYCNlZs9HmwHYNwT5eEveYhQGbC9OssQtm&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Moti Mahal Indian Cuisine', 'Royal Oak', 'moti-mahal-indian-cuisine-royal-oak', 'North Indian', 'Both', '$$', 'Casual Indian dining', 'Casual Indian dining', '{"North Indian"}', '{}', '3823 S Washington Ave, Royal Oak, MI 48067, USA', '(248) 298-3198', NULL, 3.5, 197, NULL, 'ChIJ55FWoEHPJIgRl_T2CM2gqOw', 42.486855, -83.14621199999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGEx1lEsHd5VScdMQXNxP_W-dvyWJsXhOfH8HrscjhRpNo4M1_DAfY905Ezvw-6LYc9VNKAOS7IfqYtXg6Z1q7ixkAjywdjsx-azeaxsSago4LVz4U4LlNtvE7lDs0QCHdMkl_bTDPIxFToJGBaOiSl3gxbeOFFN5JkHKu5xIPcBHQ1CbADb_SOpPLzquiymyPFdXnNmXNUA-7Wjm2Oc9tGWdJm9qHn6dGWhTiYUScaE8wEraP7wbfH5TM8u62mwtbxlpnR0s9vrwxxBw0kgsM1z28ZCknHyUJ0ec09GiU1fhJnhf5FmZanrBjjx5iQ5AdhFJyudz8_twerNalmngYZkRdTnJDe8qb5YhJQ-g2gD7nuuJKkJuKcvBO6jCVpM-KgaH-9EBVdQRtcDJZHmCo4TkEWBoAik2FXjd1izVLSKig&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH0fgp8eWLMI16KDnrI_dtT1u8kF3qC2pzx5HCIijcopoilo7E1gZrF-b4MuX-20d62N09Uf0ZIAHogfamLZ91xAjNOnf7XRFvTQ1Hy3w0yLt-BGJBas7pacgiDS_YXn1mY8XGL_ujye-ZJkyTITDNGLLUMv_4ouFf5RaNybBAla00jgHMnMNSewgcJcgZQMWIdIX-6Tx6m5RQY2SenSOgGFEa3q6F9i8LQr9NyzqikbRCIcIMuyQtCP_ffJn2w93FbkMbG-bKjy8XKG6uky1SdMoO8CX2G7yow8IvDcI9a8o42OeSflHIYbyY6fn9lP31kdA2ZFSneu57G79LZ0KtXNI81PtLN4CHoR7SwLBYtcWmp2XevigE6DSow57x2KWlhNTmjCDTgFVFThC1ymfv8EoV65Q0oELxJ_-BKUBG6j51Y&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHedzycZ4ByzGwFcZR7s8bTo0VUWhHhKiNdzLDRNsFXNf1jtDBNydW6NJBJGLfeHnbQp-Qi1ZOmIf28Th-vTspWLf4fnBdl26i3fv7TGZEpn76pGmxYkjnn2PMUQM0wNj1gdbPHhVo1ThjUF4PaU_FgMzskYH-ZK1eNTaG2KuoaQhV5zrB4bknvOCL7QBEdsGlrez-Ys89N-N6oBp69k_vcdQkyY1Aw1-xAavNLoKBAycqjMRlT7dC70k3xoKz5Jpo7156qPdeBBT7ccKGKj-YKsA8Z_Dab5Mj_Vku3aNgH2dLRVxgNKb_AMgnxg615Kch4kH5CxuCAGzlRT6V3o8fh_CrWvwyoBqbLOGp5hSixMwQiXZCQxi9MQJAJ5BpmGxaXuQ8q6M33kPjzvhPF6PG8K9CBJAGVd8wFdtxZbWmhLHE&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Star of India', 'Ferndale', 'star-of-india-ferndale', 'Pan-Indian', 'Both', '$$', 'Award-winning, butter chicken, samosas, garlic naan', 'Award-winning, butter chicken, samosas, garlic naan', '{"Pan-Indian"}', '{}', '180 W Nine Mile Rd, Ferndale, MI 48220, USA', '(248) 546-5996', 'http://starofindiami.com/', 4.6, 1357, 'Monday: 11:30 AM – 10:00 PM | Tuesday: 11:30 AM – 10:00 PM | Wednesday: 11:30 AM – 10:00 PM | Thursday: 11:30 AM – 10:00 PM | Friday: 11:30 AM – 10:00 PM | Saturday: 11:30 AM – 10:00 PM | Sunday: 12:00 – 10:00 PM', 'ChIJzQf2suPOJIgRMHDAtde7mgs', 42.4608418, -83.1360323, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFLORyvKnMB9F723AnNg15yM63TTvVyN3AIAQwnOgwEKGir4Ebo738tNgEe5B-H83XV5xblzyzPdTBL47W_hmk9BSYxKRlxAa23VK0YagiSl2eiszTegTJrfkFORoQsU1fs3g2Giy2kZ9eSZEQHgisypVA33H5ipGvOSGDNatmjLUq0XN8mbIBo3TgJY2AJqcmIIyE5uN4c1Pbm8Cv-1ZX2q4Aje7sERTZyDUvpKe2lstRYy_VqDY1rlWEhTOH3Izj8ulaWrNCCguBJAbB-f8_DLk_qqum55_pz-D9tfrvPCw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH50mPtLUAeltlwzKilrGaYVnrayqi52GW4gUDJKKqYttbNZs_PcrfZyustF9tqCa1RGptKPFgdm1VoUdDagvJzl8v3Uh9qbt9vEVqv1B8jRitXH6ZBdoZDuOGA5jcXEIZWEfxfadB1D7z9xf9iMN5qTYyUABdVCWuk5JZSvw8zj8dmU5RnFNUW3nufy-FvoWFuTPcZz-0s5S73xQ8iqWqSGP0YrDX3kvUn3XER2iktiqExqiWSoEcFs64z1i5MzVcbtj87rNTlZ5kcgYAMv8Io9GKRJxwBDIvZnUMp2jyUtQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFFk4jy1iLPlvDytxLKp0A8XHGPisGG0RlvVFMfxgoDuZCPxwyXV2sbVZxDQkh3p-hXxGUgerRGcWThFyvbcQFuCBc_1lEEjHOTQzyPA8pCtgqO3Wnwya62pFhJsbqwnn60QqS5E-yqBavSd_Vf3dIjMhRPLQIB63bgmgi6ZHbO39JBM1jiGkP3FWmkcwmOMFjsS_bEuEEd4acZkq26fyx8raNC6quYNwCNolA7H19WC9WjA2eUr4yhNz9OZVVFxWfPyOpjMYmTBqFB7X3TKkF6iRmK7qFpeT0sjLEpnUccLJnO4qU-7_mNt9R8NfvqSMmGBJXjEnmH9lKzCfTjtyVHuCZL6YHnBPs-hUM60Po-_4kkmy5mMJe61jUvcCkpkjExHofR88BwY7TtAWbXIbksWybftCFqochSUPTaJHg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Noorjahan Indian Cuisine', 'Royal Oak', 'noorjahan-indian-cuisine-royal-oak', 'North Indian', 'Both', '$', '16 curries, fresh naan, halal', '16 curries, fresh naan, halal', '{"North Indian"}', '{}', '22821 Woodward Ave, Ferndale, MI 48220, USA', '(248) 677-3666', 'http://www.noorjahanberkley.com/', 4.7, 107, 'Monday: 11:00 AM – 10:00 PM | Tuesday: 11:00 AM – 10:00 PM | Wednesday: 11:00 AM – 10:00 PM | Thursday: 11:00 AM – 10:00 PM | Friday: 11:00 AM – 3:00 AM | Saturday: 11:00 AM – 3:00 AM | Sunday: 12:00 – 9:00 PM', 'ChIJLbGeconPJIgRF3M5l2sfeRg', 42.461059, -83.135561, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHX02dkD8rf79kY0E_MpJbxYiBNuhkym6QzkVtJ480qfsb4c2RYU3UX3aYPIXV5Isr4AYLoiUQSxVZPeRVXHE8JimGg4-X_kvKAWOpCV8zwKS_a_ecpDi2apS8ZpGWwrNAURaah9B8EmiYmsdU1Nw_yMomAJ-ZF8KW4lWUwO9_L_Jc9QzM3TqTAaGhAoZGb01DM0XfaqbuAMOO4fCPquGbRqL1gOTmAroapZ84mbEEt1z3fPoCv37PceiYdzZWJ8RU3X_SMJF0--Ct3rPQetiDcTnifEpBaEDOZXZPNy62wzsFl10JK164hvTHwFpD_csHFuyuvI2_gnckhpFAr54IFBp8RPpGFs09wNqplhnmE1I5n__Cjt6hWh0-xf4kKC7JGjZ10Ue0gaDIVl5zHFUnGGlkNH5WGk0iqoO6Xox8U7zPS47cfdH4N1G9Y6dfD&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG1EqItZR7FImwJDQF_10HGABzR9QY4tsjZJx_km3qIJkhgnf6pJp0HrCZE7rY748TCjj1lzKQxQZToDVUta2VBIh1iTg9TX2ije3hWUHLYstony_RfLJuEnbdwB4m5ByAcCUxUGplXm77-a0VjO30ElGbzmjSFL5wb7eLutunDgSEWaXqHZgWGBly6Y8g-asWiEHdjiJ70pp0KekZO4E42e8_N3WqIxS82AiOQIEOXnlMauCbfZJ4Jg3sQITA0GcMl3_mk_EK8KcIrFnd5BKnyNLMbnyJdgzIHARxguKl7QQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGmfC7I_v0LDIeWMFThBLRH7rOnHVgh2jBvPeSWzi3pJKNNLyZ8oKBD6sA_Jt7Ol5j91VhJKNQCsw51DnNz26CoZ8jREOI1jux_Dxxro32_pCp3uX5b64jnK6rfNVPMYinuOKCQmoSxKcc2x2dDdyuNoN1vTxfdkdHyYkhPKVBHr0Fqb2WMOODF-xlTkZnW9waHKQTdMSSG7KUgTL7cli8vbhH6FjeK3WYq0X8-5OdsLcpabvS0701QJmUAZupGx2JYK4bPkj2LOBsAvsjtvhwAfULkivnrqIeb1EtyiXOdz0slQyCJeUW6PwXVMd0A80O6CMbfZ89dntogmBefOL_42GcM_meAxM7n0vM696npZ8Myd9vDf6ryX0KQoY3gth8Hek3vb65yFB9yY5z14a-ZRRarAYVE4WDFnH_OFuBP4hpftVhHPVKToKRbKQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Detroit Eatery', 'Royal Oak', 'detroit-eatery-royal-oak', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '200 W Fifth St, Royal Oak, MI 48067, USA', '(248) 850-8770', 'http://detroiteatery.com/', 4.7, 1302, 'Monday: 11:00 AM – 11:00 PM | Tuesday: 11:00 AM – 11:00 PM | Wednesday: 11:00 AM – 11:00 PM | Thursday: 11:00 AM – 11:00 PM | Friday: 4:00 PM – 3:00 AM | Saturday: 11:00 AM – 3:00 AM | Sunday: 11:00 AM – 11:00 PM', 'ChIJBXWMX7_PJIgR7IldCaA9XnQ', 42.48651840000001, -83.1456164, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG-PC_-rIe0NSRJB5-lSSVKWsEAhbzMIvJKPo5G6Po4FoxO9oKgBckKCJCboJ4beL-VIodJ1TLKqyHgwoHKb3QkflujOq30rNjpV7Ifnjldl0kfrVAaL8LSKouNcvCyL9l3gNRPkkhU3GgXtD0YcoXX3vSXYMSMKHQdHXJu1yjB5XGx5lnd2ZqlatnT_pXEkmeIFzUjJ-Fty5A5hw5jVfsXdoinixx0fHZcgaY9GR3blVTbJ4NCxPKX1_ZeGPWDeOatusB-5zSgZAcTcnbRIvBBgVcidiC3wTyEgQRAiF-3Gg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFqgOTpCybbCTKquU7NbXfJxVOIwxIqsSRSGJdijL9vL_gG12VRTqw0lEV-TnxuL42eQqIzSlgtoe_gNz48CwlkxhcZw1TVZZ6oAfVJuaArf_zijbiMnMOuhizr3s31tBN3dOgtPO-ts5jR7un86kMKCrivHxSrKYF0bJhMQdb-otPw7Jr_U2z-9UVHDwrHgFYJLltBUeUd-peV7Pf_iaN_3T37eta3JKXptfq0rnr9nwxGXJyHnxrTQ7L2-Xh67_tMnE5YWvrg6nbXzuEzYgmKurjpgTsv_XYMcog2A4KK_w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG2WeU9RLra7eOq4Xy9Ua6S1D2ebYWid-FNeq56kW9A3iKXlqhCGO7rKPKaFxOxw-4T-7ZVVV9wDcmLijAwJcRZFYXsNz0A92ycBEKzb_hDZx-caKiU6Tea8XesmMfsu70mjy9vGo_lcc536cv5Q-oXOYmjplKvp7qmJ8Q3CFznNDzXahUI1hRIeu1h85pq-k4HWIusfdrnO9ydjWpIcbqslCDEa52nJeGOkvYQyLshyocAgmm830a4w9eDDsKayupHD5c14pEMvxv-3UEuz8OI6WreGmF9rq33y5pmTP3xYKyRi3XvybjhfZNsNcq_eSMnM-KdLMvMWmc0ihrXEJmyaa9ZwcL-sfHBxtLfQFbhNIiQmuoC2OEvtzuRFqLlcDknTMFldxE63v2sN7mETT6zc5Cnl-prHczBpCI4AVjc3oVZ4zrU-2upgrInUgJ7&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('The Himalayan Flames', 'Dearborn', 'the-himalayan-flames-dearborn', 'Nepali, North Indian', 'Both', '$$', 'Himalayan/Nepali and Indian', 'Himalayan/Nepali and Indian', '{"Nepali","North Indian"}', '{}', '22266 Michigan Ave, Dearborn, MI 48124, USA', '(313) 908-1193', 'https://thehimalayanflames.com/', 4.4, 1199, 'Monday: 11:00 AM – 2:30 PM, 4:30 – 9:30 PM | Tuesday: 11:00 AM – 3:00 PM, 5:00 – 9:30 PM | Wednesday: 11:00 AM – 3:00 PM, 5:00 – 9:30 PM | Thursday: 11:00 AM – 3:00 PM, 5:00 – 9:30 PM | Friday: 11:00 AM – 2:30 PM, 4:30 – 9:30 PM | Saturday: 11:00 AM – 2:30 PM, 4:30 – 9:30 PM | Sunday: 11:00 AM – 2:30 PM, 4:30 – 9:30 PM', 'ChIJLfisrqQ1O4gRoSRwXqR8Fms', 42.3054825, -83.2494586, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEFTK7hvItT9b1ylAZv-tiZf3ZCB-0F23TzUHLpfwPBy0DKiODsBfdDROuDS02SuNBNaZhV4E4dzD_APNEcecOVU9sy24uZX0U99BRk1eb1SoBftlcl-5bBMrtSPxm8EdJgZeJwuYDaOJA0vNH4bAw3mpYmrbsfoUCMh7GZnNgHL3m3Aj0oGG19ecUcppvB-YuSQWjnroIt-e6-Fsayavg0Y4ot7DlcYKnlVYR0ud1U7oL9AUronveJRsaemgfcq78qoqSz5nUqgD0379obeHZ6tWiMC4gAjYDubuMKS5agGQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEh5t_IdM-nqnUpFpzuO4uWO-IC9ojrOJUCtNf7gNbM0aEAMk1YWCKu3smRbxw8XjgRoJfPVEiR4Q6mjgL7EgMKSvttt1sV4SWoFASzDgVytEQ-MHlcQB2oMsOJlRm3kk3s0kSu-DAlrT_sRQPwXKxzbeFMG-T6cGkwqYujxRkZyrv0RhdPJzS1v55LNBAL3OJ-WiGUzdDiels4Hr78FhusnBjs9ltwJ8fKKD4HC56kOjzVIkAFHbadlNkhQhnoYoTR_T19q-nyXn_ETldA9smsXuwdFrUk6UaKz4zelwnGeGqijsh1A0a3K0XQMmuOyx5ZqMqS9POkZzoKcve2RMtVW2na2jKW2qRRLwMYnMfABktoRoSClcZezntHDAqJ-b2_2QuzWrJvgClS_M6FDTklhNGRaf_j-bmv969dFzPVlrcH&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFzrvIAelM2MRJoYdbkm_OOlBHOXVNkvPSLNG49iG79z6NAHM5ZXCFhpfi3s1hV0TciY_wgGG0GQp5lskpWu3P8a1xh6QjC2dSPQ1wZlFFgjPM6OUiJt57f836eE_Cbwp3Xzw0xTearlefSZ1nhc-CSgtGEjNrijv-Cqxj9Yf7_AWhX1lTd-JKh4SfvogtYvHEBYqjLPg3GQ-pEUzJipIdpoEu2Piu7t1Ciy64tWPfobpSSX4irHDtvJY1_yLDWLzXJKdqG-pjkdieldrgr8y06wp_jPwXR2u7TzTwfu7l7r73MgueuHR34bH9pcvL6ClnsUGmBU_vezk93p7vqnUCWW5lO3j0kUkOAyt8bsPBwKt9z-YeSwlP2uygvwV1Z4G_8z3gx60XBJf8gax76rj1mRUT4mPJP0xEjoCNxmurX_rWAni9Ew50x-puQiw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Paradise Street Eats & Biryani', 'Dearborn', 'paradise-street-eats-biryani-dearborn', 'Hyderabadi/Biryani, Chaat/Street Food', 'Both', '$', 'Street food, biryani', 'Street food, biryani', '{"Hyderabadi","Biryani","Chaat","Street Food"}', '{}', '22001 Michigan Ave Suite 130, Dearborn, MI 48124, USA', '(313) 406-2806', 'https://www.paradisestreeteats.com/', 4.4, 2480, 'Monday: 11:00 AM – 10:00 PM | Tuesday: 11:00 AM – 10:00 PM | Wednesday: 11:00 AM – 10:00 PM | Thursday: 11:00 AM – 10:00 PM | Friday: 10:00 AM – 11:00 PM | Saturday: 10:00 AM – 11:00 PM | Sunday: 10:00 AM – 10:00 PM', 'ChIJPSISIU41O4gRHFggQ1WUNsc', 42.305913, -83.2445876, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGjE5mG5iLS8fhKw9rP1KDD9we8dYwfErkD0F7SdpDLy45D_A3hAbUAU6Y5A6tuQSg6gtRn9GNJ10xWvuFi9DkbGc7dDPQNwQ02xtY-0sgXVMMa7NmAgoleFAEbc2k3rHcVDiIgXFcjqizTkHRPVepzRw047JMFtISl8kLi5-hzyWhKYSsldxpFYJbx98OCikOEnTvXAL0ohnLbK0MjxCjeK4G218PbYY2ByiP16-MCCMdfn0LDprd_kHVnQUca0b6qK47eGCo4T4VxoIganOogeka4jfhyiwgq16i5uQlWdw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE6sqXvQWj2ogh5w0kaCNGpLD0WpQLltRM6Wn3Syypt7dEUMvsDftomIEi5gmeKlI_VlnN3gYAhatFcJhVA9leLgZ4Gd84jrc0cNrF5YCjTVSHWriST67SxHsnsWDA6JktIgEH0IWoxveOK_RnyyrW_b8PMZcMiP6T05n76P9d0C3IK9AxLCojL1SkqO0Xonv2ctrZ9HFnUj50I4R1hnXeFvEdzHV6uZQC1Dt3IBHoUxwdZ4AOisIZ_eao9uGOj21P40YtkTwk08Zxwome60gLr3-HqP6yKCl1io6FvawQKCA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH1XHaFwyqkXpmi9KwxxwNRH4na4FToanehABezYQOgpQGd8YC-f-ZinUmBNcNeCewl073Kbt0RDiTKXWWYc-LUX1BCln4tlvmtJtp3UQh6LVmaIo8axGO0u8aPAM177VeJyRQDIkbfGrFzGwDsuJOrtaQKg3s2urNdywVADmDcW-ORW0uFavKqK3lFuf686X1st8fJdazKpyzTcca2DdcuycouwVcv29ugifaw5umt4S9Cj2R3jBuRNJ-ABHLbyRQDlmxcqV5UBP7ENtsmfhQc05u1LusbBaJ8bvq2Hfyvbf3rM7SQId7ZClvE-yrEvIXyKcLyakzaHgQvqVN56PGFbhkOjoBayPmCejSf2hd1ILa0TSDcdqAR1kbimDEzO5r7xZ2mlJl7s4FIlYsXkFlBoh0GkKYh6zdSNmgsKKvxefAMIGrlEZ203_u8e95S&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Charminar Biryani House Express', 'Dearborn', 'charminar-biryani-house-express-dearborn', 'Hyderabadi/Biryani', 'Both', '$', 'Hyderabadi biryani express', 'Hyderabadi biryani express', '{"Hyderabadi","Biryani"}', '{}', '111 W Warren Ave, Detroit, MI 48201, USA', '(313) 974-6236', 'http://charminarmi.com/', 4.4, 704, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 9:00 PM | Saturday: 11:00 AM – 9:00 PM | Sunday: 11:00 AM – 9:00 PM', 'ChIJ8dQ85ObTJIgRowOmgdCBGAc', 42.35594080000001, -83.0660245, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH4g6R5X2Dn_QRDkLwJErdoZ2OtToLkGEoy8JJs1frU0mACjIqkZR4kA1Au_HuglR7wrG7KSF-tSuBp8L6d8tfiTBP4OX6377f1cSiegdfPdWE3th6nEzjUVB1VTCyZgMn2VyZlc5dRvB3qmp0B8oY0KpRksw-iX7o57kupPD0VbWdkyGp1iwJLIOnDQNYQq_FCuSdd24NU0KYRiNXVhX2NJpwL4sUkqbFEdjzB7E2DcRtcVU1cnA7lAO33CWURfll3opSEK2XGkuzJeUxW7Tpf_0Ga_WgzaeJatIrt8TrZjQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFrJGP-OHpw1zO9KKGiTgiTMYp3yskdhwvrXSOzV1FkksXQi30TdI5Z7TAceB_PbEai3XgLBjsDvIenw2Kq0ymLfeoqQLF9oB7L_jxr15cliLZTemiJjOCzebukDzQuX-JsL2PIsIn8Umz0E7ORQDROgYe-q1mtQjpKbgiSTsA_Qi6d1fnaBBBzPArABj_MNK2e0YKVzYvzY_9wtD7RiToNAA0LJopPPUmcX0V6Bxma51TzV1uokLFsuvzDhRvBrJ8wjPvued1BMpy7Lb2CMzNcr2BAwik1Pxv4iXg2c_FvHw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHA5KTiXw-K-cvoXQau54mke_w59hDKE682E4VetAunNcxA9sV77HDZTsQgIES03l9n-PNmLP8RZGTz4PmrLuCuSjzB5awytX09Bf3nSmmCCheATmR-cHtT4sX4fRv4Kewr4XTd7DQ9lRzRP5Ih8JDpFY0exP-XUCruh8Icn54N3yGe-Mm6z-pmjmlBEu_ek4x4YDhxsDSfIPUbbmZW2p9w9dDuE409zTgcAYCiR46Z7WGEynfs8sM3MlOmMZYjh8SPkIob5-Uz1C-_ckQUxaqEX6hg7ziPVg2nuwXUpiQ8Q7F_2wca7NhpLsgy0xFX0YU7mKGU2f-7YghmsULrpzUP0gfy9oddnSEH3ZW7rWSz0VKkqR_8VeDVFGO58zG6F8WWT8ZAAezGbfspWCJKhY8HSx-HopRfjKRb-pE1ICxiQ5n-gv0EX3_TQRVyRycw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Saffron Indian Cuisine', 'Dearborn', 'saffron-indian-cuisine-dearborn', 'North Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"North Indian"}', '{}', '16351 Ford Rd c108, Dearborn, MI 48126, USA', NULL, 'https://saffronmi.net/', 4.2, 66, NULL, 'ChIJkxXGAjE1O4gRYkRpcdz_A9g', 42.3278633, -83.20327429999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEDCtQDASXgU1qPk-5uu56p_2Mo-2AQ-9Shz4oQ7T--Mb1graU7OvlQx6sfiIz-ktLAOkSTVSD7uWQIaATq23sJeYAS96S_dFVNMeku-oHNCAsF25p6b7XaU4wjqXmrRT0E3w2byNWYKpt4m6_t5usltYrxZ4ryhgTI-3w65jQMsVYNd7kbn0ktp6qh5qmFRV9VWjloaYFjdIX5WJCpAcW2o7WnXUipbY2wsQjJAqa1NUyUf9qWX2EWKifQSIA_vLZIZON1T_uou2WWJHZOy8R4QVF7vgqGqqVKjCEccQzxjt64W3GhqvP93A7OYQkSZh40CxF76Yq8leP9m5shCh8QIcFMCEnf3uOJJPpjhrds8iSfZ-XS6OiOFDWhgDOgZoyyBAWdkRPR9XP-m9xPce4KJRImoyBnOYgZ56AM7ECLhRFR&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGRIqCs7kD1gDsyjO_hSQ2EMSyIVaanrWnEXhFfKdU9_PwQ6zJv6RNy27Qd22M7lGMP4UWAsaC7U6Arpko5pILrrS6_lWItIv-ub3mv9i_XQujhbIgaULRGaqeOJxC5rjFkIeTrpmR91ae15r-5hb80Oo9kmkzRWpBdTaBDaxUq0MWUJML7VelNpTP0tWASKdJPsRAbhwbktb3jTLvHBmvx0YwrIHaLe4_Ichc_NfDSqeEL3ZAWHbEglytapN1eWJsuMdLLlXDGQYUQZlwv9z-7nbceLOPe9G8sfXtSVWVoo8LgXVflwO3CurXSxY3YePS-SeXgnWpUvrEwrJAzMY3V0USJtv4HtKZAaG1jVAFVg-G2SqTDbM7azJWDUxKz3nGXsvOkQklANQSv3trMhtgXrEyBvhOevMoSJGy5oDk&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHwEcVS_K0o46yZNcwruTDdAFUumiU_j69nPonpajqFpsr-G1FGFkOs1ysq-AZaM07KS5hwybInrrIg_zpB084bpvmFqc8FUWjz8VL2l0c57uZ854XnoOrGCoke9KtedEHCO7-Kx2pOnSdP6YvR4c_b4fAHWH3YWArMWFHZChOgYYubEiXr4gmrjVIUUl7fi0XG6CI_FkdtSolnZuqQVrAx3T_Uy-Y1vwCQoV29wlyhCK37ETWIPkZ2PK9NzC_UCeIKGQZi_jwitR9a4rCK7Si0CZaCy29-eqGM2AARMHC_-qfV47gYMyf2tjPfpwWgZKTDsYetd_pidQwx_ZoiMuJ4_4pKh1yBiVudPcQ5Yizx7h8fd9CvstI_dnCBDGfUgJGV6chHNqzDNJoo8heR4gl0sF1PoLax6HWO2fN0YN4&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('The Coriander India Cuisine', 'Dearborn', 'the-coriander-india-cuisine-dearborn', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '16930 Allen Rd, Taylor, MI 48180, USA', '(734) 225-7361', 'http://coriandertaylor.com/', 4.9, 130, 'Monday: 11:30 AM – 9:30 PM | Tuesday: 11:30 AM – 9:30 PM | Wednesday: 11:30 AM – 9:30 PM | Thursday: 11:30 AM – 9:30 PM | Friday: 11:00 AM – 9:30 PM | Saturday: 12:00 – 9:30 PM | Sunday: 12:00 – 9:30 PM', 'ChIJeymZQaY5O4gRAEtbVGhV_jo', 42.1850059, -83.2286633, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGbaDc-1h7YPKAriSiHOhGy6k6gLtE1mAFWFpzCbJMhUjoB-tXWx7-7mEsIIGtbMBB6jPRXS2_wt4JQQdio2UaV6V11inxeZN9XSb2TmzLYwXyjZYdlCtVE1K2NYjDMW67QZ-vivHT_2Bq9urGQk6Gtx8KNms9GVcPFYDyyxQKPjku0G57hFNNbRtW5k93rFsy4tyr-QvIgODEuc0vwKAxM_GR4n1m0S0qb7-zj3huEqjASqrUTrcANEgFo6E5JP-SPvQUAnVPPTBRnnou6nMHV_yQLBkWUA8-0zsnnFn0eLHq9QRHBSssGTGYotYdQsM2UWnUlTumf6sCDfq8oWpK_EpdCeMQXFKDihvMI9CFtbRJPGrXoPB95wVk9nv-78koUBmwzugAVsVyH12RTVmCXbFpnHyXEYsJl9-yvvu-dIfp8YQ9odHV653nXpqo8&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF74acV-2TEbrwe9IT9wStldrZaBZvbDgI9PlLFZlXUzm8GeOIc0aiUSYx68wNWbA6K6k8HeHfXPexZkFYvwO--DO2TiwiLFjG9_akTGEObNJm1DkL_EyVKREbUnvd9P2ySOFHAwISqQtguU8Z0ZTBth7ukb3cFc9pFVOwfosRk8x7yUXSfuQ_SBcmMRGFFg0KP704rnspyOSUM2bQfHNlR_MUEFrS49nnsjeZPAZEWn0nNBgHqrFsdik2YFHJv46RS3IXvWJ3ZwfkMXvE15Av4NVafoWobNY3ujT_5BVUS_w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGLtDW6CY4y43jy6hqbogS8QQZeGQNJGcytGeiyEp5Isw3Adp1N2JZVDrIioI5V3aDBWNl3tTwflanthlRRAjiH-MNiy1SATPcPP6Qm8stisPco3cg_AC45P4fW9OyD1yvQRbcFsc2pt320QrVxtq4x6oNW9iOUC9YytIdAosMM2mLFBJ9gi-bGDg3shXHZhgGdNS3YZvLTUmq1VxPNXbXTkzdQQ7SGSEVGmPyEA8_94HxkJwAUmfKfbq16cIapeyaOjxg9JZ_759ZUrBl6plO3X7PctULe08L2YN8GI4UVv5CWSQ5rbiy8uIHDHHo2TqqBNTZ6nTvgnMPuV0fNCsM6LxFlPVvJ_KXOjR6Q3l1BV4IX1FtwDRAEeAoXR7xf0Z0e55oCuxn5I3vN8THOEMwRC4L3zyFTasWIA7VxNQpncXrK8ZtpAL8M89b0Aeh0&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Pink Garlic Indian Cuisine', 'Dearborn', 'pink-garlic-indian-cuisine-dearborn', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '18625 Ecorse Rd, Allen Park, MI 48101, USA', '(947) 948-5680', 'https://pink-garlic-indian-cuisine.square.site/', 4.8, 1198, 'Monday: 2:00 – 10:00 PM | Tuesday: 2:00 – 10:00 PM | Wednesday: 2:00 – 10:00 PM | Thursday: 2:00 – 10:00 PM | Friday: 2:00 – 10:00 PM | Saturday: 2:00 – 10:00 PM | Sunday: 2:00 – 10:00 PM', 'ChIJ0ReIYzU3O4gRtj4r_NBWg4M', 42.2562441, -83.22568439999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFGmZDZGAgwrmXN4BAzg1ma3bIK8hgjfet9pY33hApvKpg8LvAJSb3aXZrORuKC_SWSNUImUOZ-eltqiigyVai7jqgoCYwgdICAu7Eu7MPTHNZu9VNaava5sVsTHtl7B5JBqAsU1IGNtTDsQWG3ksHEhn1sAZS-g-MTl7mf9zgA9omp4mrFcSI3YecKrXCK-NeXXq_mEw9b2A617AU-LUg7H4erBpwtvJjYEcA72kKNFMWxJLsmQeUtSPZhD7qZfeW-_SA8jafFV3qPCd5jn1e_4-XlPfh8xJg28Tva0LNghQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHz8jBjERwbWuwvWL9mM8NxKHJU_MU3iwaziDehv3-Myyq24s7Wmqw0MOHEKL3p1NkUpeZQhxoufkqGMaXQlO0ZeL0hQ_FvTXz5BMhi-j992h7xAC98YqniJdIoUTq4FwHGxIspx_bGggpBg29CUqwUWha_-jABiwNLjpSDuGOGzGSVWJwFgKcNbScOBZ2FOf4RZ5O0FJh2HnsSMbth9FVcDpGInu_mqikC-jDzB2bCKh_BGdTqDlrREM-a7nAceOu-8JM3YzJkP9n_GC-eC4Nr79of1QFeiGQx__Pw8-kxEQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE3JrvbydpgrfOG7co2PefLLp-mXMCZYucWSx9Xh78KLSfQi2wBtsFsIxGaeTQ6EQxs5x6cd1Ha5PuiLsmVmyE9l-IlUhJrz2axX5LP9jZwyk9j00T1-XgdWXeMhhbLRWJUHSSBfR_2mk2_VwRKltL0wZj7elJElvtsrFbiB-FB5rwNC527cBEHpXoy2NygVkQOfeQ_dh7a61to_zpaasxaExVsBRDuofV3Cc90kuUZ5fhBwc3dvAHFToA9r2QvL_WeeVmYViKXd1ZVxVY6Wu0Z5n1c9u1FZm92YqLVmP7YEdIV9rb3Olo7NBUrKG0f3zRYeDWN3ufHOLm1QtAVSLCl82PYGqwkaOFdWbRkisvMQXwvZu6z2Zr6sKV3TNATYQ6GP_4EKeqHapIYDqyJklxUk2ZOHFyd-X7mN_XCqfmFsgrpz_do5uPOzHwcLAX9&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Basmatee Indian Grub', 'Southfield', 'basmatee-indian-grub-southfield', 'Pan-Indian, Fusion', 'Both', '$$', 'Indian fusion grub', 'Indian fusion grub', '{"Pan-Indian","Fusion"}', '{}', '17378 Haggerty Rd, Livonia, MI 48152, USA', '(734) 744-5149', NULL, 4.6, 294, NULL, 'ChIJOXMmwQCtJIgRQBkLczlI6Aw', 42.4142406, -83.4319603, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE5Flt1Kpe0iuzR2MW2rBsf9hmlcAbXnDw8YkP-fu5HBmsh5gjOnPkrZFAHQLvqOPQezVmYSXnU0b466MwR8fZWFdFmJhs3mKBTJORreORvx-8n_Sx0ik6w7iiC5E9zIHSBpHedqLYwg0Z9ROa5bi8NzSqvyLIFTiZLNfRdcFL46Z084gAFrqkbSPtT1lbIHVRDs1cohZFj-Q5BDH9epTiHawIwUANJJPKVv80IjikL_szQYHxCA4QAaR6I_ttJSj-Bvd1uQ9oe6md_sSRnqGvaysQjnBt7uXU31eqQgvnkTNcQ14Zk3QrgTc0R3W8vOS2eDY47xfhNmFtKSeARol6O_DO1SvHaCU2wCbX86K6KkAYh3mBCY61rLvfqm3S4EHYlO3TX3dLhzEfRy1fzhAeO8-9T8F8UuZMQSCeEI7gDM-Jo&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHvLHJXuIvzQmHQY5wohtuzraPDh5RBMjjQF58UcIMUqOKNeoo-hhFmPJ87mDaZw0kOYXKJFkN3yOV5yejQ8qqpYD4QzG8jTW0JbzKdIt8EUMjdB7C8SG3WQvhRvLukWFWBSzRJxV8i4Nh_lumNYRXpvDD7vA9p-dHnoSume_-wcP8a_07Ja3ctToEVLGmMukbwbk3O-p9-_dWaJJGAeDMYltJAdsulJ77bR169va_Ro5l5du760C6hLP7N1jdVDUUa-zIACOLSa6HpGNLA6JruXy7wZy64NYLmryAOjwSEtYDYS89fCskNpjkzYcjnKEe8AlQZ6DIYkq6D0ISG7cAFYscHNx65zzLywKQmUUQFxxqK9MLNtvKXmrpUv1iMAUt4eqz6RH_6BBK_Q9aRmw9I-Qz1yaO9yYhNS1P4LSRsUw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGciWxz0q8ArjfqXSMrkAhZSNCGCRuXnu_Im6Pt7UxwbejALhDZmpwffLwhpYRzZ8Yn5bPAlEpWlVQE0dmmWcvIYOtkc_XSK1aq4h5KwS7FwJtRC523sRIBGw7RDJY9FUNFmvLXimHZNv1_VVz1jUMw3nYm7qAVwdUZTJvvHiKJH1YKK0y_2_k1rPKlYC49N058Ec0VMseDr2lGODttCwhvlyEsYjWAL_sw1dESD8fBx9g2lGomraZnD7NsaWaUTrp6Ep3xk8jl8TVlAF_o8nXmwGGbld0r3llwU96YZoxXvnTTWv09qHbSm-0IlWMqnhokrUPr8C-xWWugOud0Ag1ou05leo5j63Ynbiffph6tFGAxvtcDz93vqwdOLoiTksrluuHLkQMFVbsmWpaDv4EM8EIZoQvnESsYXVwiLQWUkH0V&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Deshi Bhoj', 'Detroit', 'deshi-bhoj-detroit', 'Bangladeshi', 'Both', '$', 'Best Bangla food, dum chicken biryani, fish biryani', 'Best Bangla food, dum chicken biryani, fish biryani', '{"Bangladeshi"}', '{}', '12835 Conant, Detroit, MI 48212, USA', '(313) 666-0082', 'http://www.deshibhoj.net/', 4.3, 199, 'Monday: 1:00 – 10:00 PM | Tuesday: Closed | Wednesday: 1:00 – 10:00 PM | Thursday: 1:00 – 10:00 PM | Friday: 1:00 – 11:00 PM | Saturday: 1:00 – 11:00 PM | Sunday: 1:00 – 10:00 PM', 'ChIJS2_G4k7TJIgRAYwCZzimzv0', 42.4121177, -83.0593293, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEERiJz3x0PCvTL0-Wce5Db7bvoBoY7Od3tFKLs82QDoBOTj6ucPZuE4e_AN-8PMVH7Co-FqVywzvKqyrw3A0FqeiEbcbIGfzAnDrJsIil_2q2MzOEp6XTkT8fvZMCUECXpMmQYH9GTh2_UhiUus27gt7z7uBe42fXjiS1ReeCMOuQx05GEnklOWEKITjywmdlaTxNsyMqZI-yw3iDAwkMYY_EJj6CKzkEkl9KaOpD3Bf3j-1MSBoq-8_KQZRLfDKfNT8ebXoAYvrG71r18_wXpgGGr9GIq84Bywhkte0M8bNA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHVlSN3L7d_mvuvYZ8SSnviIHWlptlCZid9yCRqTEbYwGMWDtfjkgFAoqtGVmmvqZ8R6lOpd0Z-Q4fxJPGT4cy8ck6tLL2PiTMinIDwPyjjPaGYXD_yF98esTOQ_oXDRtbmSGnBwTXcvncyP1n7dO3LUH9GcdhjsE2ACJ9BdcpEeaQPmBewAudWAckl1dRTuIEM3f9Tkpqj2t4q9FA2Bxm4wYt_WmHpp3jMmbfcl_Xq4T56R8LDYFJX53R8o_p4QoxuHoc4H5GTuIY0VldowBqiI5lzaSGoFfBYCEznucaXDw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGfgGYRhv77pR0P1lAXWd3_H4cNpaZbSDVyFjk5tj7TjnMAEifKVwTesygL9IyjrwH9OdW07v7-ZKyu4dYg312zI9UEPh0Qrn90qi5wGyhnPxK3MAMb0fGDY7bfzU_sJWUPOQNeLEFVSV5hyl6vreMhqjwjZnZSQi7wjLQ8ng0FWYq_SSYncXZLO1fcyPC3Mrh3w5JskvLWDsFCFivQca6jvELa_9VN2JuTQajj9x3qPZXDBK7o_6gZVzwzN2p1cOWOAL35PDz-8Glhhp93TKvPGupMkoBoYTbwJrHekcTLxg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Aladdin Sweets & Cafe', 'Hamtramck', 'aladdin-sweets-cafe-hamtramck', 'Bangladeshi, Sweets & Bakery', 'Both', '$', 'Sweets, chicken tikka, naan, roti, Bangladeshi', 'Sweets, chicken tikka, naan, roti, Bangladeshi', '{"Bangladeshi","Sweets & Bakery"}', '{}', '11945 Conant, Hamtramck, MI 48212, USA', '(313) 891-8050', NULL, 3.6, 986, 'Monday: 11:00 AM – 10:00 PM | Tuesday: 11:00 AM – 10:00 PM | Wednesday: 11:00 AM – 10:00 PM | Thursday: 11:00 AM – 10:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 10:00 PM', 'ChIJScacpj3SJIgRcOky0GfFpAQ', 42.4066469, -83.0556988, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFlC5T3p2Zhot2uV0rzX3Ebn53OFhp-PdlCCUuT1H_J4GG-Tjgd4no0ahoEUilEFN4Vt4uYmfoO14k0Ec0U-KwuIybjcUbtYgHnEd2fA-gf5DQ0zkgu9M1lo5ekSGG4zGQ2JVBpEbWqeHbLzHJWsGQelSJwS8KWVqh8wRFVY2qzd3reEDlenja18d900RYRPxDhDHodafxGjWCJN4rjfE0xrBwOp1VZFu9legW-inW4xLdPMYjFjcxnEM64eAzz50etSkZUUCAgr9UvNIlodl_ukyPZm3GcMjw3cCbx9k29x3ZB3K3xYPIfbdIlIBrpVxKfCsoBL2reUu35pAC5Q9skz99OEHKS6qPPh6BZb--PzJ6w_LN-k8laMLdl8eo8Rt7dhqSHyHB0u6F81-ZwuDhmTKbNkfCCVkGe1mF3wANEkw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGO1vX1h5LUq600Sv3E1hl5CWipCD_9tyNYAAbrz3u4ld8SsMDoReQJlKoRSnYQ40M4r3e6ZRL0M7s4Z_UD5cwBcFXMfxOWS5wju8SWn-Jcz5xwBI9FcCuZZgxeq2rdBRYzYAAOxjprW2IxHjWE1Iq_j7hPFLCOhUiyehl9EGM7-df987qnrklouttIaFbksHAiF9iW8s8HV_sl5aiu-1yvygiOSOe5Qa81GDT7oMdZmh1ZAd37m0gp64PxhR9TdnQv0BwiWbUKATJbx6GwyHs1Cl__qmmKt0oPi977e2HS6jmW6pJwWovclFpebG_vd0kfYdI3TriQLIKxgR65fBUh0YuV4ri74OcnomeZ0xw4rYc5S6SSC6tYuIknedxxG7yKyyEPH5NonfJnO0il7WN4TovMPnUSto9LGfnQAIGSn8Z0WJEVQ0nRMBdf5eAU&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEvxchgCSJGxAnPyWQJ5Ty10T9Qewl5aKfwHP19KlM12gu6z7h80SUHidxEDXotePwhkk589Phmdg_3mhWDh6ATOKqhBqqPCkZec1YEo4uaNPklSioRfZS3Wm0-8-_qLDibwKKfWCBFtyN4wx37xwCSpObKyT5kz3CSmXcBXkYO4USq0WxH4itiwY54gc4bIo-FclvxRZCdiTS7txk06wmW7Hy9sCYqmEqxNX7UDJzWLIE8jvQl7WTZBDvAi9tfatb0eKV6dv5oByqCZIjJotcenzPt1FZtTmWP-YAG7cnJMh8HbVF6MFkTQCx2WTf8NqukLHodlT6bbie_6YckC190kiVRyuRjyOHIUAfeNFToUKVHdGm1F__yijMNEllnvj4wFnK8S-VvzUBRH8Hg8L4HKEA-683pib9WhYs_KzQAdCDm&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Bonoful Sweets & Cafe', 'Hamtramck', 'bonoful-sweets-cafe-hamtramck', 'Bangladeshi, Sweets & Bakery', 'Both', '$', 'Bengali sweets, cafe', 'Bengali sweets, cafe', '{"Bangladeshi","Sweets & Bakery"}', '{}', '12085 Conant, Hamtramck, MI 48212, USA', '(313) 368-8800', 'http://bonofulindianrestaurant.com/', 3.4, 233, 'Monday: 11:00 AM – 11:00 PM | Tuesday: 11:00 AM – 11:00 PM | Wednesday: 11:00 AM – 11:00 PM | Thursday: 11:00 AM – 11:00 PM | Friday: 11:00 AM – 11:00 PM | Saturday: 11:00 AM – 11:00 PM | Sunday: 11:00 AM – 11:00 PM', 'ChIJ__9zcz3SJIgRZkNLhh82u7A', 42.4073761, -83.05642019999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE8pvuZAUUExMztybz_3III-LMViVZsY_Lf_e_eFSZtMzmvVYH1nh9lKdkhaC6QTpXiPcACuC-Ir3pSEzYr7sQdHEbVf3dvxG7jtZq07CX0F6emG6tX_H6HrX85mHziP8iX5wy7oZvyChqdimoOwgi70zVZR18tDTuBjyDZGco288j8tJ-LhAOL0mTXqAW70PM3aWTnKpxeil2WITdjsV2QOz4Du2iPTGmi6O4cVUAfX5DyjcBONfNaPsgxpHJMYrQMKrGlPWgS0jvPEdH-4BCkHBbaM9POnijMvQNoDA82ZQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFe5BgjMfHqKOLo5CmCGOfM92rVreZmn1DlFF6hUYds6koOhd2pQaGcvTNvcRujlGgmdtMNYYeeAL5zt8CCbHqCOWbgzZbFhRkHaBk0OZT3wyyJXXx9ZnzERBxTTIJGgLav8_qgFnwJRnbsvFleYKdUDHQjYIwkk5wPVQ1p5S7vjql9TfHEEeRZP0rIEwy-lQYEB-WAvYloMA8IeVvDEVqeJtSbt7y9vj6cwQq3czWAOR3feUL8nfz9BA0f31LFCKhxSu8GJNZa0nNmoFVTLBmhEDgCWSEdl4Gw3e9JGOcn8lxlqP9n9UE9fOBxLuWQZE7d6mVh7st6AVIOS0riN-P-jC--ltCw_Pze05jTgplKTEqxPMtR6WbDegSJXWG2n1hObwRPHVQoHhDUZJs8itJvI3OH0t1uv64e45qbgK0tnzdK&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEgR5UGh5tB8qdQXpNTCBHmFzRjXCgRqFj-NgAtb9nj7Ml7H6JjrpszFQ-1asb7gjLvS2QidiUKX__QXLhmgWx7yzxP3_Ywh8YKq-5r-WmvaGz2AZdxfi1K91TcFoNKLwAk2hBDsjenF1Hu962YLBmXxlVf1oaCNE9boBDf4HCXa1MKj_9qfIlyZTzlI15uMzvfJIDbsrHDYxAJgadCrmZJ3Qacha1RV8MistP_6Cmtjz3xPFAQpPxb9INeWgqK8QxhZmlQ_Ig_H8zfMntwEjooUZx584c5ymLq_DA1XNpCTb9X3_k1jyHhQIWncWHTZM6rCufbW-6c9V74KnuxCmIDYm7oDuqE16KwnJer65musK8s1L82hhuyRV0Ic8-RNg7HD85TC7P_8HJn3N9zq-g96FFfMSijXsuSyDwh5b97og&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Premium Cafe & Sweets', 'Hamtramck', 'premium-cafe-sweets-hamtramck', 'Bangladeshi, Sweets & Bakery', 'Both', '$', 'Sweets, snacks, samosas', 'Sweets, snacks, samosas', '{"Bangladeshi","Sweets & Bakery"}', '{}', '11357 Conant, Hamtramck, MI 48212, USA', '(313) 707-0986', NULL, 4.7, 18, 'Monday: 12:00 – 7:00 PM | Tuesday: 12:00 – 7:00 PM | Wednesday: Closed | Thursday: 12:00 – 7:00 PM | Friday: 12:00 – 7:00 PM | Saturday: 12:00 – 7:30 PM | Sunday: 12:00 – 7:30 PM', 'ChIJM-2T_yTTJIgRqpqEXegjZ4E', 42.4031835, -83.05340389999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGvaDHQ9NK3G6MTtsIjyAOtkq9juTyGn9ebjoAGIVIUkGFEXtMkX_lZmh-ZZ78UYOte5P31vpp0KzLd3jjE4TiCLNJ3XV97TuIw9yJ240XWo_2QnO4nkHFmy2u1Jk4bu894zFyhjf73lbtyxrWJ5PddLS6Wqvo29SsncmvQtfi8mma0iDpjeVHT4pIRmH2TJsrW-jgzY2qwr5lbELxKSCUdFrAmNgr-KjIYUaH4sqG4LTVAiW_lA1k4PWeqgQXUWwYolbXTptYHSLx9Yra9ugnBN8sYsYDe3fgPa60teQSlXA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGKeAYa-YxppvfJZe88JdGuI49zrcJZrA_M3Y-jW1DldidG2EpyO97Md6Hd7JE5XZJU2sP2R0lR3-9nqANA_61Q-dxgU-WWQxl_RZ-lOG7I66_sXZ7BcftcuMOPCeELNILkMgNI0KD64xYpkMMgPKYzzN7yQNmiyk2Kzxko70slPkMuxWD5CfsJ_WOhN2BM2OVx-b9IaZz422kBDrL6t60yeBDcrcuwkJz515KXK_kpYlp60n_QLVIsG-EhC0KcASzmbKrJn1LoVIxFYPfTiopfLHNj43p_IScpFVc4ixCZVoC-57dTO59lNfxgtajOLYaAnirJzk8Wv3llM9pDkTzba-OWDmHlYqc-1lCimFOxz4uEPooBTMM_-yzrnvGLVE8BkLYfmogHtXzvDRQlk2nK7jJFWadZ6V5w-psEUMUCDA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHOMRDRH8IT3acsFy82cQbGSasgG2q5N9PpL6V_rw9UUQmgQyxcG9zoyfk1JdYhyZyfuqtWtBqWbqNDy6AsmmvUAZBguOs96PpGGA0tkPYnSqGlUa8wHRlDy0kgPFP04aEvu8Ve3iRwbUTvw2CURpZ7NiNfLHGPD2-Bax6gx7fqXb0UxOgUbHmm00bx76HORfVMIGvWlrkU8rIpxpUWme4f7kZBvWnRTTjuItZ2djkU-_jtpU476dD8k2g00ZgjvJKHOl7w-cvE6j-Zf7KwS9nKouuTn1zPelGqlB3sZ4icRg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Flavors of Bangladesh', 'Hamtramck', 'flavors-of-bangladesh-hamtramck', 'Bangladeshi', 'Both', '$', 'Authentic Bangladeshi, curry, biryani', 'Authentic Bangladeshi, curry, biryani', '{"Bangladeshi"}', '{}', '11341 Conant, Hamtramck, MI 48212, USA', '(313) 436-6069', 'https://flavorsofbangladesh.com/', 4.5, 448, 'Monday: 2:00 – 11:00 PM | Tuesday: 2:00 – 11:00 PM | Wednesday: 2:00 – 11:00 PM | Thursday: 2:00 – 11:00 PM | Friday: 2:00 PM – 12:00 AM | Saturday: 2:00 PM – 12:00 AM | Sunday: 2:00 – 10:00 PM', 'ChIJWUNC1EzTJIgR5KGfpHRe9m0', 42.4030429, -83.0534175, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEMO6ckzNAtNTedSUHtl_ibw9KeYWOekMTPK90NBCloI6S3koSpee7uKlJI0KQP49CgwY4xRbcEjAqqgZgMc6-LV8VAOxV11dJeSRh9Nq3ggp6xtyC_QA-iLg6CnU6oSz1B_9sXnGkF3fVx7foImKfMSSLKgfz-VZhc6K3dPYnxJQE7MvQ1w3ipFEB4hjkNUxcfOH4jelrCr6sKf3dkd9eZw-WSeg9I1yEQDF2gALC8trulEYdS7LVL5pP6cg_eSm5D_bhOW_ZnKNZcEsYZwuq5RVhK9YfWZ0EBWBxsLa0CZGUPMBglvWxg9aAlMVpq4uLFWYj5YZmxHlz6u9ApeyHZRKyPLcM9Tp0s_wpcpAP0uPu1lAgFRNb3m6pbwQoyt5ws3GsuA2XJG4MM61JvBnklgXkDGq_IKR_I0NjtKS-LbE1q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHKLcXKlaFdoHr5AW1qqvnbHeebqL7QjtlPoG3ryKBzG5xf-QAdGIl_Iwu7z8QK3qVB7tctBhCHDpq24thmlxg_zfpbFrsYsozI4Q7WnsQUnNWFdiPC0zEGFIgGkFU2SR1Zqwh56w-ZE74c3Ik2mmASYHEPFxAba2Ueebfc43ZZViNhg6FtV57bHEbbJYUzooP3MYw041DSbdgAOgLYPSacl1cCnidI1SuDgEbavB6nBHxYuDqAhB-_ys_3tFV9KktwqAK8OUytornBN2tgKO3arlgLbCy7mr5lB3dc2JySG4e7zTQ-eK53dm0QG1gIuw7AMFDPYof_-vAOOWQuEzbCM0FYv6uVYSgZxRB6CeHemw-h3pT5HdiIlESse6YagfhR3RY8GHMwBFS3L2MbJaMM1f1VyRz3uHVoDEHl-i0CzaBj9aNrjNz8J92hOA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF7YNgIeE5uzaw6AeKw2hgqvvib0saNwep6Uh3AUNeX1UznUfeG140vlMQ8WLmJCwZcny8lCir34b39XHtrtsbmS8QJMFez_YlvrQQnnzA3Vyg_m7p6uto06dIjf8qSRplrSjmmS5hxJdsjg1yA9qWFGu5vhcRf8Ci2_8hqbZ4LJbgsF1C0kxDYS8mXN9j8pRvRhSMFmChEf8ZMJyRDTWBfAGJxTU1K1Ad6A-6GMuM5omh8HaxAsvcTwBCYnib8Xo_b33cJZxmeZO2eDp6TqkL7E6FJhzgyS6UM2Q6e6ENy-Q_9ZdD8cWnBmCRppZy2akwZdPbPEw6ZuKlKpl1lwj0cKlWOrQTDl1pse5Br6eZ02bxG9rcYs9O7LmexU-WVR8SKgpshoZImfes30FAuWSejoxSZxiEy8GgGbyccQMN1XXCJzKwkLtIAkvMV_YfL&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Sumaiya Indian Restaurant and Sweets', 'Detroit', 'sumaiya-indian-restaurant-and-sweets-detroit', 'Bangladeshi, Sweets & Bakery', 'Both', '$', 'Indian/Bangladeshi, sweets', 'Indian/Bangladeshi, sweets', '{"Bangladeshi","Sweets & Bakery"}', '{}', '31632 John R Rd, Madison Heights, MI 48071, USA', '(248) 597-4500', 'https://swagatindiancuisineusa.com/?utm_source=google', 4.8, 170, 'Monday: 11:00 AM – 2:30 PM, 4:30 – 9:00 PM | Tuesday: 11:00 AM – 2:30 PM, 4:30 – 9:00 PM | Wednesday: 11:00 AM – 2:30 PM, 4:30 – 9:00 PM | Thursday: 11:00 AM – 2:30 PM, 4:30 – 9:00 PM | Friday: 11:00 AM – 9:00 PM | Saturday: 11:00 AM – 9:00 PM | Sunday: 11:00 AM – 9:00 PM', 'ChIJDbtIKQDFJIgRdic32WSYe5k', 42.5261661, -83.10602949999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEkkKX2oPo4QWU4Tot0FDZm5dPLuCEE9uUN9_n59qB9TWCWRKp8ywwu4f22dC_66b9E1Mo4obkLJblx6PE72RaQTFZ3l3vTnZS6QKxe88vDCEfdu5at2CSGmYYqfzgY84B5Uc2N2eIBOF9YqhL7DKWVRzQHX51JUmZZsC-Qpp6iLZDZAevE6FkgRfPYPsuHVr-IUQCk3mno0ALPtvxeXyraJLpzW8Y84y55-Vg6Vkxe_it1iQXCxRJjKgy2dswStqxwc3WaYh4nQnyMZALMhBQ3Qzs2wCmNZgc2177nYTcQhw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGzg7Fgk8TZsIz4Amnv4LKw0fLG2nni4HWoV1Y_jZLAr9p2cBzxgotbSa9QDbRjn7Rxi5pXLc-QLbegalKPX2brACmflFvkgydSUdaWHDCEaEzycWhRszw0QPEYNQpJzOv6vLXxd6K2-uRsyyrmo2xEzcJ3aH6M3_7gObvFrhAgy1CmupMTPLHhaNrnRbwTnblwmDu7nsiVuPEFbnrR3EiI2Gk30z-eFX-o78l0zzDm8323UXfiODgW6RLjn01HqEdVQUVVZ7EjyPe1zo6P9YsVBwD5wHlKqrbm5y9qP34R8w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHKAgRGFu17M3QKmT450Y1LY5eQ5_AbwUNlcy-7XO-5npYdQSFVAzTF5nmh4CGzr35nk1EbUZAC25A-PBmB-cV01JueDhHafPcRdyJo7JE8NWteRY5N63Hb2ZOx4eF2giIG_vqK0H4n6iURTVELdz5jV0zWjezKy92wUPdZ3BYmvmLihWFssVTKhaaVrF66WiUhBIYCsfMKSi7rv6-n3-hczgG20UpkOylDPpYcV3hOBWqI-U5UF1H-f_96rAbs0qTz8r6tFDprRsGscJzoUPaoHATCoFXcqzTkLo_oMQm5bA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Amar Pizza', 'Hamtramck', 'amar-pizza-hamtramck', 'Bangladeshi, Fusion', 'Both', '$', 'Bangladeshi-style pizza and food', 'Bangladeshi-style pizza and food', '{"Bangladeshi","Fusion"}', '{}', '12195 Joseph Campau Ave, Hamtramck, MI 48212, USA', '(313) 366-0980', 'https://www.amarpizzamenu.com/?utm_source=gbp', 4.1, 836, 'Monday: 12:00 – 11:00 PM | Tuesday: 12:00 – 11:00 PM | Wednesday: 12:00 – 11:00 PM | Thursday: 12:00 – 11:00 PM | Friday: 12:00 – 11:00 PM | Saturday: 12:00 – 11:00 PM | Sunday: 12:00 – 11:00 PM', 'ChIJfWlYOzzSJIgRznPPUo14-yU', 42.4061098, -83.0644804, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFs2_Kqeh05PeqaTrbrsbU3Mk_09ETrZRNQrQZhGDVHVX7T3bhQXKHaJVCW8yJUcvcf632YVLiw15hCazKt8FS4rFPYUpFyq1tgDaSpFLKl_lk6AIOWuFc5U4J8OUfFCpEwiw9GqtJZP-IPoisNDC6EngY9lqJ6mUK4Ac2gNJGQV62s6gXMVAIcFn9K44udxI-C_a6W2SXgVkhlnaCq7iIv2R_RLlfLn6tDl6PfnfdjU0ximp0fe1-NTmy4rwpsorTpopZ8Jktr7LkR-OHHGPw1tsuklzOClgeNtxIw_PRzF91nc-s4I0gOl9vI8mP-8uMYpygcO3Vmp1YWJQHowhf6L6X-N-1wA0GKGE3mP6OHXgk-D-vfxlIjugQ6THu3SS6Mji-DX1mgqmfkVU3E5cUxe-tT3B7QPUAanR4-hN-pAe1N&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHxlCLDp5IxcwjKExuT7Vr-4s44zWL-bzKG6d33iDG-wa6HhSR78Z2oF8NvyCJuPzw0bopf-M2TvZ_U92pcBu4FjB0ST2AoxgKm8EtZI07Qs4Dlz1TOqBiaym9TmIevsCOH2gEVY62uVJa3FL6V69-bRDOkUoRqvqW5QilvekpUZWYn7lNoOUjBFkgWilLqo7HXejQbI_Qm3usz4ilVABWCWwGza_v74Jc1sP6E-LQHd9dCq73a_cApmX-JGAeu1as-foiIQ9lZDD9n-kfwFzGqQ6LB1xPoOX7-pnx3RduzmWy4QPCZhW8f_bmqVMv0dO1uzXb3Acy0HyJGIQLTOP9mSw9Qsrg73SjyMRpy4e0YrJFQQAQqcXqW55E62IbQF-iyVX_Ck1-eENyaQg9nlVG4vnpMndY4uPqmzlb5wDzUS34h2DmrPuL_phWiVw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHpk2v5gA_UTGQg2_bmeSglaslPJKIRowunsqDhaL-W73vb23QN_kbCK9RduBLSD3wLyF-4PA-k1IxXZyfHmCs2lG5mdmwKyRFMmk-wxB1g6cwINTEpohePK_sOt8GiRkoIePnWVJmpmEEXmRdFceRkn9hh68ckVdDgvjfC2BRJKPtk56uysHs0BpKGQKgDsKwaeSPzYIgNUdbtRXsTIGwsGxOTYTMAPpGpx2rGe7pcX-lBldhbDitn1qf1bQvW_OIYbAneh8XNLfkJvn5JxKcAfACeEMpx87AASk42G5rs9gbucNL-GD5QDbm-cP6kRLmDG4LsxGSGcmO5qjcMRGbkmrF9oTDnVqYIZRjIj1FVP-BOLMbmsYW20Kxl8HFbbFqY4IN0aQPUafynfB0EYVrvREaOVFUX54KO7UBi9QkR6vAs&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Kabob House & Mouchak Sweets', 'Hamtramck', 'kabob-house-mouchak-sweets-hamtramck', 'Bangladeshi, Sweets & Bakery', 'Both', '$', 'Kabobs, Bengali sweets', 'Kabobs, Bengali sweets', '{"Bangladeshi","Sweets & Bakery"}', '{}', '11405 Conant, Hamtramck, MI 48212, USA', '(313) 283-7131', 'http://www.kabobhousemouchaksweets.net/', 3.5, 93, NULL, 'ChIJEZaT4_zTJIgR1Dkbrqc6jBY', 42.403288, -83.0535507, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEaJezMZYJZ_2ZAjvKBhcSio5j50BTjKzo7htXRlPKrFm7gck1-yrwN6W86EisAR8imJtMIWNInuYj29asGLo0GnjyTSR46yObFUICJWDPUVJeBzghxapGlFVZTDHP0HGjIcXbKXFfg4vwSx8_jHLYXWGeKbGnQ_yq8DJYrFLlaIEUcWv605zUMbA-Hn-0MizF9kFsW71qijNnfbGzPi-R45N5nKELieMY22dZKvWHbiNxP6eytuehfCLGD2ej8vW2Z_5AOMf44rPcDcW1xX6Adm16UzXzcXE80m8szRYmKL7rZvbY2zJfBj0c1QpEsj77lCLwJBaVEpBUx5Hmnc41NUs-pBCKdG-6sc0h3FglRAoAM9WbFBmWYHdF-wBU4K8c5nZfY2u5x7ABqoMk7DyK2vkNBmr6EguNEgfAqFGM0d5pE&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHaRwj97yYmQS-x8DxiReDnDTnYeup0KX8k3qrJxH5VKa_-YbO2LySvEAl7BrOByWeqKdjkFCinc_G6t27s2kUu0VrW1Jx4yfddR6RbRs-R1TDemOjcHxfW9vzX2vrAJXHSFq_EvKxRf77YnYHy1R33bU22fblcAhbcKY-WqLp7dPPVe9jSe79-wkQbKNzHJMqtK_5lwGK17-OuvBTDTQz6cJmB9pENgr2_QpFLz6_6b1HZqgl1tev0JsRda-JX6zN-yUMSlDG5JTbsXsEniN_I71Y7eKqxbHgvwlAQIlRoNw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEGJ4wf1PflU9ZNYcSJlA3gkvxdSf0G_I4qtn5RTylL0IfoUBD2nj3e646fWddFYk1vX1ILUXhBcLuxdkNh5kXXWoM9Eqk7y1kmIzGukn3euUmHIc1J1Dm15sLfwkOy8PdNvT1HDoe3hkleZg1R0MxtqDahfv0i8Wjk0bAIAMxJEUvdb2JLwDUfHsgFkj3R_R2T77ZC25aMII2V8td3mqHyKfasPcjyd1K6PWVYZw3qqG283HocEzFtGvmYNhDOgIHedWns_y3Y8-OETAWdI2JPCPFbuMNra5MRjG2MNve-u0WJMTtw5n9SZt31eHAdQca8_b4hZEAb87CL6hyRsywvQ_kJJ2h3kWGXqK40qMxVJqt173LKESD588EPv8Lg5hTbadmueRxyNyYVp_9zXGjCIAQ9uLL4cC5x76d62ZUQH3K6&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Reshmi Sweets & Cafe', 'Hamtramck', 'reshmi-sweets-cafe-hamtramck', 'Bangladeshi, Sweets & Bakery', 'Both', '$', 'Bengali sweets, cafe', 'Bengali sweets, cafe', '{"Bangladeshi","Sweets & Bakery"}', '{}', '11357 Conant, Hamtramck, MI 48212, USA', '(313) 707-0986', NULL, 4.7, 18, 'Monday: 12:00 – 7:00 PM | Tuesday: 12:00 – 7:00 PM | Wednesday: Closed | Thursday: 12:00 – 7:00 PM | Friday: 12:00 – 7:00 PM | Saturday: 12:00 – 7:30 PM | Sunday: 12:00 – 7:30 PM', 'ChIJM-2T_yTTJIgRqpqEXegjZ4E', 42.4031835, -83.05340389999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHzUMWs4CwIDnL4azTwXHx92VTxpPIgEVs_EMij0i1c6lkvqUuJCaAxZcVLjcL6nCL8cMMXsO43nYJhmD8xZtx0APL7pKz0VwwsT3S0U0JUYIQW1XeWHZJhjRsrHJZcZMng0FeNQgeAVoNuRXgOXVNiC6xhI8cye1Fwpi-ti3R3hErYHDUDz_YcWt9bofL0NY9uZffr7eDA2b4FyO875Krje7qlTt5W9nNN9bWSJdJ4po_55tD-_iTUJsr2W9pL5pCryTJirGIAqIaB7mAKbcRf_ugiSr1bauJiWFqkH6h3xA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGwsLdBNQd3HVzOIpkJPf-e4FF9cIu-9b00Cz5NWJQwm6hLKMI6DETOb2O9xjX03Q2somjMgm7H1nlr5Nl4GMv57f3Kqi8IcnQJPwfpursHDGWt9qFDx4RyN7Zumf2t-KjUs_iHr6xk8oP6q5j7XdB0OL2fyykVREiz-60OZQ31toY2BD8r8O_CUjAPCw0gSIit9U6Hmc8cjr0hWucSyhc9rjLXR_-csSDIAiXBRdH45ID1xsb5SpUx8FJpb-HyEqcF73rf1Qrw_-RRNXtDkNbIgjYHW8UPvOWmYQTUt6BHiLZvVD3FojjCmxjtutPnmZlgOivAELaojoZgdd1UaTYXJ0HLZ0BZUni_xou_h_tWwjqCzx00HWJ5Ctb9gKknGilsxEW2g3MSiS6KxL49O5WqKKUTTTrDZ2bkn5MhpTTGpw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFzc41pHgOjbqINbQU7xpq4W1exoiF6cXk9YX8r-MnuswXwhOK85Oj1Gaju9gdFaPwVw1jQcqmc1PNsMiOvmRgDKxL2yV4IKanYqbcfOXtIr_m5209OQ9Bjai3tdSeGBwHWYo4EHVaRRqWMe74PoQDXlz0iOpkgcyd_D0c42nsN2BmYJk7c114j5nTf_jbk-ylh8S-Y6LmHHTaQ1NRdtMMGHCpvzBAapzyBMZzk69W3A2-wTOYxV0Ijb_v9bAmnWEw0SLHaZgASP4hdlZpYq5uKT-Yi_0y2Qiyb5RmdREW-kQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Radhuni Restaurant', 'Detroit', 'radhuni-restaurant-detroit', 'Bangladeshi, Nepali', 'Both', '$', 'Bengali, halal, momos', 'Bengali, halal, momos', '{"Bangladeshi","Nepali"}', '{}', '12162 Conant, Detroit, MI 48212, USA', '(313) 707-0621', 'https://www.radhunirestaurants.com/index.php/', 4, 451, 'Monday: 11:00 AM – 11:00 PM | Tuesday: 11:00 AM – 11:00 PM | Wednesday: 11:00 AM – 11:00 PM | Thursday: 11:00 AM – 11:00 PM | Friday: 11:00 AM – 11:00 PM | Saturday: 11:00 AM – 11:00 PM | Sunday: 11:00 AM – 11:00 PM', 'ChIJHbxzPz3SJIgRPxcz3kvDbNw', 42.408282, -83.05626649999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHWL3lvP_lpfNXrP_6zcENdLV14x8RxS2W4YKGyFsl-xawso6O9Jqc906-llli5jRN9hvQx3gcNljIeJa3E54w-h-AkriWAzTzMEas3W1bzi1-1qhKtS8fIvP3n1iyF5YtPts2ryUNkTsyTf-W008MyVRBc9bbVkmyKMueS81Hn-yeUX52r_RKwSN10JWIIG7k_x5UlJjincIfebdUJgRMlyVgAGCJDEK9D5sgIy2hdHuz_S_Llf3lSzMNkiZTNdC9b1iAbD8Owj11wkPtsaPWUcRMlwF2WWu0sBAP6QkF5kA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE3UqvGd9MrvNtxJVHiCjeRvnmXNo6LSSJWKsvDqH5nVvaHK8Z2DCXh-rEhqAg27BpHml4gZzqjnJ2FeqZHlCkNooe_tQY-jbsjIjFfWBXrjJNroysCWLau61c7OXXT5Gek6P6cGC4nqQxUUitt61sHYasbd6l8HQkkgIkalSzCooqM9T8Vbvk_QGJ8C6_IP8_oeJ7nHtNlury1eypWK5GsXG28A6FPGoGXMTLB_i4jKuDCPfNouMW0OJCJ_e3Zv-XsXCY_dJvSGqMghBzDIZudX8kKxJlNA3w7nRTDS9zaRQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFzv7znWDF8cFfOolT2BOl37F_Xs866cV3pLOzT6aRgmqFHSRjJ6siy10jZ-UhBMlc223L3QJyCSbIYWs4kN7o0qoy2J6B6rzvLN35FnDygauyCg2LjnjzmfExFA5Li3e9TJOvjZJAD-fnVIUE_DAcoFebAvewB8a_cZw9VSKUVmsC91PdDadXrMmFGWjYyODR3HJ4wLgIuzD52mqYW4VK91HtFtJvL5MkriBVCim4HmWwJHULJEaMZdYI-gUZD46G6j6u2yR7rNJXaXNmAIqpx9QofE18QZesygu1gC-3pkw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Midnight Temple', 'Detroit', 'midnight-temple-detroit', 'Chaat/Street Food', 'Both', '$$', 'Authentic street food, bold spices', 'Authentic street food, bold spices', '{"Chaat","Street Food"}', '{}', '2466 Riopelle St Floor 2, Detroit, MI 48207, USA', '(313) 810-2585', 'http://www.midnighttemple.com/', 4.3, 652, 'Monday: Closed | Tuesday: 5:00 PM – 12:00 AM | Wednesday: 5:00 PM – 12:00 AM | Thursday: 5:00 PM – 12:00 AM | Friday: 5:00 PM – 12:00 AM | Saturday: 12:00 PM – 12:00 AM | Sunday: 12:00 – 10:00 PM', 'ChIJYdmk4lXTJIgRX_PSw06y-Ok', 42.34632149999999, -83.0383217, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGnBGGNOzOQ-vq-e1Z5010akByO9YCju5b7BCn8Me9au4MiBpPDPXE6AY9g_cV0K_DHT6WOgoqx69ca9gR2ivXMAcCbpDKaBd1N1thLHw0zNg5tI7fIzhJv_ZPlGV-bSL4TYs3PtxYSoxdiAzpvsnjnFWf65pPQt_KDhVjUP4u_RtO5iRnSOpslQaLcok24TMYSpyd8yMmLQ5xcX3Hl9Iyyw23SOw5-d_BR6v0VQ0oJ9YLILj9B4-qqb21r0RYlScp4wauuxV3hXMIDXkhEvzjLngCAFHiWBngMjNugp6s&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGk8rPql-DO4mJS_YqMPb8UDSafEoswDH_uGFH4oLkeBqGTw9W6NbB1z3AfuAybcvjUBBpcRzn9T0NJqCuG6R4-Rvgk9TR9zQLOa13CWU942iyXpW1E-I86I9C0ss_c8WmEvRDozVIDiZAbNIEnUipBbl__58Npjz_8mb7-7E1pATEryYzRPq8gaddO3GxoDtvTxJUqCKHLJ3_4kz0ygUVo87ipbUaHBMMkzmVl_ekstXL1cwYWsRkHj-qf3OcglxroOibxtNOgs6XWa11ldvdpa2BBlHl9Rit8-ZnyONI&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFbB08DeUpOok5lQ1pg-hXe53Xt6mu_4rY3-M0SweYyeqyLugWmtFxkwhYdwlSoBQvUK_sSG5xZD4SV3YR2Kgi516pjAEcsx7kzG5-Kkw24_d1ca70PKv74UmEe2qPsEdF2y8Pv7bzGhdYJijbMHrpsg4WVc44oYOQIr5OSNqA0BEbbCSpoHXaaTNRk4AESPZPgVM1B0u3D1iRi1vrwF7E-pMmtRUnH9Q2pcw0F3_ByEi4ShgBSK6MQxVhZD4X0mRbgmeJeqChEZLT7ukO2b-enyPfX1kyNQOyczfT5Mw4UEBaPHCgALxgI5ohPYX__6F4FtBKNooPfEQmotDlD0ZMKGjAu_BkXu_fQOLGjUEIrZk-T7IO2KRqKW4hayIbMmh43zh2vRFGrznYA96m39fvZ9vI9HboHiy_fan7Bn79srgy2Upjy3tzLX7md2w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Aladdin Sweets Bangladeshi', 'Detroit', 'aladdin-sweets-bangladeshi-detroit', 'Bangladeshi, Sweets & Bakery', 'Both', '$', 'Bangladeshi food and sweets', 'Bangladeshi food and sweets', '{"Bangladeshi","Sweets & Bakery"}', '{}', '11945 Conant, Hamtramck, MI 48212, USA', '(313) 891-8050', NULL, 3.6, 986, 'Monday: 11:00 AM – 10:00 PM | Tuesday: 11:00 AM – 10:00 PM | Wednesday: 11:00 AM – 10:00 PM | Thursday: 11:00 AM – 10:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 10:00 PM', 'ChIJScacpj3SJIgRcOky0GfFpAQ', 42.4066469, -83.0556988, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEiMGqgfJqxBErlWxLw8G8J82hnYbjdDzzEKcyNixJQf4AWzksSFrrlsPPnPJ_UUHHBY_LO5j7WidZIP9ip0HGIZ8nHT8gfLjcUCt7ijlBV9URubCciH40Ho4Vtu8DHH5EeOeE_xeYSusXrD0GyT8juelCHNxRdFYYiebqC1390knIdjKVTwz-UHKHWXY3CQQdUdlflHX1AEhkpvLSDNumwubGsq0Sv0daGIprV5Wto13HDzKV1jUzZE03CYcfj7bzTOhH0CZC-SrSzGjwQpPdCLJOX5I4p2-H1zZw9hoKMgzd_oRRXBbSVjFZFIPpV_OE2-vYYa6ctdFmKrTtcgoiPAH4sQWAKWAiflx0w23T50DPJQXnrhv7O8cNaxVOC1bgCaI9f4H87_d1qYs3eYQ0mjg4BHkgjnt0Hh67hi9KHqA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFwEwbvw5gGZFS7VPSHe2Aj3g53ghLz0braZ92oJuWqYL9O-dJ3dZPVfcU-jDWv1tVDX_zrIeJetpwUWSOrO4kiaFv1R2CqKa591ZPtRTYbi6Pe1wwlHUTTcxP6EN5EF7ecIjpHY3q5cZVtTZzMf7IDNMibNe--TkmdjCG-IYLNbzcfSK9udNIOEeMbQD74qvZUEWyMRxEoKp2QSqBei1nBc7PBrDKxuCkFHttpBFzIiWVm6mAM_KKkEZBaDVnlqsHGQCp-P-ivaf6MyhN9eO8aHKlYJFBNv5s7xWthHhLWh0Qu10Jf6l97r_RpIbuZXed9-NShDa-mNxiYLOvFSXpefok0r55oIyrJ2kjBSJEB58lsd61QIz1WXZO7_xl2GC7050SLTzKbbH_L9Gna3ae4zJ0-mnng8-IxAzfRMd6-3ZauwadvZOppQ38HrnpE&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF5wWarDV51Pi9manIidr_iv1aI8v5a3g0In1rcEdIsNZAxe4ZFJ6DaAkWQaw6xqJTsdgHQ_kYKDp4yDL2Ht0rsD7y38uk4kB_oZxWnUdlqf_ZCKGzHZ6FX_uGI8jIbwSNiEYY-OZUKUj4xSEuihu2m3PQ2BMt962KaZBtaC4dBaw8yd8_OHEXiLsJNAnY8K3zcFjTp6bsCUUmFtAODkigCaG6BUCnhPHokrWIZrVhIwppI8o19DFkXHxBKIcWDyYGXAlwY3TLOJr4h6W-_2KFAw_HdgmR3G54E6zABHorpevnEHktYuhk1ctdgK1uPzsLwstp9Zmkr3Wz_gilfPQrzTjEoXnu-0xcyHM91zdphnQltcwLQBS2uIcAEtmIbHxgnxxUNnNDV7NUqPd5N-G9y9kdG16EKw3dsFt-7eLsbxJrE&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Mumbai Market', 'Detroit', 'mumbai-market-detroit', 'Pan-Indian, Grocery/Deli', 'Both', '$', 'Indian grocery with food counter', 'Indian grocery with food counter', '{"Pan-Indian","Grocery","Deli"}', '{}', '1472 S Sheldon Rd, Plymouth, MI 48170, USA', '(734) 658-6040', NULL, 4.5, 206, 'Monday: 10:00 AM – 8:00 PM | Tuesday: 10:00 AM – 8:00 PM | Wednesday: 10:00 AM – 8:00 PM | Thursday: 10:00 AM – 8:00 PM | Friday: 10:00 AM – 8:00 PM | Saturday: 10:00 AM – 8:00 PM | Sunday: 10:00 AM – 8:00 PM', 'ChIJ5xukbu5TO4gREwZMnI4avYI', 42.3591171, -83.48023289999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGQFcNS21pJwq-Tj6FCWV5iOIykj1PqqRci6Pfbt2ZfJa4bYMQ6bYOdg55-uznhhQHE9SKMMY0s026hBrE2G0MEaPUHXcZgu9t9Gk3Sl44-B8u4QV7SnMxoHIAnRG9xCAFSXu7zmXJb4qKzgCmSMoNBnl86bJ8b6j2MorHy1BMkd31CTo4K4mwMIHa9o5_CwDSLs2A0McYINPvjrgzKPd98mGhBM39QADWSl9uA9Uyn6ni5lKWPZGkTwRW4Ioxl4OvLgHh0UmcJMvbRF0ZqzT8S0P6m-_U-FJCuQRscAE-t_ZuNF15b8u6qBJAexWEn_Iva3_-itwBpUvTSoAECmTrZNOfsUo-AKnkHlUMhg0xmHTlFpQf7sKLDTJEEQZ26gDCmFU3WLYOdzT67mQ6kQQlcBXjxogZ25J5ZNi3Ok2U&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGGXd5XR4WAxsprgbH9NSKZmjgGjVtLI4BmGPcIaVa4fdsX1lQLTbZopgWamlLVRMyOsNXvPTjJzeThgJtC_5tfvamPEzR-2TCbVjwbQXnNkx9wOok8BEtgJvmVa39jk6_NiVw2qRHA_HgJT13TjRmB9gHRxZza_yBvU9jW2xPBKUgqi0DHRQuwJK5Yx_je9BL3IQb_l_fn9H7w7qsWEzbACRp8mr1PuSotf4xfFCR8JuwLIZjMSfCnJy8G7HtyyXXjlQDzm35fG9F2yimPQAuO5NAAJFWEmq01w-AwP8KUoA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGcZK2iseIM04jfSdq0VmgXSP5SucFMIoshOZCy8gNeiavMjTT422Qo8q6Ymx87unzy9Jutf6bCS5ra8JW5sO38QZPrcW5ltG9fCDjERk8B1CZNEpByenseU-mNT7o7tyZ-Pd1DNRwsmqWPO7l3cRiJWKP6xYmivFH7nNLPvgMOtKbT8PdXXdC7AZq7W3tshfUBOg05h297zSL7tuL2eki-jlb04STcprdi-B4GWRbKUoucCRUHCe63LF-rqLEeUBPzzEdgnbBD-VLizxmbSLUgcHQBJ3lArNb2WxtFiy7Z4rM_Nj1h9TfIQPlNRLuRar2aG7z5vRF1-EUVHNxxqVaFBvwzAR0XmUpz_XBVXaDvDOQwoZ6XXerOoMsThTwqTd5aYkt270BYNp9GsgNEfUb9rmOuM2OaN3MKi4ehbck8MEWQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Madras Masala Restaurant', 'Ann Arbor', 'madras-masala-restaurant-ann-arbor', 'South Indian', 'Both', '$$', 'Dosas, South Indian specialties', 'Dosas, South Indian specialties', '{"South Indian"}', '{}', '2016 Packard St, Ann Arbor, MI 48104, USA', '(734) 222-9006', 'http://madrasmasala.com/', 4.2, 1711, 'Monday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Tuesday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Wednesday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Thursday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Friday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Saturday: 11:30 AM – 3:30 PM, 4:30 – 9:30 PM | Sunday: 11:30 AM – 3:30 PM, 4:30 – 9:00 PM', 'ChIJQd-tQz-uPIgRnEKEr1N5Ink', 42.2571755, -83.727763, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHg3BV4rl6ZPH-PbXncWzEe1osu4KIs0JtA-AIJ1WEyrHNO7rD0cY3UaUCDyopWp4MLD2CBwthnCIs5v56JOKISGZXRMHsgC9qIpX-yqM5ePDNxYr00m8y7aIqWu2GoAZE9ocwhdeffYlXM7QYFKFBmqJSMnR5HsW6K4jfIykY4uWvnjJoshUxK5c36plugUU7tWCh-URPl1QHTCmqadEmgOzKcgzp4K_8iTtwtqRZ6PNh-uM1Bk3liPxl_m1qUNpOM-MEPhnUIqVL5Pgu50K-rqEwbTNF9djaLK3Uzi9q4Qw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGxHAadn-JoBvEFrVeeXEiS0SHLzi-aPVEX3QVUL0IrIWmUUwjgIx1umvfrdpF0wSJw6v6lBneRdBfY-irBexQqZdmw5Uvs0M6y4pFKgVQvJ_V808Z-e0VVnc45BJKH8DE52dQrdsNwWGIqR2ca1joSqWlJkDbIDgJ0BFs9WmwJLYLzlzH0qiVTyPkpxpPLLXK8oYy58VQKFRFTEcZr7E5H4XboL7H34IzD20co5cL7BcHHjrsbOAqDHTXSCmRIb6ttFCNctNuzGvBj_Z0NRVxsMwcv2nNbIjf1-6x8siRokqyZNdW2ZDIY46wXZukAvABWlfR1MmK9gj9IXimosBob3Xwt2zOhhc331wbeTrmtHLy5J1zFVj2AikKQVqnt7Zq12EsQ5LmSvC97SmuG2z-blDNS1sayn_GubP6VKx0Yxw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEnc65OxXWivUgc6qzC0h4Y_1BS4NjL4tcnWWcJX2WJKNhercjTRtAIWnVw-ucFTuIpqqQoEFaO5B8atUz-c67v-hl17lEA2y6BthQsXSQN8--4eHwyg-Ext0OTzwvzJCsiv8YvaUtXpSMkVv6Mrx_p-4Lx43xO2fN7b8NJPsShFCwqyoe_0pxq4Q0ssGtH9qd5CuNfpqmPLJkWRK1-o8QTqCx-D0ziBMZfqJnpEpKmqejbiURdMVF_jgWLRIzbU6xf5U9gdBIM8iVeTS5AH-Ft4gcHcbZ82myV9xWo5yYGa7xvs7b5-0BJ_KTGXQ9mLTpbPvqZUb4jSAyXXNt9sMRnyUkufOikXF01fXGpMu1MCyJDDTdySmuo395quSvov16KC-pAuOv_0FH_0H3y-M2A-Jqkg5Zj3j4wAIQxNy-lpQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Madras Masala Express', 'Ann Arbor', 'madras-masala-express-ann-arbor', 'South Indian', 'Both', '$', 'Quick South Indian', 'Quick South Indian', '{"South Indian"}', '{}', '1143 Broadway St, Ann Arbor, MI 48105, USA', '(734) 882-2401', 'http://www.madrasmasala.com/', 4.5, 106, 'Monday: Closed | Tuesday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Wednesday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Thursday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Friday: 11:30 AM – 2:30 PM, 4:30 – 9:30 PM | Saturday: 11:30 AM – 3:30 PM, 4:30 – 9:30 PM | Sunday: 11:30 AM – 3:30 PM, 4:30 – 9:00 PM', 'ChIJF34SZACvPIgR87SSP9gjOGU', 42.290804, -83.7369511, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG8GqSBzvoUeDqvwr2y8m9tiL9ZU78b-rl_Z_DiwNnDzFhzB9JQFWw-9EXjyprrOCXHW9gtpAVMIGYlU_9TM7N-eb6FlTMyLGVwIt8mNS7FsCQbrSApkmtiASLIJVoWyB5o_hXgyIhaUcrKrBJEoiurey0AyE3bt7lJrdoV2__MQ-XzaQij-bRhysIe2EgRlNYpdzDqQ-j6ufaUWfCceH5js1iLDVhj-LMnn-4NP_czo8xmCrPXeabhQj3LZeW4KcDnnNdxwOdazzQvOXqWvMIGYZ9uCTlIvyDzVkjGQbbxnD_2n1F1mfpj90IgL7B22r79DGaPnS2X480zaxThKepuVLY9EvtYpoLf5F6UYmWYO4wVxW-4WhpdNUddD07mtdMaUWfKcCEIYjniFbLItGe7tfsmCcOVJcsyK4LsnupdyUUQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGeOrDdhBiLM-ezzek_1TL2bbe0gxID6jXKI1fyTRjRfk71uqgVVgrg18YaWl9rZjU_KQDpQtwxg1tQHFbASuTyRGgE5a0zCckMysqG6emWqa5XtruMcwg9fRwkfkyPslSR15rhISHAw6qScjJIXu-CZr8UslSPUgC_W4fNXc2wmsF4TaWugo80j-FoOqCpczj6m-Clf6Oorem3fTh4H164nTsQMFGTkpQpAOwBVjsf9qAcZSj2mVRjI923ppRfv5JauDUT4wYbf7dIgAH9REHKtQqMj6ITulTFeBzwuy7DNGGl4-LVKDD1eQH74Ygue5c3svq5Xxkpe7lAMY0W1xqFvV_sskGPaUcJrYr5XbhPlpyzI92bR_zzw0JGA2HBP-KK9ajbnTkRvkHEVnADU_IkLG52qr9B8wcuX8assquTHEyr&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF-V2Y-LgcD5R0oVikxfSJcwt1T63qadJTATCj-pQZVZo7YwC1oqg6lDUQTwyRFcXxuRW0yT4-h9svNUKeKgaiz1VrYRqs8tLzmgw4a-t935gc91o3-HxZOlvJ-hNsTcSCDaRBkhxINfNyRkzQAaAOI88S096M2uvgb2v2PECzuiwynwGirCwDDHKUdxvBsZBgY6ZkrVkBlE2aTbHMw4RGV_QG_an-P-r64YKxCkI0lVEMkW-q5gTbcGaBP3PqM5Q57vLrF_JnAkVvjrfEJ-5aSDruMVsTzJQj9ArhPMBQehO1WfPcXWJFEpu6dJPJS2A4VJjVtiPPYEAtLCKNGakjH4tdw7rUxOA4DuIb6RgoQcife_xVTa7txtbtkmPVLe7NqRP7iuKLU-c-oSoX3q6_BQl2eDt0K4ZeyqguJFutNhzucM4L8ajcJ3lz4U0ew&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Cardamom', 'Ann Arbor', 'cardamom-ann-arbor', 'Pan-Indian', 'Both', '$$$', 'Chicken biryani, bhindi masala, upscale', 'Chicken biryani, bhindi masala, upscale', '{"Pan-Indian"}', '{}', '1739 Plymouth Rd, Ann Arbor, MI 48104, USA', '(734) 662-2877', 'http://www.cardamoma2.com/', 4.4, 1629, 'Monday: Closed | Tuesday: Closed | Wednesday: 5:00 – 10:00 PM | Thursday: 5:00 – 10:00 PM | Friday: 5:00 – 10:30 PM | Saturday: 5:00 – 10:30 PM | Sunday: 5:00 – 10:00 PM', 'ChIJxxmItH-uPIgRDuvzf4RZ4BM', 42.2985643, -83.7214494, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEut73wfXVzlXKVldF8HQhlELiBNRrvbqT_bJqxpyfUuoERiUteoWa6_jK69B5dl4GmIV4RtM-pU3Jzqh_D6QA3Q6TVf9uObXe1RX48WYLwj1O2GPEa3A3OgSt4Zo0z0fhlQq-MP-nmgCJO3LVl3RED52YXLcNDDGF5QnqmioQiMC9HWiNtpg7JDGn7LvsQUdPQ-W_BI0mxb5R7RSlib5T2CrhAFAjA8hgvxN15dti15CBREFId3QRVsIUBv7p-1fjhXdluvYiI22tcs_PDEsk9ZGm9l4bINMlfNY0ueH5cjeFP0PR8i0eqMp_fVykl8bQL-AAj3CYFYiSaCkhtjAoizQOvtZc2ZY6vOKh1xRPEbtdhFU4E1IWf7drwYCO33V5BojSRKE-mqhvyoNfgnFomG0czX2I8W50VjpKJNOsJxrv-prR7oZJv7Z2t1w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFZpoh91M0JOOCF6CurFVO6z_4MtR__xq9MDCL25I1-YLIWbncD61ynPsByn0QkNp-x4SDfoyZdsEjAth5XStmgsYrPj9YMniKJpKQ6V3Ng8pZfP7XKW76yHNTK-UufvNyyiGRDwmkBCabc5RcL6DHKWyrStOKtCqWwNzrk_5yCzf6zXeKcYi4teMveS1YEbVbHfVLjREjteEPHnOhLtYjbhkdkB6kdtTm_O8Z_Z8aZRU2AG4eFQVodF2t5VjLyZJ4xxv-bqRlYAijZt0fODkv6wDI-frwm_nIwzEfdPCacN-WQTJuZoKqVt27RsUaVQ547HsLI0u-wh7NSPh9jRNOIRBujMa5hgj7Ids_TyZ_xmsKBN0pw5Brm59Xw8oXRa_oWXCkZHsqt2wkj1tdpMrvOkuP7x6z_VanLeV21g8csRxKS&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGSP7H2Xny7fMQpdJ8VKGV6GkvTBWDQIm6ndRWF4EtJaMNDQ5fXJyI3qpahw-bhG402H6VFx1aE-LuFch-1wA3YqRizYBcbe-pkD2oE5WuISd7vpB7T_BFYVRBTcUe1n_N9-oXsDwg4NDZcGMt1Zrf8FPmOT9NN9qfnxwfGAdpxJJmXsP9kf4iIFiBuZGzTklw885oA0RP7PF9o_Nwai2rNUD5-ZVSRy_PZqwcc69BggdjTE-ET06gGnQ4jedxJquCsqwzKDErNeyHJkApohkYS4Szs0M05LyBn4FfvZRf4c16I2yt6kQEtr3eQdNkHkwRgeJUjjSRM-7KWQ9mUY9IXdqMpy7EjoCXfA7TqYVBPn7g9Do-tytV4ZugwiDaJPVVXJrbcXaXK0JB8to_1P5bibkjCZfwdgLnKuo6vdE58qjhwFtPe40Fu7JA7vA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Shalimar Cuisine of India', 'Ann Arbor', 'shalimar-cuisine-of-india-ann-arbor', 'Pan-Indian', 'Both', '$$', 'Consistent, traditional Indian', 'Consistent, traditional Indian', '{"Pan-Indian"}', '{}', '307 S Main St, Ann Arbor, MI 48104, USA', '(734) 663-1500', 'http://www.shalimarrestaurant.com/', 4.1, 1607, 'Monday: 11:30 AM – 2:45 PM, 5:00 – 9:30 PM | Tuesday: 11:30 AM – 2:45 PM, 5:00 – 9:30 PM | Wednesday: 11:30 AM – 2:45 PM, 5:00 – 9:30 PM | Thursday: 11:30 AM – 2:45 PM, 5:00 – 9:30 PM | Friday: 11:30 AM – 2:45 PM, 5:00 – 10:30 PM | Saturday: 11:30 AM – 2:45 PM, 5:00 – 10:30 PM | Sunday: 11:30 AM – 2:45 PM, 5:00 – 9:30 PM', 'ChIJOSatXDyuPIgRehsG8WwjCRw', 42.2793005, -83.74847299999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHRSOAWLnvdHWGXyJ5hiGakX7kRjgwFECL_aneHQyG13l-QgUx0Qw2Y3Hn-hOFtJdmk0_sIF6jB1uzkUCiOii6jZHo9meXd-cJobg1RyiKSL813CXQchyRrlaly8S4zEn0VGk2peyzB3LG6prJHiZviJMgZ-_smXRK8D7vA_hqaoI4dHgvgVfBMAZ1t37N_BkiMVVtXeqknRMsQQn7zRIoIi_q3a40lhUhxcte8XpuHC5Xv-mcKNGyrtrFwld1D2IXmoOnCwh8d-83BgEXGPhxit9_Kb_wODOXIMWpidhLP6Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGs1jnsx43hOhYXNhnLllHctKb96ZnZ9jFi8PqcneSs85Q-s7Q3IJFDT4NZprBN9zS62U9la8K6ST9kaimCvKCDllL_-myLe6l369skLxRcqh0nR6ugQsq6BZ0sk6tSK0VLTe00zRKn-ZnL3lJgVB2PhV6354iitNTN1K_DpUxIVikGDg6Z6CwKkcoErOn16ZsnwTs0cMOmfvdj4maL8jtkYixy0D1cmipfFklbFLdgxe4ZWR7Jl9Edl1fJRqkcawgoaoBqwP3eY_J9LiXwwYm1H6TtTuMLYkizF-lKrxcbdQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHlt4zllARiCx5Sk4TeRqvGg0pEf-OnI8daqhftTBuk_c5y97jfbk20wuaE-1vUpfCXggZeV0LHZRXXDYTIrBeUymXZ-52LVcqmlRrbk3q4GTLf-LkQG5nGNFjh4vTPS-afat7oJEVxwu859PUMGov-s0Ij265Zob128XcSkooAq6GjYlYOfUmv-kvueDFxXBuclWEaDjwpbbhdBdQuFvSkMePXVA6LawHPkRsGd_K72r0IeSSIIHjsUFZXJ0s7hN44KgS6Br4yDkxM0TgkyuJx_3RmnRluV20tIFgwFNk4HhtB38RkeJ3I2Fp6OHX_EaVdilHzMMXBGwvSY46IEhOf5Fvakx-xkTxPaoK0zxANYXjWlrXbqYtrCT0uzb2seDsv6gZTbvcqTnWuZP5n1BitTLUfb3yGR4utiDZsNqJKpW3WLGM90NrmSLso5mEP&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Namaste Flavours Ann Arbor', 'Ann Arbor', 'namaste-flavours-ann-arbor-ann-arbor', 'South Indian', 'Both', '$$', 'Best sit-down South Indian in A2', 'Best sit-down South Indian in A2', '{"South Indian"}', '{}', '400 S Division St, Ann Arbor, MI 48104, USA', '(734) 995-1545', 'http://www.namasteflavoursannarbor.com/', 4.3, 1692, 'Monday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Tuesday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Wednesday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Thursday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Friday: 11:30 AM – 3:00 PM, 5:00 – 10:00 PM | Saturday: 11:30 AM – 10:00 PM | Sunday: 11:30 AM – 9:00 PM', 'ChIJP8H70z6uPIgR8T_P8lSxpvQ', 42.27765249999999, -83.744383, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGg0Kr_n50ylVQInJ-c6ZYQLzgEn6Qc5mEM3sKEVDGBEy2N-n1j72AIv5tWkU1W57k_4SzzIR8KqV04KbQLdNzdXb53PLTH56CR2IpKSYANUiS7GBt0Ghx9aoWZo5zHLu8tgW43VN6belrLxbU-F-XGr_PlFFklY8Zc2sxMAw1_GtfXMUcQQyMj6diNCfiocWsyGOVyRY5bSgGM6p8WN-kjvs6XINs5olD8vRwMD9tC2bSHbI7AIa9IRyz_WQ5lQ1PUEQ97sHCldfTejbtKUsDahwf5dk4G-wqblKcdZbwYfQx3UvdVhoXrPiB-OLYWCs60jU6czY5pwgrMS5BABpGHHza4qJkRo1K9wXovJCp9gMcm7RYcsb0epFqE3R_QGFk1VajwwhrnavBDBUDqx6aazx6rNUZkaLD94vWtty7QKg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHvKmJKvLJuO3i6lnzduGCNg51-_aKMhlVldoaIKc9n1S7uO2vqQgEll3wGY3W3ajePFpPKAKqIGyIvRRdNmFfDDt26zFT2nyK4yif4rS1HVTLY7a_06Wo0TkfD4-7aFi3Cj0y9Ei2rLR349JCO5Nrq2z1kurPqgPGoU06i7mi_vXmydEJS8PMDyjnujR_tg2Mb6Xw0ci7a2VCAA5u7PUltwHAq16gE7axDyWoCAvTPDkATisAJJytpuVnh5-6KSWQx3ARFtvWm4lEnJJSAZJ7mgL3whaTmdgS6PhpLPF_zESFgPfYXMO69Ki-S6fZZfdnK_cwkE_W8yZRI4CI7LVBJm-XCHVIchZLhxGCh0N3aEiyMG1y8QC8vq0MotO0YSSLgfmR7ceEuGOuJTNs3nyTfRRvn-z46jcFTygxn4zkaF--P&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHGYo4r0BPsNn9hgHwf06Vpoz5uXQ4XF4tyAV_izB-HttrZP00SFvqYNkgjE2xUHmPVD0xrhOn0gMHO1_5vVMrDM9VjOq9WMyMlpO4wBYXOYPGcPXrjwdiIjq2pb02rk6nxBwQdgMa2fN62rT64q2rDj5nae8uAhumi5nDAJsDSseepOHvUPKmejdpdoW52tGwnVY0gihKRNQzTBEofLqW9UQcffRhGIETnl4o2X5njCMsw5DhCanFDDOQfv5yE6K1ktk5glKOdcw-DQVe4f4z8AunLnza--0ZvKaptCNASdR9-hNXNDWdsneKjwkUO93Xr6e3Nsz6SIcwutjnk5wjrGOn_BKyLgTnREUyb_Kc7c3GE0x9tm4wdSHDLZi89etFMzlPI7WNGDOic-E7kYtCZD_AgyGYUQArOTlCuRsO4IpDKtRupmOvRgT5GCTqf&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Taste of India', 'Ann Arbor', 'taste-of-india-ann-arbor', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '217 S State St Ste B, Ann Arbor, MI 48104, USA', '(734) 327-6500', 'https://www.tasteofindiasuvai.com/', 4.2, 716, 'Monday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Tuesday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Wednesday: Closed | Thursday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Friday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Saturday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Sunday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM', 'ChIJWRQCM9ivPIgR9eqQsqA1JQM', 42.2796896, -83.7406896, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFOB4-lz3zabCOePXCzgOyDSJhbBmBOG7pwuU4Cc8C2BHgFNX97YWNHIL1pZVzeYDXvYsZ2RjlUrS2ucACcuybFLOXMlqEl6XvSG1Bcvq8cOh3MR1naVuaSe67d3HS1cbvkVUiY0WFRQbT9ne-tjmrpE_4x3LgzMvFasJWxKq50X4LlrMWyr9i1xg7SjFf7Rcy9QLM9Mjiwm7ZttFsih7U826CKXriXae5tPDf90X-2jyiYUCLzIh2LoKtsh_F-HUSVbhaWI6-V5Re8c8uprHKJh8mTc1Dc1U9EklHl-pk7ug&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFByIsLrhVL0mc09GvCjL4RkQkUgmGk-SN2Y_UI79hA6C0BQTzEQ2j0u8bSeckyHybib-tNFSeZAVN1SVCCfBFiB8D4r5-sH35oJbsi_05q3LQmOhioiOVEb-zBV51_2w7gmKZQO29pPtCdHq3ipsIGvhMVU7ifDE0uX9wws0aFDLycCeJ6qHQHK9VdZcuFWTOd7DbHcIdi8M3vDkA0AMmaJ8r_-luyIMbqjfCwnTh1FIe0wkjD7XOrXhnrHwrqL4rVD2K0Q10_dPc_glu8rblC8y-2WOo1-YIRHIUcaIrG4Q&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGtCpCHy7VnN0sasm5gBLTjXvPFuKeS7ivBy7W_aL7yiDuJnpaP3fx0OQVuNTC3qV_6Vqprzad4SV2HiUAq6r5iNaX4JW3yoHmxvqZ8axkEtwYwTRRXX9BF18-DlovadueBodMuziLiieemJaFBmyJ-g1Cn4g0c50YsXaozhfyoyH4NzRkU615KrmXHI01EEiT-L30ANK1pu6xLXbhmMSzsLpV1-SMxVAVbEsyztUdirUBkunyFopcNLod8fpANy1D8n5dOxk0Z9RYoHVD7YsXHfcm9jLP6pQb6CWmoNgyK-CR_isCFbKV10e5ROi7-cCeUnzaClbh-nSamvkQJy-etNv21_v3wxYKQRaY4OwLcTn5HakR0Hj49x98g2Kmbknxax45Gshh2Iah8crdyeo8N7OFs6jV9e1jGWNOjBStUrCTO&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Spice Palace Indian Cuisine', 'Ann Arbor', 'spice-palace-indian-cuisine-ann-arbor', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '2874 Washtenaw Ave, Ypsilanti, MI 48197, USA', '(734) 415-2789', 'https://indianrestaurantypsilanti.com/', 4.7, 828, 'Monday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Tuesday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Wednesday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Thursday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Friday: 11:00 AM – 3:00 PM, 5:00 – 11:00 PM | Saturday: 11:00 AM – 3:00 PM, 5:00 – 11:00 PM | Sunday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM', 'ChIJ-WLvSFapPIgRZWKrvX2Na0w', 42.2508989, -83.65607179999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEm1jrYYho_lS-ZokqlG4cZ8kMb5uKE_cUe0upNj9KI4amkzdU50db3YkDTp28vtG5FmtcPcJO9WQhUYdSJ0ms9lfuaCyrFtuLGmRO2ZACvgZklskf4WJXvmBTFgUV4P5h25gvYTO_cJ25iFrGCSLIr2VipgzLYgCtD0iEV-xT2mWamh7zO9X1KempcykwNHyff5LUZT33n_SZtuppPykI7ziGb-HDOrEABOho7ELmY9kPhF5QAfWS_MYn7orWsb1onTjuXohD_OupYFcx1iWbNXM11o9MykvXUDYrlpW_FfQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE-Htllt8-qm8wkZd8Q6mzkDagNfPUEBihAGdpnkJW0N-1uGFkdnudlkOJCxb1hmjMiLp3FH38_Os5zxlRQPGQJCqZDzt0GY9cjHEB5G16CT3XH8Ki3Fxv5eM6Lfdu0NbkcLMrY-k7x0EqVM_bkWAI30ngu7SbapWqzLRI5eaNuKiynyGNlsVrv3j4sdNjvu_OFYTC6ae7eMphJkhOpE697MsgUQLXYi3ZzDSDVRi50JiqXL-UOboB2IotVhaT6wO6e-4BHyfM6DuWPI1dAv6DYByvyr607Ol_kE6PQWx1IyA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEsptg009X3KU3NFbAjC4w3VWLq4levw2N7t7fM0-8LPb4Zk1f0OAQgZBNgO1Np9BGauoOQcOBccuRZGx212oZQP0jtCb0NxT61EYEh7sa1Xy3plCtI9_ui3jGLeJPka4yJMdPtCm0sI65_I7eq7eWqhXhhaNJmJK6NcdD6kq2lG3v02_jhIoidto-0204Vu2MG-qqyvOddOSyGon_Zek5cm_cOyO7xaoY2GOCmqxROSUWYAnvkHLjucCrM6I1zmxpzCAdGdh6cnLJlNMXTde02lzSEoz1hqOeLyXYD-tXLmw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Everest Sherpa Restaurant', 'Ann Arbor', 'everest-sherpa-restaurant-ann-arbor', 'Nepali, North Indian', 'Both', '$$', 'Himalayan/Nepali food', 'Himalayan/Nepali food', '{"Nepali","North Indian"}', '{}', '2803 Oak Valley Dr, Ann Arbor, MI 48103, USA', '(734) 997-5490', 'https://www.everestsherparestaurant.com/', 4.6, 1072, 'Monday: Closed | Tuesday: 11:00 AM – 2:15 PM, 4:30 – 8:45 PM | Wednesday: 11:00 AM – 2:15 PM, 4:30 – 8:45 PM | Thursday: 11:00 AM – 2:15 PM, 4:30 – 8:45 PM | Friday: 11:00 AM – 2:15 PM, 4:30 – 8:45 PM | Saturday: 11:00 AM – 2:15 PM, 4:30 – 8:45 PM | Sunday: 11:00 AM – 2:15 PM, 4:30 – 8:45 PM', 'ChIJaxIyOCKwPIgRS9iWJt1iHp4', 42.2459739, -83.76925039999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEH3bKZ-ZLOA6FEqCbe0Rch_qmLE1ZgUcsTkG-rs7JWC6fcnPEdGeYtpu8upLG-gQeuNsVSrO6Wx74_pXzqEVNEez5R_PZjzbC6p5vPnPdxxzTB5KALIZzfno5xjIi1erZqCBWw8Ei6D66blLVRgRVR50rBeQLvytX2HgjPnVYjCF35VBjE_TtRV6Ctr1lfuDNym9iDKWGA6Em0m1sqPQOOymQ1v01i3EJL6gABs0wm2lWfKcjWyrm3EUVFnB4XHFMgpyfLfWgOX4rpkjGmK_cekRQ0GqWrEb6CqeUs5itTMvSjm6E3ZFjXFcW8tHxdaUIXlQ61nbsGe_uDDV9dbyX2rSeE2z6HB9XzjZSWL0OtX5fpX5aZKJaMlDAwvZLfukxvvFGHtA4vP5_M23fl2gQubAxWP22G_BWu7-rHxXW9aoA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFxgvfkfN51NcmfVnRHLXax5pzxQdcjZhdRqrOc4vJHThp_puiomhEMAf5kxMzwCxchAbRGd_slmAW-mZ3zijX3ifKqnS8-gD8hPO7dclFxCKIov5Xo-UYFo9e7Y7yY6W6BhNAmP9eFxbAmLVlT8uZuwKaHl4Vgz6Azf6sSBFsLLZCZIxIZV5mxwv8UJ-qZBZ48PSZOoJLJ4mMPmT6F3ZUjyd05BpmtZ8igisxmvUNLR2XB3uBLGqKQR6P5Ly4ImEBTqNlfWFM9lA7_AYEDgxXF1MpJoyUc81s4mYWTlmTia6eICrUm1UY-QLgkKZFRhinJpoU-JW8QffG9oJvte645m6pktf9B2Pb4tzTWuMZPxOSiXOSjj6e7w9OUY2aMaQDVIo8kXnoNq_0bMwmSxPMEkhWuxi3ivouid-pj6aQJFw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHzpMFvMcMBP4i1tkr5EYt6lnh0_T5J3WTfTeP7tZb7ht1ETMP4vmfqgeXp8WYNOgyiPLYQQ1lIxWOcwQzS6DNzJcUpsLfmDqbkEtjoJ2ceE-f3IV5W61NUthhLgRMgekNmmt5HzfOl-QRdGO4jVpgKZotz2HzCTddt4sCRBdMJO0cHhvMyo88T7-JaXdrFp9oFLD9gzLCp2eVzErnh8ypLrel5OXbCO0YaCN1mwRpeF83g9mT-nES8AO8aEpIkjapf-ZaaDVM4OgRf2oCMAh261U1_xwdVSsJoQ91WapijITxmeqD5D3RJUwy0zgD3ABFQmCoiTVJTUFdmr2DBuNDDB2KFc_mXGXIrTl8U_2CyKywL_blwYcJtMuVN9sUyo8xB1vv8WCW18WKvMToUHA8y-96YAjwrf5v-oCFvdkRLaaiUR21eYN0IJ3Gk9pVV&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Foods of India', 'Ann Arbor', 'foods-of-india-ann-arbor', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '217 S State St Ste B, Ann Arbor, MI 48104, USA', '(734) 327-6500', 'https://www.tasteofindiasuvai.com/', 4.2, 716, 'Monday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Tuesday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Wednesday: Closed | Thursday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Friday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Saturday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM | Sunday: 11:30 AM – 3:00 PM, 5:00 – 9:30 PM', 'ChIJWRQCM9ivPIgR9eqQsqA1JQM', 42.2796896, -83.7406896, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEGraevoVacElLr_47IYJNVRMIRhBNMWrQaijJkujdKD8pVPyS98AE0AVFhsVRNJcrNhCDJXgi8QqTkjw4OIeZ4faM3h-IXLy_kNuo5bM98NOUJB1FEDAKt91JaZ7ICF2ztHIIc2gjQRY0CWJB5rXagtklYM7Gh7XqlNe5sjrTfQc43ya_I6ujnHNmTzXcMAVcPTJQuVbwK-v82g_46lzOTsigOys_0pl3sxVV9-xW2jPF-WcW_9a1Woiycw2DvbiT6PkSWk0RqXLIodvtLfhYE0HmTZKX569b6aBjJvJbQkA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGGaGFpc8G1xNrSKdZzQeqEJqec2wsXjHrX9JU20lc8tAoHC_fFUjWcvD6Tgobjbc4AddWMALIEedxYE5Enxs21kNgXkv4D3sDlIUvTNpk-A3753XwwZC4yhnoZGQ7lRit1fLZk1p0_59JnZxpf0Vhx_OitBoSfxt4cVgE_Xq4kkWylggLn5uptCzSQhliU5zRzLkFq8YIFM12NR-AfKbsnwTFqqpPJjEah_DyKRXw-ULEhm5fkT0rlUk8W4daCkscntHov3TDo0IokVQIPK7VUHl8cgoUzCjUdKTrFVni-KA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHmdjekqfoFfLKXc0c28FmDNqPz2N7snua26WuRrj_A3B_7-eOveq9yLGNhgdkswJUIJHAkgdTEL1eb3l8bCGGJmca4lTHnMmBFHolly4kqvSLu22m4v3TvmjNL4ftIaZGkn5suhly4E06JCVEm64hv-5_7hOv2igKmeSt0_CL-zwPUZG2P2eYO6YSo7RvtzMn5v3Fpbowru8ppqkdP1tTgfShDR1BDnZiDOpBjr5LCozxJjFN7ZKr0zT8etF0oGJdeHtgCzZba2Pz5ENRuToI9C9nWHg5KqQgApinTKK0HRtFoXSfm9QATlUuZ96NsCWsUNlFyYMzg9tnql3DsHohChzLLt25aA8zfgSDIlvAfPVILng8K5ulbYHJK62Iz5iC2cnlazVujlWQZETipZHcsy_9jy0R41ORCux488zoAF_-0&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Desi Ruchulu Indian Cuisine', 'Ann Arbor', 'desi-ruchulu-indian-cuisine-ann-arbor', 'South Indian, Telugu', 'Both', '$$', 'Telugu/South Indian specialties', 'Telugu/South Indian specialties', '{"South Indian","Telugu"}', '{}', '3022 Packard St, Ann Arbor, MI 48108, USA', '(734) 361-8111', 'https://thedesiruchulu.com/', 4.5, 590, 'Monday: Closed | Tuesday: 11:00 AM – 3:00 PM, 5:30 – 10:00 PM | Wednesday: 11:00 AM – 3:00 PM, 5:30 – 10:00 PM | Thursday: 11:00 AM – 3:00 PM, 5:30 – 10:00 PM | Friday: 11:00 AM – 3:00 PM, 5:30 – 10:00 PM | Saturday: 11:00 AM – 3:00 PM, 5:30 – 10:00 PM | Sunday: 11:00 AM – 3:00 PM, 5:30 – 9:00 PM', 'ChIJ_dxwELqvPIgR_bl4rfuAIq4', 42.2446215, -83.69925889999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEYPWDIrMdXJKVpZH10OcsN1WOXKlRid-Vd-spJcv4GqGpvZpDvmxjTLQ3g8-4FtiCKGkr5U9Yj6QqsmFIV_z6H1AHmlZ5UgGGu0a14XE_5Aa-bcS2p094Iuisc64JS19ozV9Oa9IBa_vimnEeP99ZPCwM0jAnXjOg4ggMa5-1sk3-_rnl7cRbV4H8MK-K_6Ex7jf4GBV7C0ahC7EJNR_ai95D_Yo7-GWDRsF0aYnDox72IoPwZUHppX5gKUni3h__LphzOiskDDid8FJRRT7dSMMPkFigjEq7vKylDDXtZjw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFz_ljYalBRji8ZkL4h26UzKeF4zELbPfOanHuOnDcgVQG3OHFC_mAsOZr2zF8ui0pHOQ7LWUj0kf8ewcdsYgjrO3A-dTCJr8lrc2TCf3ENY1ezQLqPc667RgUrExR9piGpqT7k4eUtWvs8U-rW0c9pqqYYZbiq5sTwKP0W9NQMra68VzNy-6HfZqAD4MaJT-ssSPWsg4keViBccFhd-l0K6dvBgRGt8dq46VImuExRm9eCqZLKuBXSxDl42nChMQgNntyXIfqGA3aaKsES2RpIxURo3yS3VZJVnVmpBOIpHE7LYp6CXt5gDxuHzZm2yy8Z8krDe3l_IWEUTopLLSp-PgamEPTqn9Vm52P6LvoebX5odj01j9BrjcIyZYEHETLLiNcjxgWVUoEa2d8Ve4NiR69r4FnLKuipiauhkw2VrMUJ_YwCpegEzqa5yLTs&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGA58h4s6pbwg_w7Y400r78rkZ6PTbiYyl48DTCGTtaet1FmDmEr_4lDv-QSKqgxI4wPM_9HT_XzjtpDCQcg3XPmwYzITWXS-gQFOI1OJXEYvv3ncy_NZ-e_57pvNwst-PHz3HK30DrcB9T5YZr84xrB3bQsm5yBz52Wru9R_8uGInpwijyVqOnftUG9-A2is556kbSCrcUdgxdVWY70St55pi8zfXOepJgQ6rQsqs9W8uhnKLrzplmd6xBP-x4kJRmI_kZndQ97lHt14-mUatD0Z_AVkF3vOu9Z7aPTkZsNx2GdO3vyWDs-LxxByddADP1v77I80O5HhxmUMxTLqbNtXCHBlc2ub-aA3bBUwckNz7zIR2mC1m5jbF7tRRWxWUuzcLTnUFozpYY48VPlJKFPykm3UsS0fWxzi44xMfxqw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Earthen Jar', 'Ann Arbor', 'earthen-jar-ann-arbor', 'Pan-Indian', 'Both', '$$', 'Indian cuisine', 'Indian cuisine', '{"Pan-Indian"}', '{}', '311 S 5th Ave, Ann Arbor, MI 48104, USA', '(734) 327-9464', 'http://www.earthenjar.com/', 4.5, 325, 'Monday: Closed | Tuesday: 12:00 – 7:00 PM | Wednesday: 12:00 – 7:00 PM | Thursday: 12:00 – 7:00 PM | Friday: 12:00 – 7:00 PM | Saturday: 12:00 – 7:00 PM | Sunday: Closed', 'ChIJRwd_mz6uPIgRgP6vCT_-ctw', 42.2791024, -83.74588399999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGf2BLg5bNxS7FUJNaOQhooYzzhtBgcuogfmTxq30_yiEEBfA7brWlnMWGV2ZNrYEV4Pc-dkcAUKKHc9HKFM9rHkkQfMcpQe6FKqn0JJBhu2g4cn_zg3omM2bFyN8XL7cKKOiznGsT2gEd47oxyRSyDAytwQwnuScubNQ7DDi_j9ZRSfdXpEblZU6OdBQBHo5ijMiVz5QYbTLE7moTclNRyiVDCc7Cof3yfXIEwaRbGrqmBwAT2-ovNoRhM6S3EzeYCVq6IKkdRksR3G5cpeoHyU2fHZKpIY97GNb3q9juw5oNzVkMBgptppWiLtd2p7P5JUWWTXGFIwN5XdEe1DZeDwy3Zx3SrHFnSvb4QQzmntoWpwOcOcVd9QsQ9t3itCmqjXfQP7pymcXe8kr2ekvOfSZAqW2GBBzbROnN9cPw8jg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHnhVFh3i6T9erMAD1nAFvWH02_hxpaBzq1MaN-JgRrEE-u87n0gfRGsJbEdZJfRoKpvcTnfppxCejFYEPaK5vVH5KfJpxyvAH3KhpC-MBkUisbWIHJOly3gX8UXFZI9vb_mvcLf_nRmp0cICLkKOMH1EOcaAva9FfhHu4-atSzbRRAhchKzu1SAH76WLJmSDRZ-VHRNNY2Dto-Yc5OFIP4iQlyXmTc56Spd_lEKa_R3L9auzWE022M1PHnrcBgulct31ZsloM9XS4O_Rz04W7eRUR6Td76AFvMftQ64Cj0yiUV3HmRMKBTFHlKtPJo06cB7xWAV9nLx0fvBHAx1dLPnCOhRRh1d62Et2KnYgUmlIkXOsnzel1WAkqrb6Xy8sKPH2X_-ELwTymwt845b4ABVIxDBuZZxhq7mgyWwnyrx8M&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFyKYXLeUKJ07peCxwEwQXuVT78zDZlVbRtYYUNRmGGgmDLTGci4rFqVgvPmyM6KJH6ityZf2LqYJodWw9LlGuzziYIVPegr9xkjHrTUj2LWqFwar6oMrlcA2u1WmeErG85UmTo33YEBveHuWomWd6-KCHCsbaA_pBvSQllOXFpC4byoNdMI3M6HDasAH_0WirnU7SrXTkB7aketytRjPRXkGcj2Fl_bOStLhlCd56suUT4mnrEq5SpPdTEEy11b8B1H3MloJiXGDSM43NIWND0EHMnWedhsMLOoljR2-4gdrxdD2vlEdNyjTr8p8f00NIIC73bKIkzcFl5NeLid1ZIha1gXTUzwf5Cstk67er9Bytf_NedzapjGE3-1yarhOC3rpPaiix7Dtl9wxzQBc3lGO25Q8SCDMRp9Qh1vh9CUUw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Curry On', 'Ann Arbor', 'curry-on-ann-arbor', 'Pan-Indian', 'Both', '$', 'Casual Indian', 'Casual Indian', '{"Pan-Indian"}', '{}', '2711 Plymouth Rd, Ann Arbor, MI 48105, USA', '(734) 418-3175', 'http://www.curryonaa.com/', 4.2, 515, 'Monday: 11:00 AM – 4:00 PM | Tuesday: 11:00 AM – 4:00 PM | Wednesday: 11:00 AM – 4:00 PM | Thursday: 11:00 AM – 4:00 PM | Friday: 11:00 AM – 4:00 PM | Saturday: Closed | Sunday: Closed', 'ChIJxeTZUiasPIgRv7TJvB2b9aI', 42.3039449, -83.70689329999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFAe-HWeXK7WYKQZPpq5O4wxE1c1ehWKqmlVezlcv1qmFPLYSre7iJtnbtsso_b7LoiYLORvm0Gn56p85XZdMWagetCRxmTKmUh8ZFqrT90HcU9ZEE5hHhiw1yYysG687PuGPIsH-70f_-2uaba1bBKEQS4EXvZwVyHr_vr2p0nhQDUZ_OeawCXzZ-Lrpr4g5fMJdUTXG3fmCe2yEt44AuouPRbBDA7JsxYZ5OVDXS3YGSnIzIpWMk1SpJdPZrXRs2Wb7k9v2eykFkZ5zAtfeR5-BANAvkIZ8er_W2fzOKTqeM-SRRvHuxRDU2wQmriazTyvzB7mHoThZxJbBRtHGuaij_84MAyuU8ZVYr7b_kTDmktTaqGOvogH-gj0sBGx0PtKlPbl3cj4sl0VSpavpmCkZjH21nkE41voHGvRAzpGw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFWn4GyZbCWkDUhmbzYVeyHI_ghazyMbJCpGJ7nru-wt3lxavhCwrxpHgAnq2XLQQkfkwQQIfQ6e33cg95SXzyUxGBANQ0J7Ql3aEIet01kZyImtHsEECDv7ZbldrkbHu3VBgIRXUNuMtG6IXl4A-jsID2JzWEjGuI74oxAyWAUtjnR_nvu9NogkvtgtPtMjPdwAktpjeFYZoltvHWktgO83CtHzQwSi2_aEzoz6va6o0wVpvKJqhRBz1PuEiqoyHvdRwrRac6kwVUnPYFz2cF4FuWY3srBVR5pxXGDMtf3ug&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGR18FYJPgqPzIlJNop0n9SO90NQXEfewWTeXInf8qe19vC-ZrCCGRrNFQ9EgAEPFWmUdq5pJkuPgM3ZjKdSAxMJ0VgYkKW4NHAUM5aGJUb1ZxFbdNcrBVkOpDD87zMYOguk5RsOmzcs8ZfwPZty-8klKhtdIQ3Urw4nXejhpFmByMIX4xnL84lrKHww6gk9wMH7w9NqE94w7hJ8Y7riXv3mRC16t6hmf9znSeLRPpF_ipR6l0ucE7JtCpQ1scj4f6hk_TJsVxtGeAJCaDkUKEXrq4errI00pHHPqr_xUb758gy_vziZzy8mHPUYC9g5FleMOy8i-wJOHlVzBlLw-5zpWR_7YqcmDYSu3JRx4fFfLNJaIEpAVuzd8VuE8jcOjTn7TwKNtN0QuOngRLpnp8c-jBI6S_17QQu81DyvI65tr3YKokuGhKpD8qFVjTe&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('India Cafe', 'Ann Arbor', 'india-cafe-ann-arbor', 'Pan-Indian', 'Both', '$$', 'Chicken tikka masala, fresh naan, tandoori', 'Chicken tikka masala, fresh naan, tandoori', '{"Pan-Indian"}', '{}', '1797 Washtenaw Ave, Ypsilanti, MI 48197, USA', '(734) 622-0115', 'http://indiacafea2.com/', 4.3, 324, 'Monday: Closed | Tuesday: 11:00 AM – 3:00 PM, 8:00 – 11:00 PM | Wednesday: 11:00 AM – 3:00 PM, 8:00 – 11:00 PM | Thursday: 11:00 AM – 3:00 PM, 8:00 – 11:00 PM | Friday: 11:00 AM – 3:00 PM, 8:00 – 11:00 PM | Saturday: 11:00 AM – 3:00 PM, 8:00 – 11:00 PM | Sunday: 11:00 AM – 3:00 PM, 8:00 – 11:00 PM', 'ChIJyYbquW2uPIgRrg_cAaDR9gs', 42.2475657, -83.6419184, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG1WNFJ3XI2BbDu9BrgI6epAGqlyV84htxFo2UlIUh1X8uPdiTNAbj7B8aVqNkpMiYMTgEo7BxVyZ8940bJaobu4tQWoBqvjGopptI4oTzyn6mpFxy5oXVdj0vHjNcz0basbOQsMV8UesGV-8DS6XIK4A9hlnHVDyxzqC0huCWAGYl591ywz2LQcN9Untk4LbngZ0RkBFsagNcmtSKcd1vtZrgdSC-PaLTZB7dNSuM4iDCl0D6Odx7SHXP2XRu9HxbL96HtYFeqiNqaonZr8vXIZEP6Fur3t6A6Z_ibpjvzHj8OWD37xFszMDaxkmp_RZbyvHsUCyYgQIvHPW7xISXAO8vbasF24RDJyeQWk_qFU7hTe6OEYZ8GBPaHaTT8pYzqaGl2HMZwfaDvOYrPSlaASzabohzGcGTOLCtCuGstrPzw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF84TDl3Zk6uIa2_Y7AkJSdNzXkDP6HpRZg8Jl4SmnEpaJ0ef9-c1TuJhvTPAHoUPjf_fE2juo-eY6uPpogbujP_UJsuWUB2rHxY1ALvbop4aFh2Pja7ucCHwc7HwU3DnmnGqNku4mPe5DlzbetSTiR1acTiwLGo6N0KFlOzUgSay_BIkPZYGmGF6KmN-vlehsuYA5smmry6YLZBhogBlXTaTZl4aXFHvc6ntT1Q2zq5g07MFA3Nct1ytLR96vOLk-ASyzhCakHDH4pMOa-Vs2Q2UUHzrb_4FgpU8-UxYr5tghNv6sSWQNcUZQSd01Z8ficmKjXeRjkrSGqBVgvUo0jq6jLylJDqsSm4fBybPO2tATtiAvjp0VrI74xDw9mGdVSz2bK4GlNEzedaOtqIMgW-VghH6Psne-VWpGHTWPHyHKOY7V-jKvsJZ1iWPKG&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEErB34JFkpknL0X9BIpE6Jj_84IN19JM5OLl001LhwB9My1ixH7TetJGpPrzyg9rhBn57KFxq1CjMCqM0pUKY7rqqx-RDQcAApje1wMFV1nBoCm0q0BpXjhr00AhomFNB35USaWBHcaqTbM8GelUijC8jUCTByWu6qR0cs28PF17FCfj0Wp7tTF4MsR8EjJ3fEqIIK8d0f9mxMKcCoteX1pu1wHW8Ke3DqVeDOP5fqWruQ2uqqlTMcL6R-XtFrSy-E-0QnOTIfSLQNPGIn1Q8URMrVTFS9dNhYXzoFmndk0IQiagtJpu0X0_M0MAPWBQ6HRGP3vz5Fbx46At9FScR_REsA6I6VqhWXLtLy43Xw0iy65ymi6tVguDf8il7IyXxFDmSpHtYVrwlFA-RygEA8Ja3dERs6c6uTfbo0txlAP9w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Base Camp Restaurant', 'Ann Arbor', 'base-camp-restaurant-ann-arbor', 'Nepali, Himalayan', 'Both', '$$', 'Himalayan/Nepali cuisine', 'Himalayan/Nepali cuisine', '{"Nepali","Himalayan"}', '{}', '5060 Jackson Rd suite a, Ann Arbor, MI 48103, USA', '(734) 882-2882', 'https://www.basecampa2.com/', 4.8, 489, 'Monday: Closed | Tuesday: 11:00 AM – 2:30 PM, 5:00 – 9:00 PM | Wednesday: 11:00 AM – 2:30 PM, 5:00 – 9:00 PM | Thursday: 11:00 AM – 2:30 PM, 5:00 – 9:00 PM | Friday: 11:00 AM – 2:30 PM, 5:00 – 9:00 PM | Saturday: 11:00 AM – 2:30 PM, 5:00 – 9:00 PM | Sunday: 11:00 AM – 2:30 PM, 5:00 – 9:00 PM', 'ChIJ2Z6s_wm3PIgRILR39DhMkx0', 42.2875012, -83.8283096, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHo74jU7FPjXHG6VAYfAR6sltNweWze7T-TG7vl2q5qpCa7lHtub9TVwMjUg2QPndUELhyvsXLYfTz0bqYDL59ICsIlMrJe4O0m1fR_tKzdiD0ODDA_JWpM2jjFgipaRiaFUmqPp21FsT3LahIF4msBwGJUpAa_5wbO_lngLaleDIGr8aIUiifeLkmOJPxez48_JvNkZZAOvgYFnuUVrBGi18Qil_6sKNHgPMpQtnYRAMx__QAR3pJJXMY_Ie3PaO6fGAgCT_rPTtnKZLFQi4UEby_2BGosAOfjONqHe28OPg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF3ilL7Z97A8GpEIlBrD9t1YXZas4EBJHo1E38WrLsXYmnC7kZFC5-8TtBdJNNpUXW57MnToOJkeHBPQRyXkIYpm2BViTFtufn78GSJQ-eVq75I1_mlF9wNxOD9E34PQ3lp0ytTcDyzVs76vLZ8RDGPZJ0u5I9JjIC_X3OKOkzKpyC6FgouZsmh2ExpqO_nsmksbEU18JT8yZ8At5CHBKkAans9BlU558HZBYGA2yiNK1MBHSaJ2eXQJpXt2uI5Zo-pbIWABotUEJTjsZLYMrHN1fJ1BsRpRDcCSBss0X6L0g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF6tXJdpL-b2dj4Uq8LtWmv4F0YODzjobR1lsd3HI_c6GgqtFyPA-2jOhjn8NlSJaYqgDGrnYBoneK9AYkpI-5NhTFgrLQVWml3e6vO12Vv3wWoGfhISHazYwnWcrpLWl_P2Rahhvk81WwAFBfIjo3CvY-zG1Uhw857xgefqHpXPRf7zbe_ciRdbURncKNSWTyAkVYyDGDX_UyMhgcSlI-ysFdKNE9BRZUMljDnwMRZ8QaISitBAEFNA2_pbPmYh20QlbjguW-WJ7DpUSKI-JiiNo7NOUz04OVvInF0fK_WlqFv1jXlqPjLwwyiNmeWcLU08Zj5iyhNmA_rZ7fMORgIZdlP9VqIU3ER52ApmgcfsLcn-4dZtyjJaub5V1FgSzjxEj5dHIjkPWTXGo2RH0YYxYWDw_wjFq2zKRdE0fzxmz0tl51AfqkGHouX5daG&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Basil Indian Bistro', 'New Hudson', 'basil-indian-bistro-new-hudson', 'Pan-Indian', 'Both', '$$', 'Authentic Indian, new to area', 'Authentic Indian, new to area', '{"Pan-Indian"}', '{}', '32621 Northwestern Hwy, Farmington Hills, MI 48334, USA', '(248) 562-7179', 'https://basilindianbistro.com/', 4.4, 201, 'Monday: Closed | Tuesday: Closed | Wednesday: 5:00 – 10:00 PM | Thursday: 5:00 – 10:00 PM | Friday: 5:00 – 10:00 PM | Saturday: 5:00 – 10:00 PM | Sunday: 5:00 – 10:00 PM', 'ChIJzQmtViG7JIgRd5nfTqwfn0s', 42.5248218, -83.3534337, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHO8S1Vdkek6h7G-YNl4wOzUmEcKCDG5HE_LEqpF39YaiuyIYn0PbxUh_QUBU8YcG3oZ8a27uBYgOPvGcQ-Td1a3b-1r9piTsjJi1tC1TiUDpRqUthpx_JAbPKlo2s7DC7jZJ2g1oWtSgoFYaN4i5WUHu4FDJn1jUNr2HUP74nzBBHY3fNa7z1xvxYe6SzuRy-RvZhvFlhVLLA41Dx1FccyNFARDC1Fmg9YQeYpHSKe7QEr2-QVjH3Sj0ZAcff_GUf-m4K-JHe1BvoqWtArKsSwkem9gktcTBfAtmz0_tbykA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEneO-en_13PhvC-yzRL0YC1jTsvgGiWiRyfxVNkCLQ4nHRHZ80IQRfEbqYIHQuTTJcntvJkQRa2Q534b5aA6aSlh8UaRGPtfxNRc3TjQ-tsNoID8z0Pu2MUhxntIlp21PeBBukpu8vOlXnG-skVOm9hZ2Rsm3-TgWLylZ-ArFD_6c1cBLoMaeSotJBaf_lum1KgVf_m5voRI0RwLlxIjlh9zPq_TniPA0u2Ac9cqcRVJsxbwhptB_xTA8UkbKdnDl_owUfJuTR0hDQ8Gt7D8wiOMGhah8NNsXB_q9hreOGjg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGxgs88Nlt4rWWIOzT1CkxRFIpB7DaBXQYHpjQotC_UCye3eswjpBBuWAu6o6Nf4U2_DR-hID_Oi3ezRLVEYJtphDzEP2R8lURho5XvUPlNWsyEpG-cfezUjjVnIwtH1JiUHemmbLptoHmRLCYFb1t0E2kfZtgGuxZ86SMQtPVS2IB_Anpy-Y2Q4R1FHTG-JroJpF3NdWaEOLT3taQTc6episWLagXSrpJiquvonNUx2cE8vQ-XsUlLlQmqk7i_Ldspmqw9tqZPMLjcu0PYZM9mqn71eBldZNyPW5JNgHmQ2-X81e3G2gnvQiGEkqCsCN4rBb5IfqEz_EMFmhgi_BVvIYyEKwXq9Cww4gAfxC4VgscKudXAi7ph7xLhV5lwEkkzqHKNryjiNv0DkQYoE47XzS82K4JRSpmLH1wmHiNB1Lk38c96v1VIDvrZgE9p&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Noorjahan Indian Cuisine', 'Grosse Pointe Woods', 'noorjahan-indian-cuisine-grosse-pointe-woods', 'North Indian', 'Both', '$', '16 curries, fresh naan, halal', '16 curries, fresh naan, halal', '{"North Indian"}', '{}', '20641 Mack Ave, Grosse Pointe Woods, MI 48236, USA', '(313) 473-8001', 'https://www.noorjahanmi.com/', 4.1, 232, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 9:00 PM | Saturday: 11:00 AM – 9:00 PM | Sunday: 12:00 – 8:00 PM', 'ChIJPZUQl__XJIgRswxnafplqNI', 42.4427648, -82.907521, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHloQJHacSjYFK3vG3BKuTpYHnQwsMv0nSfLA9r69hOWJID1QGUxL_jpvAKWSnaYwsbXBQ5V0K02Rv6svhMsdG2vdWrqr4hi_1ZS-PSENySJtXH-KrITNDDmd84BwnzznkT9V_oygtp0_zLtftHt5husa5CEA3JKyBh0ENcy-YvVaANVMRSiNlTdLuuuNr2nR7imSayQBLi8F6hZEGkfgYvfx8rOo9k5rJGYhK6ZTKXrdMhBd0fc-lEjBwUDmvUPun6Hf-78C69YxGRZQw3sidzzw48pZCyN24wfwhdviV3y74nHeKjOp2a7d0ZK-FPdKLIP0POpMlrpfwF49raoCrnSGmk3oppqIpN0U3KdyD_TH7bK2Cbz4HUjjMJ-OcU6TzD8npl8gj9ck7pBl0rNxzlz2z_e0VHUGbKrEamSrw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGRz2cEVrPWQHw0EFPyBVjPDdOPMtQNKG1fvmSPs_eqU2wXdJcSBh5igF00oLdfl7UPGDjUaHifw1MUTmWxcEKkJnsTeuvWgQaPYkSt0fpQTTlnH3Ey67LYTthTohLZdv1oXI1lo_4PhG029fqGtiB0gd-wRX8yXggSrpWrDjCPmy76ncgYLziF4jOa0PWanKSdJX5hWYW72NLPzx2nITmIuLb6drMeGfnFd5vj_fyZtvNe2DlZHoFPXzmVI7Y1Uhs_mfzqR1n8Z2sCVeOt2hi5f_aKZd7S9ULBvtAsxhQSTg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHvPHpSb7RAJ8vbeR9mV9yzUr0dkakMyzYPTizNyLhI7gVUMJ2tStNZLtgQIwjc4GqY2cg8LaIC1NaRnLRHfiDQNBtkLHCd_xdoPt5QJFSYvc6a2FhQI1ne-fsIlbWGJzidLnWiextdwZWzjwNFcH69_GXIe9XZVFU6qSjpIPkroLuh1Z2CuU806yfVJGoF2wKxgrFDkn535MQCwInT9TUAJezSAOpeZWcbmrCXi_d6c30MUMWQKbasQow2RBQ0VJAGSSqvpMuWH4HcCe-xIR7wCVNaNTHParm1UtRQED5n9w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Karahi Korner', 'West Bloomfield', 'karahi-korner-west-bloomfield', 'Pakistani', 'Both', '$$', 'Pakistani karahi dishes', 'Pakistani karahi dishes', '{"Pakistani"}', '{}', '27616 Middlebelt Rd, Farmington Hills, MI 48334, USA', '(248) 426-9000', NULL, 4.2, 57, 'Monday: Closed | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 9:00 PM | Saturday: 11:00 AM – 9:00 PM | Sunday: 11:00 AM – 7:00 PM', 'ChIJ42x3VrSwJIgRkyLwApN75ow', 42.4979225, -83.33736119999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFC4EbeTJjVW9OgU574UJnpUhIv2APnYHrQ3YlSYzTo6ssUvqQbQi46wDvA6kNmEmOczYj5agT_mWeD0_rpAQTnqe7_icVtREM3-i-nuSjaXGeNj_AiyrrjafD204VnTxhBL5YWVWcjT_8ViV7JyMxCxJW67USlNNnaZ-UGZTkDIIilOcAF-z0LJTkaiPe8vCuw7rs7pD_SRcgiQGvi0wdgaMn_w1fg5Nt581QF8HXeX_0Fz-ZuCHzy_owASc8EOk4fiJU2LwnIHNzT8FujWXavmg_0qDhNdmxjLP-56ZGnfuIE-aqIyWgRTm7kIj-KeRzoTubzhIIzQV30j3AdG9YXRdgT7T-DaEJGkK3e2s0jYo6UsoM0U4oy9OuOGfAe2f3PUFW9cqHEL_bgQ49G_rOjEZ_Xh5g1yYhQV2BiyriJQg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHNQKA0Vg4vR0PJ8AxAFDV6xcMGXq3Ku3qAJ75sh1odz_96F3Ljtqsb9tvAlrZlGx5GcdV3KZwiddd7wHo7EC7UdxwaoWrc-zYbQOx7tzK3lhSGBgPisHqKJ3W_QvRgqCjVomqIoDDM8sX9PcSjXGFwKnhs-aJiXHnPanDDq9orj7ldQL7oz_m22yvQHX9UMw_BayTc7YJlWhBPZsWVJEC25MU9hrnKPYlP8YoyniZvyEKfdN6kklLD234-92wVHf1hivJb9NkKG6VjBVvznHeKmavEaOTeAM54ZEzYb0a5rWjKwlp66tL-nRbiygoiSkLuk5NV0wNbfo5lf2zoku_aNFLMW4O7iJb0E-uwjnchEt2sHuu6uMKfrFu-8O0HX6G_A1fwIMgtlyA1OdyyGEm7njezAZODfpdljB9mL81EaO4Nexiaa1DykHiX3Qfu&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEcrKyYYpxHGozGeXIknmbR1faiDbkO3Jt1S9mS2vPP_1CNyn2P7V3ndA6qoCKAlKVh98qYQca0y3ZLWgXaXZmiAqHMu9Jp3F4uwd7rOrQL2v6unukiKBibU59JekzNc8qCBbCUDasccDxWIavmXWz7XEcb-B6aumXUpUFfSUUEE35I4WWhi57KBfjL8MImFJX8l_lJ0fo7lkuet2wu1nmPpoBjr29H4ZcYbpS6I7_3zfxFAHjjAtCdlgKNzqnVjZXnhIPMXUZdvAanUSBioBi8FGd9GqjDytSKLQD0zH2XxpiT90zOaPaOBtYjIG5qKBkt92ofZzPZL2pmdJOXUki0ijBJ8aiu7d0SUgfhtAzOKzsSKKc44Ub3hReoO5ijGWbn4nTmm0bV3QV2TL8zAft03HUwclm4WH6QeQcGbtPHac71H9s9lYXLbR_IgQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Asian Fusion Restaurant', 'Bloomfield Hills', 'asian-fusion-restaurant-bloomfield-hills', 'Indo-Chinese, Pan-Asian', 'Both', '$$', 'Asian fusion including Indian/Chinese', 'Asian fusion including Indian/Chinese', '{"Indo-Chinese","Pan-Asian"}', '{}', '2079 S Telegraph Rd, Bloomfield Hills, MI 48302, USA', '(248) 481-9581', 'https://www.nipponsushibar.com/', 4.4, 485, 'Monday: 11:00 AM – 3:00 PM, 4:30 – 10:00 PM | Tuesday: 11:00 AM – 3:00 PM, 4:30 – 10:00 PM | Wednesday: 11:00 AM – 3:00 PM, 4:30 – 10:00 PM | Thursday: 11:00 AM – 3:00 PM, 4:30 – 10:00 PM | Friday: 11:00 AM – 3:00 PM, 4:30 – 10:00 PM | Saturday: 4:00 – 10:00 PM | Sunday: 4:00 – 9:00 PM', 'ChIJwWjT3N2-JIgRBU4IE7IuVs0', 42.6088793, -83.2997743, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFnYfIIFHSUk3d5_-zrVIJW_vQdbpMdHW_mnC77EON7Pf92sSQTmG6vQog2fn6bkzOe7rxvLBUubLK27VKW1Q81BBrG1GDTkF7ygtjgw4XbS9SczYVRWtavbimTtbQ_fcuMsByg8vokZcD94k5AVKkYOTWg090_UrZzXSXX7qF-YuwudzYktMGp9oUCaqB3Qhq19IdMa4eXYMq4zclHkTAWCSNAV6ngVnFHPBLdogPlM_WRtMeLXeMmY03W6sofLaJ1gCJlyDT8sNY_0KjPTiSEHiqpMNadbuaKrmAdA-7kyg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEhVblPf2smGIE_8fhTfJUb1tot0Vxxif8PD61K6UrfYAlYIdGeyYol2q0JYfWaV4Pk7EgjNS-Ga_0pfFqDdtZ48y_7M4uGrWVx7ctvjXWHeMay3ZKiyDziyHO9KXSpUnB0-P2VtlLmjXuVbRJIko_bKPu7o4A2v1kPxHcVeQ5ppVF0LhPXKj5Xptp4-LuFaETbwOI6_49MIbyv2MCaouZwVsSc0KaLTIh3wA3b3QuOaGddIdh1u_2rhrMcZJbAJhp-vcHrvLsdfwzc8l5Iv7_lHtKLjGFAFq6GsVkQMRfrqA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF6zbZBVSWqxz4hc7nhq6KcCkn-xJhE9ENyUTEB34pc_dkDEEUrMEYgAuXr7RU8wEHhfExBXTIrI1Wx9C7xzghMrT3vkhzrWsa2uiYG77WB9fmG1zcD4lB4S0hnVF6pfcMwGHHBJFKtWaotavmX38KPmJR_bEdDsEwreoObfKaW5DsOV1-sXj_XYaFlV-5O3kf2FOm4wkxd-5-uiGmWM41kRGlMFPJohvXSAnOiASSLP2MOs_snR7067VmCXyhVXoAv8kbEc6q1WKwiSbDKim0IPAMLdcBgZeshgmK49OEEfJaaKMSKRPq0r1jdI3x6SX1UgWf6OayS1Wg9uwF9pPSQj4WOZTspHMFCocmdIoPXC_w2w7JJVlf6gN9i7XqgYnYaGxp2nWM6UkvuGHukaE0oArWy__QqntfROQNBj9yvdPY6cTUSWaobj_a9bA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Mithai & Chai', 'Troy', 'mithai-chai-troy', 'Chai/Tea House, Sweets & Bakery', 'Both', '$', 'Chai, sweets, wraps, naan paninis, smoothies', 'Chai, sweets, wraps, naan paninis, smoothies', '{"Chai","Tea House","Sweets & Bakery"}', '{}', '4917 Rochester Rd, Troy, MI 48085, USA', '(248) 479-4966', 'https://www.aahartroy.com/', 4.1, 225, 'Monday: 11:30 AM – 10:00 PM | Tuesday: Closed | Wednesday: 11:30 AM – 10:00 PM | Thursday: 11:30 AM – 10:00 PM | Friday: 11:30 AM – 10:00 PM | Saturday: 11:30 AM – 10:00 PM | Sunday: 11:30 AM – 10:00 PM', 'ChIJI6ZYJIXDJIgR95UrvoRwR0s', 42.5909275, -83.1297493, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEeiKj9lPd0rrogMIdmuWD8xaDF0VDMAknq2tMQvwcbm22Avj2fX1QK80LsISbec_-P_vTcZ9dfX1Uwo-26xkB6tWkIkFIFy-OtYloRMmcQeDLZ-QZF2k4eHWm8sp7R3BhgbL1uBzrNujeWLcevM97e-P4u9q3Iuq5SnGfcZuSLZ__NS1JrX1lqTuGa-pSLnKFV7KSQy32yHyRGerwF9ruNfKZzt2j0PNR8JJriwv2dlOK9BSGzjd2pmMxVyqUgljlfBxJOmVJaV_MF1g0YQmuryfVMda6pD4sHCu67rJgtjUgolHQ52Iw1zogJ2EZWhW9JdnMg9zPmaggERTE4zM80PMqO5fpcLXT7lzWz_AYmVhqJxi00NijMnpwFJby9bx3TygQcq19PxslQyFEZ5uaZBInol2haGlffbY1Y8pD2uQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE4j-NYeZot4T-UhzniUeas3A0S7NS6Z0UK5HIg9pCXb7-YBpjFJRpkp1q_SLEbrFlsx4G2ypQF1lL4hABmTQNjd4ggU_6KpZEKG7G2NdbTsgywa0c5lF1SP-jcN9MbYMlqWNX2ZAmj3eqEbPaU2JgCUtvElRw8Gn3TLi_kAJ8uqOWxiHHb-Zyj1k4AtTXKOnsyxlqi-bTrfcXjJG3nhNbGPp5_LNXa1lNRX3HEEyvJIWmSJzM3Tvpk-s1I7mRIF2rm_Ph6O6GyiMTxobaEYLRDIFr7-uDY8nhbX5bVEb8sBFwKMpiehmTfEMiz9Ai_yHHrZT5O2DBRV2bgLExRlsOthIqzxGVdtxb37sjdJ8U_786OthkD6LpdSz7nyvvCIC8f7CR53cbv70M6l1_0UvgGQBE-EyhYc3ihYfezrwSF0Ek&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEDP-eK0Vi1LKNmumWbD8hJT3V317ATcmv94CIaDUqf803D-BbdWhYiTJfV5fk9dckyQp1cK66ajJXria1CYseSGxqsWhjv_yfegJwRRf1K15CXOyd0FS_kbpYL7kcltOoP5DYOZ5gb1pyCaa_QM1UhYdQsiUb-pYAztd9z9XWwM1-FJGtsqIfNkBOI_9Vf-BvmdPXd-env8KdeQNaOamdAJc3VJaBhSXVR-ljFLe_xDbV-meSavW9Q3Mi8wSfMkFXDkZGfsUoh2gsQ0DnJNZZDIpYRf14Hb-IUTXKSvpK74R5WRpLxMyyf06Cz9NvQNGx8FM74BDO1NgCFm_RLYlG_mYoZ0lPV3LglsTwHczuuWRWosJ3GxmPtPSQnNTIp-F2StB_vQiyzc-P0Jk1L-Vx1CuXqmsxEeajc4U-yeBBQY6w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Tanduri Korner', 'Farmington Hills', 'tanduri-korner-farmington-hills', 'Pakistani, North Indian', 'Both', '$', 'Pakistani/Indian, tandoor', 'Pakistani/Indian, tandoor', '{"Pakistani","North Indian"}', '{}', '6 S Washington St, Ypsilanti, MI 48197, USA', '(734) 254-1071', 'https://www.tandurikornermi.com/', 3.7, 586, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 11:00 AM – 9:00 PM', 'ChIJSYRpYnRTO4gRJxllqjNX8_o', 42.2405802, -83.614763, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEG-nzhC_yfVnACTSuqNWWNw_4FXPCy2XGayNEbZZmteUgVrP6aCtRE_mPmaYmkgvGgpiMLdxgDxLkUMU8KimksHdpGWlo2fs253u47ZAcA1lv3yAxMsL_hEgJtDuca8LwdUEh1ElHTlxGRsi2Id4Sc36RokqaRMv4mqO7nKPsFzVtQL404vrcbbjUT78LQvFxn3WQesdszmmDT2eouNROYFfNtUXg7JxcvvZ28gog8odbxrr6hVbEhGj0oVnWeNrkFcY322jYP8UcT67S8tyv0twk3f2xJJMKpfop2VSU1-Ew&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHwKmndzFwfPRmBbOvKacZW0jrri9EqOJM9_KYK35IZZK0nvMbMFYR1y-XyGqxJS2wlpRBZpaYLTctVlgMzowakRyDpSmFOvDJ1RASplL79V0SsJ1dL9aVtUz7FH2yqrnM7F6qF8P0xHvmlclDRz_N7huv-vySTALbuGfei3uwl3MyZxYw_spowOM0W3HRAxyTHcqwZtkIoCD2iH0PctrjNL_Ewx2tHkhuXgyn64hCOiPwyPbY2lTAyXsq5BHwYLN6YLSd2MRy8ovHAMIt39nbFZyUDdMhat_THwaogz0LO_w&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHF9PQgE0GQvrGBpcViaWgQfnrRe4BzZWgVtiNwNIzCB5DijjRh-wHr0p3U_cWLIENRhnBF0CZC7m1LD3gjrSqDnoERCFBNiYB8OiBL6A1PYTxeQO5mfTqIuwwgTy2YWOINifWF_CPlouZAkSkkBUgN80kKQKsEknv78qEfZvAF6JF58vMQll972XOjFA16VzaSS9ZuK_v9bQDlHKLTn2eP5EPoNVysiCBhtRQGoF2DlclHNHVwroFcWxWmnUvTZit48K-a21XSP2k1UnhPVp70XO5sdJL0qGloN8I37gReUi-zRH-nH0n1PAg1wqyjLWoorj57R_-HpdeE8RlVNhxcdloXu03n5Zu_6x0fIpg0IgzDoNRpJzAkwkLSpOlgnxOvr_khcdMIERiduBFL5ukgPlCJNLXyH5ZrOnTL32mJbF6Ozi2Dsy_kTvTSgprW&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Khan BBQ and Grill', 'Farmington Hills', 'khan-bbq-and-grill-farmington-hills', 'Pakistani', 'Both', '$$', 'BBQ, Pakistani grilled meats', 'BBQ, Pakistani grilled meats', '{"Pakistani"}', '{}', '29470 W 10 Mile Rd, Farmington Hills, MI 48336, USA', '(248) 482-8825', 'http://www.khanbbqmi.com/', 4, 286, 'Monday: Closed | Tuesday: 1:00 – 8:30 PM | Wednesday: 11:00 AM – 8:30 PM | Thursday: 11:00 AM – 8:30 PM | Friday: 11:00 AM – 8:30 PM | Saturday: 11:00 AM – 8:30 PM | Sunday: 10:00 AM – 7:00 PM', 'ChIJa-73pwKxJIgRAEK-z5Z9PR8', 42.4709262, -83.3386659, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE9iM04I4YCYouX5yQQGbEUbCPrNoNqbPWsZnx-F0Kmmjk4bbMmNHAwgOUxLsT-TAkpPneBlPvs40IvJjbb3M3zXnK8Qdn0-8Og4ZhTUqk54dEHqOgMjfd43zqMnG9we2qcZMAnOjoRZk_QdX-irJOAVT5zs0LM-e8ws2zKslLPJOPmvh9d2wo1pl-ptP1C67SlNB3e5WHUudSQyfchxhcnWHfx8_0Lad9z1CnxbHh_vM6fH_FxtuWDp_lMRX3Y7cDMDnYIvS1HJbR1hT_M1M5J0LZLPg-bFs1-t944MieIRQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGGrjugW8R9eb2nL4B8M9pZMZHYz47RPE-rOecRj6otIKqPS5Qe-6fTts2W0xPKQ-D6ef7LELz71V6QkjoatKi5wsUHQOY1VtxABU557rVpv8sWxsaelUFJWVt5IKH-HPiju8Rin-Fiimv0iVBZTIvNQQ4-yN3fki6CdIq2eVGAGsLimpR_DZyUtjG03Pjdc2PZlyhbKoWBxXCtX6U9eoq-HAOrCXrrhtdYw9Zl6DuKpVSXw9W12XbOmW5h1PanIayq0ao9h-LEVNZkGLR3k5WdeJEL3g6wCQDzZ9HYqbB_KA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF-TAkKWfzQmdWXi7cbQz2YqXMTR8FTRULQ1H2wRabNMnYCYtrd2WE5fbu_UFSGUKPFNYrkyukE9YPrGF0DlzkVk9KH0rD-Fk_rOdyugOaNtMvUppArOisTz1Js7PWNyHx34K20fRQORTthNyh_fPzCExuo5P2DHX69MsJaGkLw-BzxAmN9D8QSSSuQDr1jLtI19z4MH9JCLcoOpujdzh5XlWvKNW2BGN4DKNz9RvW981PJbaY_j_9XQEzazh27JMoFZ8lYPDJxhWSy5wFiWuRduufdQqp1aNfQO-gadB-zyQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Seasons of India', 'Rochester Hills', 'seasons-of-india-rochester-hills', 'North Indian', 'Both', '$$', 'Elevated dining, North Rochester Rd', 'Elevated dining, North Rochester Rd', '{"North Indian"}', '{}', '2642 Crooks Rd, Rochester Hills, MI 48309, USA', '(248) 602-2121', 'https://virasatindiancuisine.com/', 4.5, 639, 'Monday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Tuesday: Closed | Wednesday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Thursday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Friday: 11:00 AM – 2:30 PM, 5:00 – 10:00 PM | Saturday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM | Sunday: 11:00 AM – 3:00 PM, 5:00 – 10:00 PM', 'ChIJw41YR7_BJIgR9aKLwIC6x5Y', 42.6405672, -83.1723233, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHEmMulGSpJBIle_m7UamEA9IcTPYtYEWmwlnPWWcV6HnTyxfRdQF-kJYWwo2HjJ70ThMjJwVz8LyGg0TN3iv0QFU0rq-9OCPZlM70q2ZXiqWOuiURS2G4P-UdwBOZNE-ES3D47agQhiBsps2jCftwWRkIhTs5mtpRHiuBG_Z9jyzg7wXLCQe0EKIhQXdd2tFVpSwlYlolFmk5CTrzVvNqSY3eoasDXhglx9jrsFgEcGoPU5bAX2VNyisq_-flgv9yeiB8Ttx2SRvOWe1TohnqkNNSUIHZkfbxqsgn51gkaXQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEOPUd719OfcRYn39ZfK4Y6U53KQiWOItUYeudKpyVftNfF25xfJUcRZi7mYy1eC7fVAmhZW5wW5mcPSRKNXouC-IdpCPb4N2dkmsmcb81vfuzfRB92LV_ZXo8f4ialG0CHkpsnImZTkyPyxHDxFYzONU1WTaQ-OFuMr5DF5o5H10hgL0xF8CDCpl54VfqVqmldnTFfBVIPJtbS2oxX6oWBmk13wRTf0Ntb4Hw4CVk2AIR5O1R-SiUieOWT34iOcLN13jlTz_YXW6PqEhMsTDm-MzA3QIUzL5aC11gGyZNPhw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEESPlLqtuOA2oRpDeCQgZmrKBExvxn9xZvg4_R9vK1yeB1MDo6FB0l8GEib6Ar4CTdi1MWIq-ER3UNdbZRRqggTHrv0fwTs4a-BCZ3I9a8c98V8hZrd4CsA8yhIDO4pYn6bRXI5TjweCzh0emZQzVOic1fwMu1TMrssj7M2WAylVQqcPyjuPR66yBQcEi-YtMMvcmUli965anDu45boEVdGoRXzFBj2DKyLF5LjHR1GW_P3saeTLS4ZZ6NKPSxBwI_-M-_oddzS4sb1OQmB1R_uwoZnH6CmzIoty5vtyjkhs6aC7REUOHY6tZm8nIoDFgY2Y7eFfrdhX5Dt0DU8hBwIe7MGwnSffwAc3RWZABtlgSrgUcVjNr3wHi_lwktLeJksQ9hZkiazwnE0pSJNWavVwdm9mrec0SiTcQ5et4OlavRydxCXKukseO1xr7CF&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Happy Hen Bakery', 'Canton', 'happy-hen-bakery-canton', 'Sweets & Bakery', 'Veg', '$', 'Eggless cakes, Indian/American flavors', 'Eggless cakes, Indian/American flavors', '{"Sweets & Bakery"}', '{}', '42927 Ford Rd, Canton Township, MI 48187, USA', '(734) 983-0050', 'http://lucapastrymi.com/', 4.7, 684, 'Monday: 10:00 AM – 7:00 PM | Tuesday: 10:00 AM – 7:00 PM | Wednesday: 10:00 AM – 7:00 PM | Thursday: 10:00 AM – 7:00 PM | Friday: 10:00 AM – 8:00 PM | Saturday: 10:00 AM – 8:00 PM | Sunday: 10:00 AM – 6:00 PM', 'ChIJpdoYnx5TO4gRIc_8qAp9WHM', 42.3220095, -83.4637083, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEYHm4XpqBYn5P2uSpZhXAWvPDaVWO7e_ullhmM1TGDcbg74Ruk2ZSqaiqWvAkNN5B-qiHON4Q8h_ZTFxQ3s_6Ti8VDspm-nlsV7ZAosBJ2qoTIOfNJTHiFpV48tY2EGFLzHI5EwXnsJZm4w5m3rqrY3BDCGdXOtzM0c7L3vxktl1VPdL2W_MFI-jcqEyYp0jovKaycX8AOL8COgZWn78JMnlqztky2EQkno-lPkS83fFj5wDXFuUSojPDzvZ3rX3hpZMgl0z3XSn-sJ2hlJfGdd0TFb2yvH4fF897DMf_rcaaUMD3uAwOm35B4pK2_JNh2U-tqE6Qgtp2DY-0lF-BsCig-zjif7mZN1954HRP9csDuPmWOPQw7IOAM8-Vq_stes7YrrxKd_6aS-jmXkI_QeuDJM9uw_Ml08BoNakdzlcmO&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFctDa85sn2wT9FX73AoVgRhoDBBWDUGrtY_bsD2U8Z5wTaYjW-dWpPhrdtfvOTmE0HkO-Ep8rbK7of-KwxLL4dfi5yiy2eElKeMWdRbjJ7pg_wprW3qPbeXF4DqNHwbNvpLZymP7SvDBeuZC2WAcYUN4OEuXGMVSdIpIhLrLKb-LEZDTrMDWwWRDG63sGsLwNBU3CWGYHtgk8VjKI2MBLJMRss74kFSfA10PhujK37i1m3OhbKV8fD7GBsHwe30PcY1rSI9BnM2fJ0_zTi8B7K7aJFRtJdzB9sdfQqrV7yBoFS5tL-Gx1ky8GCGVGgJSndftvis3xpFWWy4mbSglVB1ZadddJx7UR4yhkgup8ZhMiy_NzVAeV4hjUMliROyXpB9QoX1Z5LhbqSLEmguehIwk6kqRtjXZa5L2irsrNQyH9FTAd6HqQVTqUdxmFr&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEEAbVXop5RVk-KQVkzoYKXag_YjIgZ1NtFlSLmLuBgAHGRVXrCcYTYC6vYXgcgfm-707LnuFP8PkrIe0uuOqwcrwhS-C8j47MQDOUdcmF1pgv5xN8sSQMrfpYts2tZKrkA2n-bcy_zofMr5H-TLzO8Q0R0GMbin21sLyoYU4BPcaUWsLxbTvwInEZdd1Yo963SuyvsGt-95B88_y_Y6vj2T_SKpaiuMeJB4tnx5zXmjwbNg_Al-5EFWLF55R4WQ_Et-bMju3DAgCcEB9qAmbEBJPk2tKdURvP3MavFHkV8tSiqL6c0YvpmOQU8kjm0lnwM358p_yHVLJp0mUginMdU9YvGbyeaPfH3vxS0Xv-ZG_N5Nq89FHZjtGzyNIOscRIWkEVeChC77LREJKTnQf-yHOcKX-e6pisGWnaMDnmpVgg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Noorjahan Indian Cuisine', 'Northville', 'noorjahan-indian-cuisine-northville', 'North Indian', 'Both', '$', '16 curries, fresh naan, halal', '16 curries, fresh naan, halal', '{"North Indian"}', '{}', '2033 Coolidge Hwy, Berkley, MI 48072, USA', '(248) 677-3666', 'http://noorjahanberkley.com/', 4.7, 459, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 12:00 – 8:00 PM', 'ChIJfxTOXavJJIgRe8xiicRgIeY', 42.4913225, -83.18369059999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFCtHXFqP0jmnqGdztnUPmOLwcc3lrNf61DhgPNTnXtgxfNPSf6wwFrgOAAcPuB80vHFc63EXW8RxZBj6hOEU4IsOKS47Q2m_wZpQKCwOl1ZSDKHdrUanMCOPJmvZTW1eb3zGMGsYYXp1CKqAZCuspGQAE2WA4soYXEb03NbYg1JmlrpH-GWJqcr-MfrfDiDN9kyoS6UoamxQiTN-E4EiYpRF7gb4MzjBtH5vIQbX1oM_1SYggvAO53AmEAN5vRekege1UedTkPWFcpCHlZzLnxvGWdjvUI9s-7K08hPlFngA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFOf9j5MrFCRYCIbmLU6BHd1HAld0K1Iy0jOuJ9ieU7cmuQt5Q-2MT_vbi_Llmn9sRr1NvL_StR8wNUfGJmKQmE5jglBcUH9w3uFarIej5auI8ytVXBwMLYAMUGEN-65yKHDKBuzaDWrXf-pY0le2tGkWiKLFGeAZfgBzEiWuscMk9bgaHJb7vIxHNflXHQSN9OvEPNvUiKf1CO67LcOxyXFbsA-omOh-sVZECq-YyDgW44K8dR3gPt46oZWqkxYWNE8TjcH20LFN-OWJf42Q3HsncG1718qLEiCPaV1lkWkw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGTVWivpDbil3m5qtE1yyowx7qvQDGYx6jNt16oK8aV5ZI2pzKoAfCp-OBZTF1y0a4K2gD5XzGDW_M5S1Akl0WQ3MYUIoQUchx0aFgu2CbtpWu5-PA0Yretfqskzsqk_P6FEFaVmzKchbm5prOL-lwLkPBYpG5jFykOiT6a9H-8AwyVwTA4VwZgodXp8sICgViwGjticPQwdb6694nY7yKYZuxqrUgPZ4MfkLLZ3zoSAJY6NSinzBaEgPDkVl2d6sGD3Jw-NeEX39bM55ew6z3SyvTEI_WpS2HCZbFl5LRdjg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Noorjahan Indian Cuisine', 'Bloomfield Township', 'noorjahan-indian-cuisine-bloomfield-township', 'North Indian', 'Both', '$', '16 curries, fresh naan, halal', '16 curries, fresh naan, halal', '{"North Indian"}', '{}', '42787 Woodward Ave, Bloomfield Township, MI 48304, USA', '(248) 618-3677', 'http://www.noorjahanwaterford.com/', 4.2, 271, NULL, 'ChIJIanfdNq_JIgRw2f6j3ID2YU', 42.6018621, -83.26345859999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEE5tu987n7By7sKsohEP6D1dwlEv2aTg1hImaPE4DEsJMtzlUAt2BLCEaPitvSTxxVyZNKbrO83ERuyJLU1-L0LPZL0wRar6NGZHSkJtmf5E8QSCPMtvEArn5FLHGVPQbYyHp3mFvvFjEXBzsnBD9K9fuY59gFGLOSoyKVUmRC_UViHlckvl1TMlDbEgQddPfVG6oZwURLODicxgwfuxT5lp7Ejdce0YexwJ-XgSZR6wE6Xj5rJw9ZnzWMLLd1AF-2-Hd1TnthAQS9O5d1ypH4FhPIOhqRhfFomvpH9KgA7HA&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEFZ8OOr1oq8tZsqJ5FnbZyVRPeO-nJMgdqI_uEPP7M1Ki3CofHPKuVu5bscy4ZZXOMfHYGpfkSslKtpqRxGCoMEdqInw77JSwlOOCl4Y0JsUEt1KOKCSX0uSrMHIj5im8TvafVHb3T-iM5ubPvPVsaDjepUsULUHDHdElLIdynvsdk_p8Pn1pyn-rDKXt29FzUDWVynug7R-QDLD0anQicCWG05Ql84ZBsxHQGvT7S-Um5iGzhM_OPs4ZBMukbIVte7030o7J14cjXyXgjiakhDN96YAuhW9nl5oF5akNnp-g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHYLWXfMLm5N6eDsY--8oRV1PSr_a1fYgNPyKs9VbhEMGBFhXaICuB4pIQP6FsGULMmP5aTbJax8W_3JZHa3fJQWrjB4my74UOPZj3RnC_w6KyTXqpm_KZEi_mjS6Gh37rs9PGf6AtZBoFnCUbgtlW8GDNZyAH62JxTYGvBGV0mx0oc056UEC0UV5c6uQe5cowXKRPcY_xQdA-Yw3qwa2jhGkSTprWq8T5gZYulDdZnsf1TfdyeJZSi_xukKYHVfrrQjdxvQker6-Cpllj2YEv-tzpcFgzJiDYZALfXyeaL7g&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+INSERT INTO restaurants (name, city, slug, cuisine_type, veg_status, price_range, notable_dishes, description, subcategories, badges, address, phone, url, rating, reviews, hours, google_place_id, latitude, longitude, metro, photos, featured)
+VALUES ('Noorjahan Indian Cuisine', 'Berkley', 'noorjahan-indian-cuisine-berkley', 'North Indian', 'Both', '$', '16 curries, fresh naan, halal', '16 curries, fresh naan, halal', '{"North Indian"}', '{}', '2033 Coolidge Hwy, Berkley, MI 48072, USA', '(248) 677-3666', 'http://noorjahanberkley.com/', 4.7, 459, 'Monday: 11:00 AM – 9:00 PM | Tuesday: 11:00 AM – 9:00 PM | Wednesday: 11:00 AM – 9:00 PM | Thursday: 11:00 AM – 9:00 PM | Friday: 11:00 AM – 10:00 PM | Saturday: 11:00 AM – 10:00 PM | Sunday: 12:00 – 8:00 PM', 'ChIJfxTOXavJJIgRe8xiicRgIeY', 42.4913225, -83.18369059999999, 'detroit', '{"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEGYEZ2Ttw_OroA3Gq6ZsjPSpHqQelu2e1Ulk9b9NKhWclQ_BBc5c0ZWkb0FXEGtKdBcYWNSIuu2Z6xgzM7w-ubJ-9RFxriQGrQhPBwQz9hVref6iNHhPSIoLyg-wwtvPYxpKgne21huVmI1rar6Us6zBu64mcsGTI-XugX0mTDmw3pDvKexzNXoOd0ZZAnDh3RNBI8IZJq7jWCMoq_wMjLSJDQs-Jm7n6iZzGUE19UEQOK_iYbwG6go3idb8-9Hf3zgDpl2AmpS6MDPNnTFa1HGBCXhpb-AwWpffgYT3FTbuQ&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEF1uurANpz_1FlsviXC8Bvidzhx849c18wrE4RlkN3Kzw6-I7Ac2cnuIWXT651pHBAcCOWifB9C40oE1qlS22SXaCRtIs38WWeAijLr-DQt9SNZ3yDF7N0FZZFCuWxpC1ZHMySnjmX3Jsc_HGv6pqBbpFE2yV2jd_b9tIa0AU2OdbzfoA_lJhViR47KG8tZjXehNCjmxsVOqJG_DrxClXZ6NMmkLkmQeo448ncRHuIcuvTjCEkhRg1PzPlxL5RF_F7A_oxsxq531j5DH_XTQGdp2T56uf2nJfpqM9kc95n1wg&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c","https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AU_ZVEHX4KfArQmS_6X0Bopn_qZyZDLFUqbAJWloa-aUt5n4grCSceU8PfnaTiWbdRxBr-8d4Z4RlxNIXSRzo6r8e81snnne4SF4OciTd2eMLMX2FN9wsHpY1Tjl9UTBtkRbSQN9u7ihQJTux-JjiAQR7SWH8tavClZDkRq2SJzGXIdv5r0Rv63YmP-w6wIvf78zoigNLKNATK0szB4Ct7NpigQmlcrSal_uHRHBXHN3PRRf0entb9TLLEBzWtVSBXrVFmoBc869D-ffoEDRDpaFfIWN7mG_KxRYMKZor0c5yum_jw&key=AIzaSyBy1BCqf6qOiZCeyr9YNVkIEZ13jwBJl2c"}', false)
+ON CONFLICT (google_place_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  slug = EXCLUDED.slug,
+  cuisine_type = EXCLUDED.cuisine_type,
+  veg_status = EXCLUDED.veg_status,
+  price_range = EXCLUDED.price_range,
+  notable_dishes = EXCLUDED.notable_dishes,
+  address = EXCLUDED.address,
+  phone = EXCLUDED.phone,
+  url = EXCLUDED.url,
+  rating = EXCLUDED.rating,
+  reviews = EXCLUDED.reviews,
+  hours = EXCLUDED.hours,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  photos = EXCLUDED.photos,
+  subcategories = EXCLUDED.subcategories,
+  updated_at = now();
+
+-- ── STEP 4: Insert reviews ──
+-- Clear existing reviews to avoid duplicates on re-run
+TRUNCATE TABLE restaurant_reviews;
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJJxRr4nvEJIgRcdG3N48RT4g', 'Unisha', 5, 'We have catered few times from Royal Indian Cuisine but this time decided to dine for dinner!
+Got seated immediately and a nice Nepali waitress welcomed us! The vibe is nothing fancy just a simple dine in Desi restaurant with Indian music on the background. Our waitress served us some
+masala chai and Alu Tikki on the house. ( We figured this later when the bill came. Thank you it was a nice surprise.)
+
+Since it’s a Nepali owned restaurant we asked them if they had Momo and they did! So we got the chicken steam Momo with Keema Naan and Chicken Hakka Noodles. The masala and spice was less with simple flavors like any Nepali household. It was like home cooked flavors.
+
+The food was fresh and came hot. I loved the noodles and naan. The Mo:Mo was okay, like any other Nepali restaurant they were frozen and steamed later! But the chutney did the magic for Mo:Mo. We got some extra chutney for to go!
+
+Would love to come back and try some curry and Naan items. If you like Indian food with minimal spice and solid flavors, give this place a try! We didn’t feel bloated or anything that night so we knew the food quality of the food was good. Good luck.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJJxRr4nvEJIgRcdG3N48RT4g', 'will', 5, 'One of the best Indian cuisine in the Troy/Rochester. Great value for your money. Restaurant is solid but does look a little older (nothing wrong with that though). The chicken was great and had a solid taste the gobi was very nice and spiced right.
+FOOD:9/10
+STAFF:9.3/10
+ATMOSPHERE:8.3/10
+VALUE:9.5/10', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJJxRr4nvEJIgRcdG3N48RT4g', 'John Hart', 4, 'Very enjoyable experience, everyone had a great meal. My 19 year old daughter wanted to go here for her birthday dinner. Out of the whole group I was the only one who didn''t get a chicken dish and the only one who was brave enough to get something spicy. The nice thing about the way they serve the dishes it was easy to share and try each other''s main course. The naan bread that came with the main course was very good and everyone had no problem having second helpings. Now not for everyone, if you know you enjoy Indian food this place is a nice place for a sit down lunch or dinner.', '8 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJJxRr4nvEJIgRcdG3N48RT4g', 'Daniel Gomez', 1, 'Years ago I used to come to this restaurant every week even though I live 45 minutes away. back then the food was amazing but yesterday 16/Apr/24 the food and service was just terrible. I got chicken korma and I understand having a business is about making money but literally they served me boiled chicken cubes with the sauce on top. Surprisingly my gf got butter chicken and was the same boiled chicken with the tomato sauce on top. They might do that to speed up the process but ruining the food like that come on. The korma sauce was so pale and didn''t even taste like cashew sauce. Completely disappointed with the service as well. Years ago if I was out of rice or soda they would immediately refill it but yesterday I put my empty soda cup at the edge of the table and she walked by it several times and when she finally stopped at the table was to ask me if I wanted boxes. Look at the korma I got served compared to a regular korma.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJJxRr4nvEJIgRcdG3N48RT4g', 'Yazen Farha', 5, 'The food here was great! The buffet was clean, the food was fresh, and replenished often. The servers were very nice and friendly. The restaurant was clean and very quiet. And best of all, the lunch buffet was less than $10 a person. Overall, great place and def worth checking out!', '7 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSXlVb3vEJIgRWzkDiJ26b3w', 'Sam Sam', 3, 'Ambience
+
+The decor was simple, with touches of traditional Indian art and muted colors. The seating was comfortable.
+
+Service
+
+The staff were friendly and attentive. It took some time for the food to arrive, even when the restaurant wasn’t crowded.
+
+Food
+
+Biriyani: wasn’t Flavorful, lacked the depth I’d hoped for, the spices didn’t blend as harmoniously as expected.
+
+Food felt more catered to a general palate than authentic or bold. The food quality didn’t quite justify.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSXlVb3vEJIgRWzkDiJ26b3w', 'Sivaji Medikonda', 5, 'I recently had the opportunity to taste the food catered by Ashok Team and Management at a family engagement event, and I was completely blown away by the quality and freshness of the items served.
+I can''t single out just one or two items, as the entire menu—which was traditional vegetarian food—was incredibly delicious. The desserts were yummy and outstanding too. I strongly recommend to try once .', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSXlVb3vEJIgRWzkDiJ26b3w', 'PoisonKissDeath', 5, 'The food was absolutely PERFECT. Fresh naan brought out. The Paneer Marsala and chicken kooma were some of my favorites.
+The service was graceful. From being seated to water, to them anticipating the need for a clean spoon.
+And the price point was really amazing.
+It''s a charming perfect lunch or date spot. Would absolutely recommend.', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSXlVb3vEJIgRWzkDiJ26b3w', 'Smriti Sankar', 5, 'The food was truly phenomenal! I came here with my family for a birthday and the service was excellent. The owner and staff were really friendly and caring. The curd was authentic and the best that I have tasted in any restaurant. I would recommend this place to anyone who is looking for authentic Indian food with a homely touch!', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSXlVb3vEJIgRWzkDiJ26b3w', 'Aishwarya Ramaswami', 5, 'One of the best Indian restaurants I eat at -- it''s a family favorite! We''ve been going here for 20 years and never left disappointed. The food is great, the staff and manager are incredible, and I spend my time convincing my friends to check it out. 10/10!', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI0CC7WbEJIgR9tKqD1Y3ClI', 'Abhilasha Nagrare', 1, 'We visited Charminar Biryani House for the lunch buffet at around 1:30 PM. Unfortunately, the experience did not meet expectations.
+
+The buffet selection felt limited and did not include snack items. The spread included bhature with aloo, rava halwa, noodles, and in the main course chicken tandoori, chicken Manchurian, chicken keema, butter chicken, another chicken gravy with butter naan. Vegetarian options were chole, palak paneer, and a few additional dishes. More importantly, the taste was below average. Considering the price, we expected much better quality and variety.
+
+The main concern, however, was the billing. We clearly informed the staff that we were 2 adults and 1 child. Our daughter ate only about three pieces of chicken and a small bite of butter naan. Despite this, we were charged $12.99 for her, which is close to the adult buffet price of $29.98. While we understand restaurants have policies, charging almost an adult rate for a child who ate very little felt disproportionate and disappointing.
+
+We left feeling that the value did not match the cost. We hope management reviews both the food quality and the pricing approach for children so future customers have a better experience.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI0CC7WbEJIgR9tKqD1Y3ClI', 'Nahian Ismail Chowdhury', 5, 'Amazing restaurants and their buffet service is very good. They had good enough items for a full meal and all of them were delicious. Definitely recommend for their buffet.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI0CC7WbEJIgR9tKqD1Y3ClI', 'Dyrenne Mae Luces', 1, 'This is just my first time trying this indian food in this reaturant. AND I will NEVER EVER ORDER OR VISIT this restaurant!!! Food taste is horrible! Chicken curry is very salty and oily. It''s so bad even think it was spoiled! Didn''t take picture because I throw it right away! Didn''t even give sweet chutney to my Samosa order!!! Gulab Jamun is old as you can see already like burnt because it is old! and so hard! Maybe because the reason is I ordered last minute and I didn''t know that, but still I just wasted my money! Don''t ORDER YOU WILL JUST BE DISAPPOINTED!!! Train your staff to meet your standard even if it''s last order!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI0CC7WbEJIgR9tKqD1Y3ClI', 'AG', 3, 'I’ve been here for the buffet before and it was pretty decent but then I ordered out and it was a pretty lousy experience. The Channa Masala was tolerable although too salty, but the Dal Tadka was actually inedible: so salty and there was almost something that tasted rancid about it, I felt somewhat ill after eating only a small amount. The garlic naan was okay but it had gotten very soggy by the time I ate it (I’m sure better in restaurant). I also had to wait for an additional 20 minutes after I was quoted for my food to arrive. So maybe consider the buffet but a definite no on the takeaway.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI0CC7WbEJIgR9tKqD1Y3ClI', 'Tanjim Chowdhury', 2, 'We visited Charminar Biriyani House in Troy with high expectations, given its reputation, and tried a variety of dishes: Goat Dum Biriyani, Lamb Biriyani, Mixed Grill, Samosa Chaat, and Butter Naan. While the food was generally good, there were a few inconsistencies that impacted our experience.
+
+First, we ordered both biriyanis with a spicy level, but the spice levels varied dramatically. One biriyani was incredibly spicy, almost uncomfortably so, while the other was much milder and didn’t meet our expectations for a "spicy" dish. It was disappointing that the spice levels weren’t consistent despite ordering the same level of heat for both dishes.
+
+In terms of flavor, the biriyanis themselves were okay. The Goat Dum Biriyani had tender meat but could have used more seasoning, and the Lamb Biriyani was similarly fine but didn’t stand out in any way. Both dishes were decent, but we’ve had better biriyanis elsewhere.
+
+The Mixed Grill was tasty, with a good variety of meats, but it wasn’t anything particularly memorable. The Samosa Chaat was a fun dish, with the right balance of tanginess and crunch, and the Butter Naan was soft and fresh, though it was a bit on the thinner side compared to what we’re used to.
+
+Overall, the meal was satisfactory but didn’t live up to the hype. While we enjoyed some elements, like the Samosa Chaat and Butter Naan, the inconsistency in spice levels and the lack of standout flavors in the biriyanis made it an average experience. It’s a solid option if you''re in the area, but it''s not a place we would rush to return to.', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJXcLtQZvDJIgR8NOPl3yLKO0', 'Javeria', 1, 'DO NOT COME HERE!!!! I ordered 2 papdi chaats for pickup and asked them to put the papdi on the side so they don’t get soggy. I was fasting so I was going to be eating the chaat an hour after. I come home, open the containers to set up my plate, and was baffled to see they gave me only 1.5oz of CHICKPEAS. IN CHAAT. I called them immediately and the guy was arguing with me saying I have to bring it back to get credit. I live 20 minutes away, so I was not going to be wasting an hour doing that. They charged me $10 for each order. Looked at the receipt and they charged me $1 extra each for “packaging” (I only asked for the papdi to be packaged separately). Completely scammed me.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJXcLtQZvDJIgR8NOPl3yLKO0', 'Sujith Yankanaik', 1, 'I’ve been going to Neehee’s for the past 4 years since it opened during the pandemic area and used to be a huge fan of the restaurant. Went for the first time in a while and it massively disappointed me. The food was flavorless and bland. The ingredients felt very low quality and it just felt like the staff was just making the food from an instruction manual rather than actually trying to make it better. For example, the paneer parathas tasted like cardboard, felt frozen and paneer felt taped on instead of baked. The butter on the side was very cold that it just came from the fridge. Extremely disappointed, management needs to do better in offering authentic and fresh food. It used to be my favorite restaurant whenever I come back to Troy and now I don’t think I’ll ever go again.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJXcLtQZvDJIgR8NOPl3yLKO0', 'Darshil Patel', 5, 'Always been to Canton location, it was my first time at Troy one.
+
+Great service, very fast, wide range of varieties to try and as always clean and maintained place.
+
+Dosa was good, chat dishes were little on sour side, although great food joint to enjoy street style Indian dishes
+
+Plenty of dine in tables.And prices are on lower side as compared to their portions.', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJXcLtQZvDJIgR8NOPl3yLKO0', 'Tanjim Chowdhury', 3, 'We had high hopes for Neehee''s in Troy, given their reputation for vegetarian street food, but our experience fell a little short. While the presentation of the dishes was nice and the menu offered a lot of variety, the food itself didn’t quite hit the mark, especially considering the price.
+
+The Masala Dosa looked great with its crisp, golden exterior, but the flavor was pretty bland. The chutneys and sambar didn’t have the punch or depth we were expecting, and the potato filling was just okay—nothing memorable.
+
+The Poori Bhaji was another miss for us. The pooris were fluffy and well-made, but the potato curry felt like it was missing something—spices, seasoning, or just more flavor. It felt underwhelming, especially for the price.
+
+The Stuffed Paratha was probably the best of the bunch, with a nice buttery texture and decent stuffing, but even that lacked the bold, spicy kick we associate with good parathas. The sides of yogurt and pickle didn’t add much to the experience either.
+
+One of the biggest disappointments was the pricing. For vegetarian food, we expected more value for the cost. The portions weren’t particularly generous, and the flavors just didn’t feel like they justified the high price tag.
+
+Overall, while Neehee’s has an interesting concept and a fun menu, the flavors didn’t wow us, and it felt overpriced for what we got. It’s not a bad spot, but we left feeling like it didn’t quite live up to the hype.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJXcLtQZvDJIgR8NOPl3yLKO0', 'J Avery', 5, 'Wonderful 1st time experience.  A member of staff was very helpful as I am not familiar with Indian food nor is my Brasilian wife.', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa_TIMU_FJIgRERXubFuXcDY', 'Vinay Kumar', 5, 'I liked the each and every item provided in buffet. Different dosa options were available. I tried chicken dosa and egg dosa with chicken soup, that was nice combo. They had other varieties of dosa as well. Plain dosa, masala dosa, mysore masala dosa and podi dosa. Tried almost all the items in the buffet, they are good. Worth trying, you will not be disappointed. Masala tea was also nice.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa_TIMU_FJIgRERXubFuXcDY', 'manideep beera', 1, 'Flagging this because its so DISAPPOINTING!!
+Last night upon looking at the Google menu I have ordered Chicken fry piece biryani (Bagara) and I received Chicken biryani instead. I was fine with it.
+
+1. No Salan or Raita (Reason was its done)
+2. Realized after opening it, Wow its not even biryani. Its just Chicken curry with rice (oil flood)
+3. Am sure it’s made of Sona masoori, Not Basmati and the interesting part: Tomato pieces. Seriously?? 🤷🏻‍♂️ Who put tomatoes in Biryani. Thats a damnnn 🚩
+
+Never ever ordering food here 🙏🏻', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa_TIMU_FJIgRERXubFuXcDY', 'Daniel Kuchar', 3, 'My wife suggested Indian food as long as the place we went had Butter Chicken which this place did. They had no printed menus but they had a QR code that brought up their website. The menu had a non-vegetarian section that listed each dish with its respective Indian name but no description. There was a little thumbnail picture next to each item but the image for every item was identical.
+So essentially, one has to be familiar with Indian food to know what to order. I ordered Hyderabadi Chicken Curry and my wife ordered the Butter Chicken Curry. Both dishes arrived in 2 little bowls. The food was very good. The portions were plenty for 1 dinner meal but not enough to take leftovers home, which most restaurants we frequent do. Bottom line,
+
+portions a little skimpy relative to the price.
+
+Decor was dimly lit and kinda dumpy. Service was just okay. Will probably go back soon but in no rush.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa_TIMU_FJIgRERXubFuXcDY', 'Sree Vardhani', 5, 'The best vegetarian mandi I’ve had in the U.S.! We also tried their breakfast buffet , absolutely loved it.
+The punugulu here are chef’s kiss, and the pulaos and biryanis are simply amazing.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa_TIMU_FJIgRERXubFuXcDY', 'sri charan', 5, 'I tried the mandi here and it was amazing in both flavor and taste. The rice was perfectly cooked and the chicken was tender and well-seasoned. It took about 30 minutes to prepare, but it was totally worth the wait. Honestly, this is the best mandi I’ve had in Detroit. I’ll definitely be coming back for it again.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-XgbIUnDJIgR894njE2W7MY', 'Vikas Mayekar', 5, 'Have Manchow Soup, Veg Hakka Noodles. Those 2 are exquisite. There no restaurants in US which can match that taste (may be Aling''s in Houston)
+
+We also had Vada Pav, Mysore Dosa & Brownie. They were fine too. Brownie I took leftover & ate at 2 am in the night.
+The Service is rocket. Probably the best I have seen. Our food at the busiest hour arrived in 15 minutes.
+There is a buzz about the place. Go there to eat, not for a romantic date.
+Prices are low considering the service & quality.
+Staff is awesome, & not just adding adjectives here. You go to any US restaurant , you see every waiter has a table. Here everyone is willing to jump in for help.
+The ambience and seating is fine.
+Sadly we have only one stomach & we had to travel back 1 hour, so could not eat more. May be next time, we will have Manchurian & a sabji.
+HIGHLY RECOMENDED', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-XgbIUnDJIgR894njE2W7MY', 'Lianna Sam', 5, 'My new favorite place! One of the few places you can still get a whole meal for less than $15. Very reasonable prices. I love that this place is egg free and has excellent vegan dishes. Fast service, clean, well-lit atmosphere. The staff is very friendly! They don’t mind answering a bunch of questions, telling you what everything is and making recommendations.
+
+I’ve never had a bad meal here. All the food is delicious, incredibly flavorful and filling! They even have some American fusion friendly dishes like Indian loaded fries (honey chili potato), pizza, noodles and fried rices. Put this place on your radar and enjoy trying something different. Highly recommend!
+
+Some things I’ve had:
+Bahubali Sandwhich- Incredible, must try!
+Pulav - Indian stir fried rice, very buttery.
+Bhaji Pav loaded with onion and garlic flavor wow!
+Pani puri- popular street food, not bad but I’ve had better.
+Samosa chaat- chaat is seasoning- this is a potato samosa topped with sauces and seasonings to jazz it up
+Aloo tikka chaat- Aloo is potato- fried potato patty topped with plenty of sauces, yogurt and garnishes with cilantro and seasoning. Fantastic!
+Vada pav- Indiana burger- fried potato patties with sauce & chili buttered buns
+Dabang Dosa - light dish, sprinkled with veggies and rolled up rice/lentil crepe served with sambal chili soup broth and two dipping sauces
+Mix veg Uttapam- this is like a savory rice pancake sprinkled with a few veggies served with spicy sambal broth and two dipping sauces
+Idli- very comforting food, steamed rice cakes like little pillows served with spicy sambal chili broth and dipping sauces. Very common Indian home cooked meal.
+Dry Manchurian - veg dumplings that are fried then sautéed with sauce & spices. Very spicy!
+Veg Hyderabadi- green curry with bell pepper, green beans, onion and corn, spicy, creamy, amazing flavor.
+Gulab Jamun- popular - little fried dough ball soaked in rose syrup, sweet and floral
+Carrot halwa- buttery, sweet, mashed carrot with light flavor, cashews on top give a nice texture', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-XgbIUnDJIgR894njE2W7MY', 'Kshitij Mishra', 1, 'We visited your restaurant on the afternoon of December 24th and were highly dissatisfied with our experience. The numerous food items we ordered were not fresh, resulting in the whole family experiencing sickness and vomiting shortly after. Furthermore, the fresh bread we purchased to take home was not up to standard and appeared to be of cheap quality rather than the authentic style we expected.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-XgbIUnDJIgR894njE2W7MY', 'jyoti bote', 5, 'Best food.Anything you buy is Tasty and worth money. When you are too hungry you can take thali. That is enough. Also there are many options and indian street Style food like vadapav, Samosa,
+SPDP,and much more. If you are in troy never miss it. Great place for big group or small group or even couple dates and also  there is takeout option. Must visit.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-XgbIUnDJIgR894njE2W7MY', 'Srikant Sharma', 4, 'Bhaji Pau was delicious, paneer curry too was delicious 😋, bhakri pizza was ,bread pizza, very average, please use Amul Cheese at least. Overall average experience. Can improve if they work on their recipes.', '8 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeTng2zbEJIgRTUr_4BHVnqQ', 'Michael Mangahas', 4, 'Used to come here regularly in the past but moved out of the area. Came to take my son and it''s closed. No one''s answering the phone. The mailbox is full. It''s 1:05. It should be a full swing buffet in there but all the lights are off. A real disappointment.
+Update 3/01/20 - I don''t know what was going on the last time I tried to take my son here but this! This is the Priya I remember! What a wonderful weekend lunch buffet! The food was hot and refilled regularly. They had special grill dishes set up including a vegetarian option. The staff was attentive and the place was clean with no piles of used dishes being left on any tables. It''s a great price at $13.95 and the mango soft serve at the end was a special treat. I''ll be back with my family for sure!', '6 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeTng2zbEJIgRTUr_4BHVnqQ', 'Qui Nguyen', 4, 'I came here and picked up some food for dinner.
+The restaurant was empty, but there were a lot of people went in and out for takeouts.
+The staff was really nice and friendly and took my order right away.
+I ordered lamb curry (medium heat) and chicken dum biryani (medium heat).
+The food was good, the chicken and lamb were tasty, soft and tender. However, I wish there were more spices being used; in general, it was good, but the flavor wasn’t really there.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeTng2zbEJIgRTUr_4BHVnqQ', 'Jay Sarmin', 5, 'Priya Restaurant is amongst the very best Indian restaurants that I''ve ate at. The food is five star gourmet, made fresh, unlike (for example) some restaurants who have rice sitting in a pot throughout the day. The food is garnished & well presented with great service. The spice level is also much better at this place than any other Indian restaurant that I''ve been to. I highly recommend Priya Restaurant to anyone that likes or wants to try authentic gormet Indian food. If you haven''t already, I also recommend trying a bottle/glass of Indian beer with your food here.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeTng2zbEJIgRTUr_4BHVnqQ', 'Stu Shy', 3, 'What I liked :
+1. Clean and decent ambience
+2. Waiters had a smile
+3. Mirchi bajji was served hot and was delicious, not the best I have had though
+4. Tech savvy menu
+5. Good quality food
+They have bar as well
+
+What I didn''t like :
+1. Expensive
+2. Toilets were not really clean
+3. Chettinad chicken didn''t taste great.
+4. Quantity was less', '8 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeTng2zbEJIgRTUr_4BHVnqQ', 'Respyct', 5, 'My absolute favorite Indian restaurant. They’re customer service is amazing. The employees are friendly and the food taste great. I had enjoyed their food many times over the past 4 years. If you love Indian food this place is a must. Enjoy. :)', '4 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbIqDgDFJIgRjjwV7WCdXZc', 'Shiva Kumar rc', 5, 'Bheemas Indian Restaurant
+
+I had a great experience at Bheemas Indian Restaurant. I ordered the Bezawada Chicken Biryani, and it was perfectly spicy, full of flavor, and tasted excellent. The Chicken RRR was also very good with a decent and enjoyable taste.
+
+They welcomed us with a garlic soup, and it was honestly like heaven 😍 — the flavor and taste were amazing, and I loved it a lot. The dessert was also nice and satisfying.
+
+The ambience was really cool and made me feel exactly like I was in India. The decor looked super, the staff were very welcoming, and the service was good.
+
+Highly recommend this place for authentic Indian food and a great dining experience!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbIqDgDFJIgRjjwV7WCdXZc', 'Sarat Goru', 4, 'Visited this place on a Friday evening. We had to wait for about 5minutes to be seated. Once seated, we had to wait almost 15minutes for the waiter to take our order, which is not acceptable. This restaurant needs more staff, especially on the weekends.
+
+The ambience is good, definitely the best among all Indian restaurants in the surrounding area.
+
+For food, we ordered the chicken 555 and the mutton mandi. I was told soup is complimentary with the mandi, however they ran out of soup that day. Disappointed. The 555 had a sour taste, most probably from the vinegar, and was passable. The mutton mandi was good, enough portion for 2 people. The rice was flavorful, lamb shank was tender and cooked to perfection, lamb chops probably needed to be cooked a little more.
+
+Overall, it was an okay experience. Would probably come back for just the mandi.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbIqDgDFJIgRjjwV7WCdXZc', 'Ven Bhaskarla', 5, 'Absolutely loved our experience here! The food is authentic, flavorful, and well presented, but the real star of the show is the Goat Mandi. It was perfectly cooked, with fragrant and flavorful rice and incredibly tender, well-spiced meat that just fell apart. The portion size was generous and great for sharing.
+
+The ambiance is warm and welcoming, and the staff were attentive without being overbearing. You can tell they really care about quality and consistency. If you’re craving rich, aromatic Indian flavors, especially a standout Mandi, this place is a must-visit. We’ll definitely be back!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbIqDgDFJIgRjjwV7WCdXZc', 'Ashita Rukmini', 5, 'We visit the troy branch every time we come to michigan!
+If you are looking for good andhra-telangana food,this is the place for you.There are such amazing dishes including karvepaku chicken,gongura chicken,ulavacharu biryani and even mandi on the weekends.They have a few other specials on weekends,we have even had paya there.And there are so many vegetarian options,if you dont eat chicken,you can have karvepaku paneer instead,every speciality is there in a vegetarian paneer option too.Even cut mirchi,mirchi bajji kinda chaat options are there.Dosa Idli Medu vada south indian breakfast options are there too.The menu is vast,and i recommend you to highly check it out.Staying in the US,in most restaurants,even extra spicy doesnt match my spice levels.But bheema’s hit s the right spot.A must visit.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbIqDgDFJIgRjjwV7WCdXZc', 'Aaryan Arora', 5, 'Loved the food and the vibe. The service was great. All the servers were polite and helped me understand all the dishes.
+
+Must Try - Methi Chaman!', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'Nicole McFaul', 3, 'Newer spot to check out for us.
+It''s in the back lot of Rochester House.
+
+It is dead in here by 6pm. Oh my.
+
+It''s cold in the dining area, not a big dining area. Nicely decorated, looks newer.
+
+Ordered dosa, samosa, Gobi Manchurian, chick pea salad, dal tadka and dal makhani, butter chicken, navratina korma, and Chana masala. $117.56
+
+The Samosa, butter chicken and chick pea salad are all good.
+
+The samosa is maybe a bit too heavy and doughy. The potato and peas are mashed inside. The cilantro chutney is good, spicy too.
+
+Butter chicken is tasty.
+
+The chick pea salad is just fresh and yummy.
+
+Dosa was okay, not loving the tomato or coconut chutneys so much. Sambar soup is good.
+
+The dal makhani and Chana was not for either of us. Makhani is super buttery and runny. The Chana has a very unexpected taste and look, the sauce it’s cooked in is quite brown here.
+
+The dal tadka, korma and Gobi were just okay.
+
+Both lentils are super runny.
+
+The korma isn’t too bad. Their version has tofu in it. Sauce is good. Not a lot of veggies to it.
+
+Gobi was crispy, but their chili sauce is not so good.
+
+My husband usually favors the Chana masala, but he wasn’t fond of their version so much. Would skip the Chana, Gobi and the dal makhani and maybe even the dal tadka next time.
+
+Service here is good.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'Autumn Macey', 5, 'Authentic South Indian cuisine with clean and comfortable atmosphere. I really enjoyed the presentation of the dishes. The dosa was very good. I also really liked paneer biryani. We typically get takeout with Indian food because it’s not always nice to sit down but with this restaurant we both enjoy the food and being able to enjoy dining in. Looking forward to returning.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'Sandip Datta', 5, 'In November 2025 Virasat catered for our son''s wedding, for lunch and dinner. Their food was excellent and the guests praised their food quality, taste and services. They were prompt, courteous and professional. A huge thank you to the management, chefs and the catering team. Abhishek of the catering team as outstanding.
+Definitely recommended', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'Katherina Virguez Rivero', 5, 'Amazing and delicious food! Also big portions. We went out satisified and veeeery full! Definitely will come back again - very authentic Indian food.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'sai prudhvi', 5, 'I recently visited Virasat in Michigan for our Birthday celebration, and it was an unforgettable experience! The vibrant ambiance and warm decor set the perfect mood for our special night. We keep coming back for their amazing special mango lassi and the delicious Curries .
+
+The service was exceptional, with our server  going above and beyond to ensure we had everything we needed. She was attentive, friendly, and made excellent recommendations that enhanced our dining experience.
+
+Overall, Virasat exceeded our expectations once again, and we would choose this restaurant time and again. It’s a perfect spot for special occasions or just a cozy dinner. Highly recommended!', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7U76VaDFJIgRExykUP3qTSc', 'MOHIT KATARIA', 4, 'Restaurant Review
+Our dining experience was quite satisfying. We ordered Chicken Biryani, Chicken Bhuna, and Paneer Tikka Masala. Additionally, we were provided with Rice, Raita, and Gajar Halwa as complimentary items.
+
+Food Quality and Taste
+The taste of the food was decent and flavorful. The dishes were prepared with a balanced and decent level of spice, resulting in an enjoyable culinary experience.
+
+Ambiance and Service
+The restaurant features a nice seating area and is maintained as a clean establishment. The service was good, and the staff exhibited polite behavior.
+
+In Summary:
+Overall, this restaurant offers a pleasant experience, scoring well on both food taste and service. We would recommend it.
+Would you like me to tailor this review for a specific platform, like Google Maps or a social media post?', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7U76VaDFJIgRExykUP3qTSc', 'C C', 4, 'Public washroom available,  lots of free parking spots, quick serving time, nice atmosphere, quite, food and price  is ok. Good customer service. Portion size is ok.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7U76VaDFJIgRExykUP3qTSc', 'Christopher Petti', 5, 'Hidden Gem. I know everyone has their favorite Indian restaurant but the food here is always deliscious. They can make it as spicy as you like. Good size dining room. They can handle large groups. Very curteous staff. You''re always met with a smile. Great place.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7U76VaDFJIgRExykUP3qTSc', 'Chloe McCallum', 5, 'I made a carry out order and received great service. The man at the counter was very friendly and the food was incredible! I got the chicken curry and it was so flavorful and rich. The naan bread was fresh and delicious. I will definitely be coming here again!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7U76VaDFJIgRExykUP3qTSc', 'Laura', 5, 'Excellent dinner!  I ordered butter chicken based on the owner’s recommendation. So delicious!  And the service was great too. Might be my new favorite restaurant.', '4 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'Niha R', 5, 'A decent place for Indian eats with a very homely vibe. I loved the fact that everything felt comforting and familiar even the setup of the place adds to that feeling.
+The menu is huge and impressive, starting from Osmania biscuits to dosas, idlis, thalis, biryanis, puffs, pakodas, bajjis, punugulu, and so much more  honestly, something for everyone.
+I tried the mirchi bajji with onion stuffing and it was absolutely delicious. The punugulu with allam chutney were hands down the best. The chicken pakodas tasted exactly like the classic chicken starters from King & Cardinal, which used to be a very famous place in Hyderabad (now sadly shut down). Hyderabadis will totally understand what I mean pure nostalgia.
+The samosas were yum too. For dessert, I had the falooda ice with crunchy sabja (basil seeds) and chikoo ice cream it was a feast.
+Coming from Canada, it’s really hard to find food that matches our home flavors, but this place truly won my heart. Highly recommended for anyone craving authentic, homestyle Indian food.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'maham mateen', 1, 'my husband and I went to get some quality ice cream; For one was very excited as I thought it would be classical desi Flavors.. I was a little disappointed overall as when I asked to taste the flavors. The lady was very sweet, However, the scoop of tasting was ever so small couldn’t even tell that was supposed to be sample size.
+
+Overall, my husband and I both got two scoops of ice cream he got falooda And Dubai chocolate ice cream I have gotten the falooda And mango… I was really upset to see the ice cream did have freezer burn on it, which indicated it. It’s been there for not weeks but months yes you can store ice cream in the freezer for quite a while, but not months where it starts having freezer burn there was no flavor to the ice cream. We both were very disappointed and ended up throwing our full ice cream away after 4 to 5 bites of it and going to another ice cream shop… i thought i was crazy but my throat did hurt and to my surprise so did my husbands..
+
+If they want to improve, they need to work on their KWALITY.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'Mohit Balwwani', 5, 'If tea had a LinkedIn profile, Aahar Cafe & Kwality Ice Cream Troy’s - chai would be endorsed for excellence, consistency, and soul. This isn’t just tea—it’s a full-blown experience. Bold aroma, perfect kadak balance, zero shortcuts. Old-school method, modern execution. Respect.
+
+Yes, they also have a location in Farmington Hills, Michigan—solid spot, no complaints. But let’s call a spade a spade: the best tea is hands down at the Troy location. Different league. Different vibe. That cup hits deeper, warmer, and somehow feels more intentional.
+
+Bottom line:
+•	Tea cravings? Solved.
+•	Long day? Fixed.
+•	Standards? Raised.
+
+Aahar in Troy understands chai the way it’s always been meant to be made. No fluff. Just results. ☕🔥', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'somara divya', 4, 'I have visited Aahar Cafe of Farmington Hills for buffet couple of time and they have a very good spread with fresh food. Aahar Cafe at troy is relatively new and smaller with finger foods, ice creams, falooda''s and regular indian menu with limited seating.
+
+I usually go during weekends for their Non Veg and Veg Thali''s. They provide ample amount of jeera rice along with roti, chicken starters curries, veg curries, papad and one type of sweet. Last weekend I have visited and was surprised to see that they have started buffet as well. They had a good spread a bit less than Farmington hills branch, but good enough. The price was approx 18 dollars per person. Will visit again for buffet.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'ruthin rak', 4, 'After going for three times I’m writing here, tried bonda, punugulu, chicken fry, dosa, idli, vada, poori, tea. All the items tried were good.
+
+Gone for lunch buffet on weekday, most of the items were good. I’m biryani lover, so when i tried butter chicken for nan, i see chicken is coloured. It is quite common in most of the restaurants they color for eye catching.
+
+This is one of the safe place to try in troy for taste repeatedly', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJNZbeRZvDJIgR23L4urg4bDI', 'Sam Shaw', 1, 'BEWARE of CHEATING!!!
+
+We placed an Uber Eats take out order for 4 People — 2 Paneer Tikka (16 Oz / EACH), and 5 Naan’s — (Each Curry cost $15)
+
+After we received our order we all were shocked just by looking @ the size of containers (please refer attached pics)!! YES we paid $30 full price for half order food!!!….(just an FYI that it was an Uber Eats order so paid Premium for these Curries $37 for 2)
+
+We thought it would be an honest mistake….as it happens since we are humans, and sometimes even delivery driver leave order behind!!!
+
+This is where the funny part is…after we called the restaurant and explained our issue with order….someone from the restaurant verified with Chef and said this is the correct size and order!!! After he gave us the contact details of Owner and asked us to call him for Explanation of or order and container size…(as all 4 of us are dumb enough to know the difference between 8oz and 16oz containers)….Best part is that after we called Owner…he is trying to convenience us that we are wrong….and 8oz is actually the 16oz container….and told us you can go and check any other restaurants if you want or come in person for better explanation on container size and quantity!!!
+
+We don’t have to go anywhere else to understand the size of containers…if you just google you will see yourself what the difference is….and I am not sure how long you been Scamming customers with price being charged, and quantity of the food being served!!!!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJNZbeRZvDJIgR23L4urg4bDI', 'Samantha Lim', 5, 'I''ve eaten here twice already and it''s the best south Indian restaurant I''ve had in Michigan so far.
+
+I consistently order chicken tikka masala across many restaurants, and theirs is just full of flavor! Their dishes are satisfying to eat if you love spices and heat. I got medium spice to be on the safe side, but personally would go for hot spice next time for a better experience.
+
+On top of that, I''ve been greeted with warm and welcoming energy there both times. They check in on tables just the right amount of times and are very enthusiastic about sharing their good food with customers.
+
+I would definitely revisit and try out their Farmington location, as it is much closer to me than Troy is.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJNZbeRZvDJIgR23L4urg4bDI', 'Rahil Parikh', 1, 'BEWARE OF CHEATING!!!!
+We ordered 16oz Paneer tikka masala, paid $19 each for the curry but still got a 12oz container, filled 3/4th of its size, so around 9oz of the curry which wont even serve a kid. And we had out of state clients, starving for an hour with just garlic naan and rice but no curry to eat with. Worst experience.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJNZbeRZvDJIgR23L4urg4bDI', 'Rohith Kumar', 1, 'I recently visited this restaurant in Troy and, unfortunately, it was a very disappointing experience. This was one of the least satisfying buffet experiences I’ve had in the area. The food quality did not meet expectations, and the overall atmosphere made it difficult to enjoy the meal.
+What stood out the most was the constant interruption while dining. The owner repeatedly approached our table during the meal, which felt intrusive and disruptive. While attentiveness can be appreciated, there is a fine line between being hospitable and making guests uncomfortable. Unfortunately, in this case, it detracted from the overall experience.
+I hope the management takes this feedback constructively and works toward improving both the dining experience and customer interaction.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJNZbeRZvDJIgR23L4urg4bDI', 'Julia S', 1, 'Only decent thing about this place was the dum biryani i tried once some years ago. But customer service is very bad-- if they forget things in an order, they''ll blame you and deny even a partial refund-- making you come all the way back to get those items but didn''t even start making them until AFTER my return. Took about 2 hours to get all my food. Ridiculous. I understand mistakes happen but that level of rudeness was not acceptable and the food after all that was so oily and disappointing and definitely not worth the cost. Never again.', '3 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'Kaustubh Chitale', 5, 'We hosted our baby shower here. The people food and the services were amazing. I loved the food. You should definitely try their fruit punch, chicken achari, chicken 65 pulav. The owner Ashish is gem of a person, he did an amazing job of coordination and arrangement.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'Vinny Gug', 5, 'My wife and I stopped here last month for their lunch buffet. We liked it so much that we went back and brought a group of friends with us. The staff is incredibly nice and the food is always excellent. They have a nice variety of dishes and sauces. I am an especially big fan of their mango lassi and dosa. Great quality and bang for the buck!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'arshiya banu', 5, 'Had an amazing mandi here! The aroma itself made it impossible to wait … and honestly I couldn’t even take more pictures because it looked and smelled too good to resist 😍 The rice was perfectly seasoned …. the meat was tender and juicy and every bite was full of flavor. Definitely coming back for more!!Traveled all the way from Farmington to Troy just for this mandi and it was absolutely worth it !!!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'Rohit Pawar', 5, 'Tried their Goat Biryani and Paneer Tikka Pizza, both were excellent. The Goat Biryani was perfectly flavored and that taste you only get when it’s cooked right was there. The meat was soft and juicy, exactly how good biryani should be.
+
+Paneer Tikka Pizza- was just amazing, didn’t expect it to taste this good. Crispy and smoky tandoori flavor.  Its a must try here.
+
+The ambience here is really nice warm, clean, and inviting. The staff was genuinely friendly and made the whole experience even better. If you’re around Troy, this place is definitely worth stopping by.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'phanindra reddy challa', 5, 'I tried lamb sheek kebab and malai chicken kebab, and I must say, they were absolutely delicious. The flavors were rich and authentic, and the meat was cooked to perfection. I also couldn''t resist trying their chicken fried rice and goat biryani, which were both top-notch.
+Highly recommend.', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'Kaustubh Chitale', 5, 'We hosted our baby shower here. The people food and the services were amazing. I loved the food. You should definitely try their fruit punch, chicken achari, chicken 65 pulav. The owner Ashish is gem of a person, he did an amazing job of coordination and arrangement.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'Vinny Gug', 5, 'My wife and I stopped here last month for their lunch buffet. We liked it so much that we went back and brought a group of friends with us. The staff is incredibly nice and the food is always excellent. They have a nice variety of dishes and sauces. I am an especially big fan of their mango lassi and dosa. Great quality and bang for the buck!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'arshiya banu', 5, 'Had an amazing mandi here! The aroma itself made it impossible to wait … and honestly I couldn’t even take more pictures because it looked and smelled too good to resist 😍 The rice was perfectly seasoned …. the meat was tender and juicy and every bite was full of flavor. Definitely coming back for more!!Traveled all the way from Farmington to Troy just for this mandi and it was absolutely worth it !!!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'Rohit Pawar', 5, 'Tried their Goat Biryani and Paneer Tikka Pizza, both were excellent. The Goat Biryani was perfectly flavored and that taste you only get when it’s cooked right was there. The meat was soft and juicy, exactly how good biryani should be.
+
+Paneer Tikka Pizza- was just amazing, didn’t expect it to taste this good. Crispy and smoky tandoori flavor.  Its a must try here.
+
+The ambience here is really nice warm, clean, and inviting. The staff was genuinely friendly and made the whole experience even better. If you’re around Troy, this place is definitely worth stopping by.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz_uIBuPDJIgROZUFgItahBY', 'phanindra reddy challa', 5, 'I tried lamb sheek kebab and malai chicken kebab, and I must say, they were absolutely delicious. The flavors were rich and authentic, and the meat was cooked to perfection. I also couldn''t resist trying their chicken fried rice and goat biryani, which were both top-notch.
+Highly recommend.', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'Tom d', 5, 'Went for lunch buffet this weekend.  Really enjoyed everything I ate.   The goat was really tender and I think that was the best Chili Chicken I have ever eaten also ate a lot of butter chicken being that is my favorite Indian dish.  My wife and kids also enjoyed the food.  Staff was friendly and this is family owned and staffed.  They are new so please give them a try.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'LilFatBird', 5, 'We had the weekend buffet ($13.95 weekend, $11.95 weekday, kids under 5 eat for free), this place is perfect! Very clean, great service, affordable! There''s a super delicious dessert soup, also the bbq chicken (the red skin one) is so amazing. Not very spicy, we can withstand every dish! The pita there is just gorgeous. We also ordered a cup of mago lassi, $4, as good as we expect. Will visit again!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'Matthew Johnson', 5, 'Swagat Indian Cuisine is my new go-to for Indian food! The owner Arun is the epitome of hospitality. There daily lunch buffet is a great value and has variety of delicious dishes.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'Kevin K.', 5, 'This is a hidden gem of a restaurante.  I went tonight and had an amazing meal of Chicken Curry, Veg Biryani and Samosa Chat.  Everything was delicious and made perfectly.
+
+I like it spicy and the owner did a great job on the spice level and even brought out some extra chili''s he blistered on the stove.  Wow.  This is a must try if you are in the area and love indian food.
+
+I just wish I had taken pictures to share, but I just dug right in ...
+
+11/19 - Went back again tonight and it was as good or better than the first time. Had to have the Samosa Chat again and this time the owner recommended the Chicken Tikka Marsala.  He remembered that I like it spicy and he hit it perfectly.  Followed tje meal this time with the Carrot Halwa and it was the perfect amount of sweetness to contact the spice.
+
+Ill keep coming back when in town!!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'Jacques Dugger', 5, 'I decided to try Indian food this week and I tried Swagat and it was amazing! I went back the very next day! I’m not sure what I’m eating yet but it all tastes amazing. I’m sure I’ll be a regular here, great food!', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJrYdsF7WvJIgR12R1yg3dA-8', 'H S', 4, 'After several disappointing visits in the past, I wasn’t planning to return. But the new $5 meal days caught my attention, so I decided to give it another try. I’ve been back a few times since and had consistently decent experiences, the food could taste a bit better, but it’s good overall. With the new add-ons, it’s definitely great value for money, and I’ll be coming back.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJrYdsF7WvJIgR12R1yg3dA-8', 'S K', 4, 'I recently tried this place and overall, I’d rate it pretty well. The idli was absolutely perfect — soft, fresh, and full of flavor — easily a 10/10 for me. The Manchuria was good too, about 80% perfect — tasty and well-spiced, just could’ve been a bit crispier.
+
+One thing to note: the food is on the pricier side for the portion size, so keep that in mind if you’re going with a group or family.
+
+Also, I noticed the restaurant mostly had only Indian people dining in. While that’s great for authenticity, I’d personally love to see a more diverse crowd and the place making an effort to reach out to more locals and Americans too — it’s always nice when good food brings different people together.
+
+Overall, tasty food and worth trying, especially if you’re craving solid South Indian dishes!', '8 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJrYdsF7WvJIgR12R1yg3dA-8', 'Vinesh Kommana', 1, 'I ordered talapakati goat biryani its taste like too sour I can’t my friends are completely disappointed moreover we found small iron particle inside the food if we can’t see it we gona hospitalized with this kind of unhygienic food I don’t recommend this place I thought this place gives best food but it’s completely wrong I call to restaurant and say about the situation I didn’t get any response. I quite suprised they don’t care about the situation very very bad.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJrYdsF7WvJIgR12R1yg3dA-8', 'lincy george', 5, 'We had requested food to be catered from here for one of our events for about 65 people. The staff (Aneesh) at Masala Indian Kitchen gave us great recommendations and even gave us free samples to finalize our order. He suggested the right quantity to order to serve our guest size. The food (chicken 65 biriyani, malabar parotta and chicken curry) was loved by all my guests. The quality was excellent even after ordering for a large group.Would highly recommend this place especially for their chicken 65 biriyani and malabar parotta. Aneesh’s recommendations and support was excellent!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJrYdsF7WvJIgR12R1yg3dA-8', 'Andrea Oliver', 5, 'I ordered the lamb biryani, chicken tikka masala with butter naan and a mango lassi, and everything was fantastic. The lamb biryani was super flavorful with tender pieces of lamb, the chicken tikka masala was creamy and perfectly spiced, and the mango lassi was the perfect refreshing balance to the meal. Portions were generous, the food came out hot, and the flavors were honestly some of the best I’ve had. Definitely coming back!', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUGOjC2vJIgR0zht65fIbbs', 'yasmin ismail', 5, 'Very good food, best we have had in a while. Would highly recommend trying this place and it will become a favorite. It will now be a regular for us! 10/10', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUGOjC2vJIgR0zht65fIbbs', 'Nicole McFaul', 4, 'Was an Indian restaurant before.
+
+Their buffet setup seems to be in a good spot for lunchtime.
+
+Not sure why they have a Christmas music station, it’s a bit late for such jingles, no?
+
+Ordered Gobi Manchurian, gravy, Chana masala, dal makhani, dal tadka, bhindi masala, mushroom matar, minus the matar (peas), all spicy, garlic naan. $111.22
+
+The Gobi Manchurian with gravy, the cauliflower isn’t crispy. It’s yummy sauce. Would get it dry and crispy the next time.
+
+Service was good throughout our meal. Waiting to get our bill paid and a bag and container to go yet, as a large party arrived.
+A big party is waiting for the back room to get setup.
+
+The Chana masala, mushroom, dal tadka, dal makhani, garlic naan and seasoned basmati rice are all good. Good heat and flavor too.
+
+It gets a bit chilly as it’s only 18 degrees outside, kept my vest and coat on.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUGOjC2vJIgR0zht65fIbbs', 'Madhu Kuruba', 5, '"Finger-Licking Perfection in Novi!"
+If you are looking for authentic, bold flavors, 1947 Indian Cuisine is a must-visit. I recently tried a few dishes that were absolutely standout:
+Valentine’s Day Special Chicken Charga: This was the star of the show. Perfectly seasoned, juicy, and packed with a depth of flavor that made it impossible to stop eating.
+Paneer Sabji Kebab: A fantastic vegetarian option! The texture was spot on, and the blend of paneer and spices was incredibly savory.
+Tandoori Roti: Fresh, hot, and the perfect vessel for soaking up every bit of flavor.
+Everything was truly "finger-licking" good. The quality of the ingredients and the expertise in the kitchen really shine through. Whether it''s a holiday special or their standard menu, the food here never misses. Highly recommend!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUGOjC2vJIgR0zht65fIbbs', 'Vikas Upmanue', 5, 'This is place is newly updated place by new owners. Had lunch buffet. It was good taste. Currently special price is on going.
+Update: Had our New Year’s Eve dinner here with a group of 16ppl. Food was delicious as usual but I was impressed with their mocktails.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUGOjC2vJIgR0zht65fIbbs', 'SARAH BLACK', 5, 'My family and I stopped here for dinner and everything was incredible! We all love Indian food and eat it often but this restaurant set the bar to another level. We ordered vegetable samosas, chicken tikka masala and a goat dum biryani. Everything was absolutely delicious and fresh, and the tikka masala was the best I have ever eaten. The service was amazing too and it was overall a lovely experience. This is a 45 minute drive from our house but we will absolutely be making the trip again! 10/10 recommend!', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRV46D9mlJIgR7GVvCfQjPoI', 'aishwarya raj', 5, 'The restaurant may be small, but the food is absolutely outstanding. I’ve tried many restaurants, and this is of the restaurants where I would go again. The quality is excellent, the spice levels are perfectly balanced, and the staff is courteous and attentive. I genuinely loved the experience and would highly recommend it!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRV46D9mlJIgR7GVvCfQjPoI', 'Sanam Sharif', 5, 'Went for lunch. Ordered non veg thali. Spice level was mild medium which was perfect. Portion sizes were good. Thali had both white rice and biryani which is definitely a plus. Food was tasty. Service was good. Place is small but clean. Not crowded.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRV46D9mlJIgR7GVvCfQjPoI', 'Mario Hazza', 5, 'Butter Chicken was good. Portion size was large, came with rice and I enjoyed the additional garlic naan I ordered with it. Mango lassi was good too and they gave a complimentary water bottle when I did dine in. They also gave soup complimentary. The only thing is that it may be difficult to dine in depending on how busy they are, I had no issue though. I recommend giving them a try as they’re new and the food and service is good. When I went the restaurant was packed and busy', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRV46D9mlJIgR7GVvCfQjPoI', 'Elyse Flores', 5, 'I am unfamiliar with Indian cuisine. I told the young lady at the counter my preferences and that I wanted a good example of the food of the region. She was super sweet and pointed me to one of the appetizers- I also got some cheese/ chili cheese naan. I also tried some “Thumbs up” soda- it was like a mild Coca Cola- not bad at all! I enjoyed this meal!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRV46D9mlJIgR7GVvCfQjPoI', 'N J', 5, 'Excellent! Ordered the chicken 65 biryani, gongura mutton fry biryani, goat sukka and butter chicken. As an indian, all items were on point, generous servings and loved that the take out containers were made from environmentally friendly materials. The meat in all items was flavorful and generously portioned. Will definitely be coming back!', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeWU25e2uJIgRF45RIQUUNSI', 'Niha R', 3, 'I visited this place with my friends we ordered
+Two veg tali’s and the taste was good , and one plate of idly which was not nice and an other order of veg noodles which was good
+Over all experience was good i would come back for the tali and the noodles', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeWU25e2uJIgRF45RIQUUNSI', 'Diane Long', 5, 'Everything was delicious! Very clean, quiet, fast service, lots of flavor, and you have to try the Medu Vada donuts. Definitely will be coming back because there was so much amazing food we wanted to try still.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeWU25e2uJIgRF45RIQUUNSI', 'GOPINATH NARAYAN', 1, 'We tried to place an order for Gobi 65 (¼ tray) for a party. The restaurant asked us to Zelle 50% in advance for a $35 item, which made us uncomfortable.
+We have ordered catering food earlier for home pujas, and no one asked for advance payment like this. Trust is important in any business, especially when it comes to food.
+As customers, we trust the restaurant to prepare and serve good food, and similarly, restaurants should also trust their customers. We don’t place catering orders and then fail to show up—that doesn’t happen.
+The way this was handled made us feel bad, so we decided not to proceed with the order and placed it with another restaurant instead.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeWU25e2uJIgRF45RIQUUNSI', 'Tenzin Dekyi', 5, 'Delicious food, great service, and friendly staff. Will visit again!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeWU25e2uJIgRF45RIQUUNSI', 'Joe Hakim', 5, 'Wonderful flavors! Very friendly, accommodating service. I arrived at their opening time (11:30am). I ordered naan, but was informed after I paid that naan wouldn’t be available. They happily offered a dosa instead, which was a definite upgrade. Portion sizes are generous, too.', '3 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJY_ohe3qpJIgRHkdqAO3SrHc', 'Glenn', 5, 'Roti Point is a superior professional provider of roti and paratha bread with a personal touch of perfection. Roti Point maintains a consistent balance of natural nutrition and a delightful delicious taste. Their healthy ingredients i.e., in Moringa Paratha and Methi Paratha (my favorite) have a prominent history in wellness.
+Well done Roti Point!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJY_ohe3qpJIgRHkdqAO3SrHc', 'Malathy Durai', 5, 'Roti Point truly went above and beyond for us! We had a large party coming up and placed a big order on very short notice. Not only did they accommodate us without any hesitation, but everything was perfectly managed and delivered on time.
+
+The rotis were fresh, soft, and absolutely delicious—everyone at the party loved them! It’s rare to find such professionalism, reliability, and quality all in one place. Grateful for their dedication and top-notch service.
+
+Highly recommend Roti Point for both everyday meals and big events', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJY_ohe3qpJIgRHkdqAO3SrHc', 'Sudhakar Edpuganti', 5, 'I purchased roti and paratha here and they taste amazing. They just feel like home made roti. I recommend this place for those who are looking for fresh food', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJY_ohe3qpJIgRHkdqAO3SrHc', 'Uma Ravi', 5, 'We ordered rotis from Roti Point for a party, and everything was fantastic! The rotis were packed fresh and arrived hot, soft.— a real hit with our guests. The packaging kept everything warm and mess-free, which made serving super easy. Great service, great food, and a stress-free experience. Highly recommend Roti Point for any event catering!', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJY_ohe3qpJIgRHkdqAO3SrHc', 'Siva Ram Tallapalli', 5, 'Always on time and fresh roti when ordered. Price and quality is top notch .', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn-UzbAiuJIgRnLEdy403LJE', 'steve krueger', 5, 'Found this place online and gave it a shot. This place is incredible. The nicest owner you could ever hope to meet and everything was so impeccably clean. We got the chana masala and the butter chicken and both were so incredibly perfect and the garlic naan was so soft with the best chew ever! We also had some mixed pickle which I was so happy was in there because it was very fresh and I’m used to the stuff out of a jar. We also were treated to some gulab jamun which finished off a perfect meal. We live in Fort Gratiot and travel down to Ann Arbor from time to time so this will be a spot that I cannot wait to visit again on the way. Thank you for the wonderful conversation also!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn-UzbAiuJIgRnLEdy403LJE', 'L. T.', 5, 'Terrific food!  The food is very tasty, authentic, and fresh.  The prices are very reasonable.  And the service was great!  Very friendly and efficient.  Peter did a great job and went out of his way to be hospitable.  Thank you Dhaba Indian Kitchen, and I wish you well!', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn-UzbAiuJIgRnLEdy403LJE', 'Anthony Dietz', 5, 'Courteous and fast! Great service and the food was delicious. The guy at the front hooked me up with a plate, utensils and napkins after asking if I was in town for work.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn-UzbAiuJIgRnLEdy403LJE', 'Russ Shaw', 5, 'Love the Butter Chicken ( not spicy , but can make it ) with garlic naan. Had it from their pop up at St Mary''s hospital cafe, as a door dash from Laural Park, and just now at LP eating in. New fave! Will return ...', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn-UzbAiuJIgRnLEdy403LJE', 'Juwan Willis', 5, 'Dhaba Kitchen in Livonia was a pleasant surprise. Everything we tried had rich flavor and felt freshly made. The butter chicken was creamy and perfectly seasoned, and the curry had that deeper, slow-cooked taste you only get at legit Indian spots.
+
+We also tried the fried cheese and the fried milk balls, and both were fire—crispy, flavorful, and way better than expected.
+
+The staff was friendly, the portions were solid, and the menu has a lot more we want to try. We’re definitely coming back, especially with the new menu items on the way. If you’re in Livonia and craving Indian food, Dhaba Kitchen is worth the stop. 🍛🔥', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOabYQpiwJIgRFrJyUfOF_aI', 'N. Sawan', 5, 'We had a great dinner experience at Indo Pak Restaurant! The food was delicious and full of authentic flavor. The waiter was very polite and attentive, which made the experience even better. The environment is clean, cozy, and family-friendly—perfect for a relaxed evening out. Prices are very reasonable for the quality and portion size. Highly recommend!!!', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOabYQpiwJIgRFrJyUfOF_aI', 'Caleb Tetreau', 5, 'Came in before 5pm on a Wednesday, I really was craving biryani although there were many other suggestions I chose kebab n curry.
+
+The Decor was simple but straightforward. They were busy in the back with Togo orders a plenty but immediately I was greeted with a smile and after a short interaction I knew what I wanted, I dint really need a menu, biryani was it, after a few minutes and grabbing a Pakola (cream soda to drink) The food arrived!
+
+The Mutton biryani is great, the meat is still flavorful and tender, with large chunks. The rice was cooked perfectly,  not too salty or oily or dry at all, peppercorns, cloves, cilantro  all mixed in with a side of Raita, to my delight there was still shank with bone marrow in it to enhance the dish’s profile with a sweeter note.
+
+Thank you for the great meal, I highly suggest this place!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOabYQpiwJIgRFrJyUfOF_aI', 'Marie Pattipati', 5, 'My favorite restaurant in Michigan hands down. We travel every weekend to try restaurants all over the state. My family has been coming here for more than 10 years and the dishes are always incredible. Amjad and his family are so welcoming and always treat us and our girls like family. The food is fresh and authentic and is consistently great - doesn’t fluctuate the way many places do. No matter where we’ve gone we haven’t found food this good and authentic. Long time favorite dishes are the Mutton Green Masala Curry, mutton handi, balti gosht and butter chicken. His Kathi rolls are also good. My girls love his mango lassi. Trust me this is one you don’t want to miss!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOabYQpiwJIgRFrJyUfOF_aI', 'Dr. Foodie', 5, 'Great Pakistani food and all halal
+Amjad is chef and is always helpful
+We use this restaurant off and on
+Reasonable price', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOabYQpiwJIgRFrJyUfOF_aI', 'Nur Chowdhury', 2, 'Authentic, but expensive for a "hole in the wall" type of restaurant with not much customer service. The chicken biryani, while flavorful, had only three small pieces of chicken. The chicken, lamb, and beef shish kebabs are all excellent, but for $15 each (you get 3 mid size skewers), quite expensive. Was not served water at any point either which I found odd, so I had to ask the waitress, who ended up bringing bottles instead and charging us for them. At least the bathroom was spotless. Might be better off just doing takeout in the future.', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJf2y9RJ-wJIgRmzamtTBKjUs', 'Najmul Haque', 5, 'Food is really good, portion is good too.
+Chicken biriyani and Butter chicken were tasty. These two items were enough to share with 3 people. Biriyani is good for 2 people. Butter chicken was better than other Indian restaurants we tried before. Service is fast, in 10 minutes. Recommended.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJf2y9RJ-wJIgRmzamtTBKjUs', 'Muhammad Imran Safdar', 5, 'Very friendly and respectful service. Channa puri is best in Farmington, bloomfield, Troy and around the area. Excellent Pakistani taste. Chicken Karahi has home made taste and feel like being eating at home with family. All served dishes are freshly cooked.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJf2y9RJ-wJIgRmzamtTBKjUs', 'Abu S Chowdhury', 4, 'I heard about this place a month ago when though exist over 10 years. It’s like a hidden gem. Super fun food if you are looking for authentic Pakistani dish with inexpensive menu. Especially the weekends Halua Purée and Nehari.
+To my opinion food is ok but not extra ordinary. I found lack of flavors in Nehari and no aroma in Chana.
+Otherwise it’s different carry out to explore. Haluwa is tasty.
+The packaging could be improved. It looks like bunch of small packets in one plastic bag. Also multiple orders they put in one wrap or zip log bag.
+Location is amazing and easy parking. I’ll try other items on next visit.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJf2y9RJ-wJIgRmzamtTBKjUs', 'Faiza Mustafa', 5, 'This restaurant is a literal mom and pop hole-in-the-wall authentic Pakistani restaurant and it’s amazing! We’ve come here several times and usually it’s when our family is visiting from out of state. Every time without fail, our guests love the food from here.
+
+Our go to’s:
+Aloo Samosas
+Chicken 65
+Chicken Biryani
+Beef Nihari
+Zayeqa BBQ platter
+Halwa Puri platter
+
+The food is amazing here and full of flavor. Everything tastes fresh, the naan is great. It’s not overly spicy like some places that just kill a dish by making it intolerably spicy.
+
+You can’t expect much from service since it’s a self-service restaurant, however, if you ask the owner for anything, he’s always helpful. It’s very obvious that this restaurant focuses solely on perfecting their food with their disposable to go boxes that they serve the food in.
+
+I personally don’t care about a restaurants ambience if the food is that good.
+
+I did notice in all the times we’ve dined in, a lot of people come in for take out orders.
+
+If you love authentic Pakistani food and don’t care about service or ambience, definitely give this place a try.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJf2y9RJ-wJIgRmzamtTBKjUs', 'Tuba Hasan', 5, 'Zayeqa has become our routine option when we’re feeling like having authentic home style Pakistani food. It’s a mom n pop shop, ideal for carry-out rather than dine-in. We’ve also had food catered from here for larger family gatherings, and the flavors and freshness never disappoint.', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8_JnlK2xJIgRyg-nJ-x7-d0', 'Vinoth R', 4, 'The Pongal special lunch on Jan 18 was fantastic. Serving the meal on banana leaves provided a wonderful South Indian touch that I’ve truly missed. We really enjoyed the entire experience.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8_JnlK2xJIgRyg-nJ-x7-d0', 'avinash raghu', 5, 'Over multiple visits across the past couple of years, Akshaya Patra have held on to their standards. The food is invariably tasty and the people working are consistently polite and courteous.  Altogether, dining here is a pleasurable experience. No wonder the place is rated  highly. Kudos on upholding your high standards!
+
+P.S.   Tried their Pongal/Sankranthi special banana leaf meal - it was the real deal. A full, delectable spread on an actual banana leaf, the kind of experience you long for!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8_JnlK2xJIgRyg-nJ-x7-d0', 'saichand bablu', 5, 'The thali was a delightful experience—authentic, flavorful, and well presented. From the rich curries to the perfectly seasoned sides, every dish tasted fresh and homemade. The variety allowed me to enjoy multiple flavors in one meal, and the portion size was generous. Definitely a must-try for anyone who enjoys traditional South Indian thali food.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8_JnlK2xJIgRyg-nJ-x7-d0', 'Mehul', 3, 'I went to eat Punjabi food and probably it was mistake as they might have good South Indian food but they absolutely have no idea about Punjabi food . They agreed upon returning one of the curry and they said all curry will have South Indian taste even if it’s Punjabi !!! It’s pricy especially when they don’t know how to make North Indian food . It makes no sense to charge so much for something they don’t have basic of Punjabi food .', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8_JnlK2xJIgRyg-nJ-x7-d0', 'Laiya Tooson', 5, 'I had a great experience at Akshaya Patra! Their portions were a great size for the price and all of the dishes came out in a timely manner! I really recommend their Chicken Tandoori!', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJO1LGTZ-wJIgRoiFCrMsIQhY', 'Office Yoga Skill', 5, 'Wow! What an absolutely delightful culinary experience! From the moment I approached the spread, it was clear that this establishment takes immense pride in its offerings. The phrase "great food" almost feels an understatement; every dish I sampled was a testament to quality ingredients, skillful preparation, and a genuine passion for flavor.
+
+Perhaps what impressed me most was the exceptional array of vegetarian options. In an age where plant-based diets are increasingly popular, it’s refreshing to find a place that not only acknowledges but celebrates them with such creativity and breadth. These weren''t mere afterthoughts but thoughtfully crafted, vibrant dishes that easily stood toe-to-toe with any other item on offer, making the meal inclusive and enjoyable for all diners.
+
+The excellence of the buffet concept further elevated the experience. It allowed for exploration, offering the freedom to sample a diverse range of exquisite dishes, ensuring there was something to satisfy every palate and preference. The freshness, presentation, and seamless replenishment of dishes spoke volumes about the dedication behind the scenes.
+
+I genuinely appreciate the effort and care that went into preparing such a memorable meal. It was not just food; it was an experience. For the outstanding quality, the incredible vegetarian selection, and the perfectly executed buffet, I unequivocally award a perfect score: 100 out of 100 full marks!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJO1LGTZ-wJIgRoiFCrMsIQhY', 'Max Seenisamy', 5, 'One of the few that still does Daily Lunch Buffet in the area. Best Naan in the Detroit area, right out of a Tandoor. Most dishes are mildly spiced, Good chaat options, I only miss the Tea. Great place !', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJO1LGTZ-wJIgRoiFCrMsIQhY', 'Cathi Anderson', 5, 'Wonderful service. Great place for an event. enjoyed our visit and the food. but to be perfectly frank, I''m not an Indian foodie. So I cannot say how authentic the food was.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJO1LGTZ-wJIgRoiFCrMsIQhY', 'Savannah D', 5, 'Next level Indian Lunch Buffet; every single thing was amazing. Don''t forget to ask for garlic naan for the table. *chefs kiss*', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJO1LGTZ-wJIgRoiFCrMsIQhY', 'Urban Eaters Król Krzywonosy', 4, 'I expected the buffet to be larger than it was.  What we did have was good.
+
+They need to clean the glass on the front and inside doors. It gives a customer a first impression of the restaurant
+
+The staff were working hard because this restaurant was very busy.', '7 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBS-D7SauJIgRZUll5jOj74g', 'Vamsi Golla', 2, 'Went there for their weekend breakfast buffet.  Very disappointed with the quality and taste of the items.
+
+Idlys are ok, definitely not made fresh.
+Vadas are ok
+Pongal is ok, no taste
+Pooris are a joke, they fried tortillas and kept as pooris, why??? Alu curry for the poori is good
+
+Chutneys are ok nothing great, Sambar is good though…
+Dosas are served at the table, they are ok.
+
+No uthappam and juice as their ad. on the site says.
+
+One time visit I am not going again.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBS-D7SauJIgRZUll5jOj74g', 'Nerissa Maria Ward', 3, 'I chatted with the manager a bit after my lunch, and was greeted very kindly.  He took time to listen, and ask how my experience was, even though he was a bit busy sorting through paperwork.  Great customer service.
+I could taste that the food was prepared by a South Indian chef, as the South Indian dishes like Dosa, Vada, Upma etc, were super delicious.  However the use of spices in the North Indian Food was overwhelming and did not blend well, I didn''t enjoy it.
+This place was bit on the pricier side for Vegan, and vegetarian food, $25 with tax+tip. Sorry, not one of the best Indian food experiences...', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBS-D7SauJIgRZUll5jOj74g', 'Ravi Singh', 3, 'Tasty vada, onion rava dosa, gobi65 and mango lassi. Idli and chutneys were ok but Idli and vada were pricey.', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBS-D7SauJIgRZUll5jOj74g', 'SANJOY SARKAR', 5, 'Last 10 years im going eat in this restaurant with my family. The service girls are very friendly they speak different languages like hindi English Tamil telegu. And the food are awesome. Specially the dosa buffet and tiffin buffet they are giving enough compared to the any other restaurant .', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBS-D7SauJIgRZUll5jOj74g', 'Rohit Jain', 5, 'Nice Indian vegetarian restaurant. You don''t get many completely vegetarian places. Chutney is among very few out there and the food is very tasty. Service is good and the interior is soothing. All in all it is a very good Indian vegetarian restaurant. If you like vegetarian food, try it once. I am sure you won''t mind going for a second time 🙂.', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ1Z6zQKbBJIgRklC8mJD_vOU', 'Cheryl Smith Winberry', 5, 'What a gem!  Closest Indian food to Rochester Hills and so worth the trip for a relaxing dining in experience or convenient carry out.  We ordered lamb samosas, mulligatawny soup, garlic naan, chicken bhuna and shrimp saag.  The spices were perfect.  We asked for mild plus and had just enough heat, combined with delicious spices,  to suit our tastes.  Each entree was freshly prepared and piping hot.  The basmati rice was really good.  Our server, Ajanta, was friendly and efficient.  The cafe was bright, clean, relaxed and had a good amount of dining tables available.
+
+The bill came to $52.00 and we have enough left over for another lunch.  Noorjanan may well become a regular stop.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ1Z6zQKbBJIgRklC8mJD_vOU', 'Darrin Gatewood', 5, 'Delicious food. The staff was extremely friendly. I''ve had a lot of Indian food over the years and this place was good. Its more authentic so the food wasn''t ultra sweet. She got no spice, I got medium spice (chicken tikka masala) and the spice level was conservative but balanced. I drove 45 minutes eat there with my friend, so... There ya go. Try the Kheer (Indian rice pudding) it''s great. 👍🏼 BTW, I always get unsweetened tea at restaurants and they usually bring iced tea, which is what I wanted, but she brought a glass of hot tea with lemon. So be specific. The tea was fresh and awesome and enjoyed every bit of it. Now I''m just going to get the hot tea when I go because it worked out great.
+Hope this helps. Try this place out.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ1Z6zQKbBJIgRklC8mJD_vOU', 'Mariam', 5, 'This place is amazing!!! And most of all, they serve halal food!!! 🙌🏾✨ That was very important to me, as I had been on the hunt looking for good restaurants that served halal food for awhile now and decided to try them out late one night! I was amazed by their delicious food and warm, kind-hearted staff! Their Chicken Tandoori???? Absolutely AMAZING!!! Let that be the first thing you try if you''re wondering what to get!! Their Lunch Box with chicken curry, rice, and mixed veggies was outstanding as well! Today I ordered the Chicken wings and Chicken Wrap, and both were very delicious too! I am looking forward to trying out more food from them! 5 Stars!!! I highly recommend!!!😆✨', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ1Z6zQKbBJIgRklC8mJD_vOU', 'Kelli Herbert', 5, 'The food is amazing, the service is excellent! I’m so glad we came here! They’re really gracious and hospitable. Blessings to this business! 🙏🏻✨💕', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ1Z6zQKbBJIgRklC8mJD_vOU', 'Nino Cugtas', 5, 'Such a delightful surprise, amazing Indian Food, this is definitely a go to now… Tandoori chicken was Delicious', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJURETUBqxJIgRyOvoyLZu0CU', 'Yohana Isabella', 5, 'We tried Aha Biryanis last weekend. It was amazing. We love the authentic Indian food flavors they offer. There is always something for everyone. They also serve buffet every weekend from 11.30am-3pm with rotating special dishes every week. If you don''t like buffet, they also offer various options of ala carte menu. Everything was flavorful and fresh to made from appetizers, entrees and dessert. The staff was very friendly and helpful assisting me during my visit. The restaurant was clean and has plenty seats available for small gatherings or family lunch/dinner. Overall, we had a delightful experience. We can''t wait to come back soon!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJURETUBqxJIgRyOvoyLZu0CU', 'Hershey', 5, 'Tried a variety of dishes here and overall had a really satisfying experience, especially considering this is a newly opened restaurant. We ordered cut mirchi, mutton ghee roast pulav, eggplant biryani, paneer biryani, and chicken tikka kebab and each dish had its own charm.The cut mirchi was crispy and flavorful, a perfect way to start the meal. The real star for me was the chicken tikka kebab beautifully soft and perfectly cooked, clearly showing great marination and grilling skills. Both the paneer biryani and eggplant biryani were well-balanced with rich, moist gravy, not dry at all. The mutton ghee roast pulav was aromatic and deeply flavorful, making every bite comforting and satisfying.One thing I genuinely loved was the moisture and richness in the biryani gravy. It adds a distinct, indulgent taste that sets it apart from regular biryanis and makes the food feel thoughtfully prepared and special.On top of the food, the service was excellent the staff were polite, attentive, and welcoming. The restaurant itself is clean, peaceful, and comfortable, making it a lovely spot to enjoy a relaxed meal.
+For a new restaurant, this place has already made a strong impression. If you’re looking to give your taste buds something different, it’s definitely worth trying. I’d love to come back again and explore more varieties from their menu next time 🥰😍🥰🥰', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJURETUBqxJIgRyOvoyLZu0CU', 'Rohit Pota', 5, 'This buffet is absolutely the best for a Sunday lunch! The variety is amazing, catering to both non-vegetarians and vegetarians. The flavors are great—not too spicy, not too bland. The buffet includes Haleem, Set dosa, and Ragi Idly on the side, which is simply incredible. And the desserts? Gulab Jamun and Rawa Kesari are just ❤️🤌🏻', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJURETUBqxJIgRyOvoyLZu0CU', 'Dr. Foodie', 3, 'Food taste was  not  I expected like Butter chicken was very sweet
+I asked for chk corn soup but it was very watery
+Desert gulab jaman was not great
+Goat peeper fry was good', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJURETUBqxJIgRyOvoyLZu0CU', 'Sukumar Jena', 5, 'Recently visited Aha Biryanis,  food, ambiance, staff and services were all good. Kids enjoyed the food, not at spicier end, all balanced.
+Flavors are spot on and nice items spread, welcome drink, soups, lunch, desserts, salads and specials like haleem, cutlets and punugulu (indian fritters). Items changes every week, so I am excited what new items I see next time.
+I recommend this food joint anytime.
+Restrooms are clean and nicely maintained. Staff are polite and engaging.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz-fppp-wJIgRJ_lv29vZ73g', 'Ayesha K.', 3, 'The food was good and I''ll most likely go again but not monthly as I don''t like to eat at desi restaurants. The ambiance isn''t fancy but it''s not a bad place either. We ordered nehari, mutton Biryani, seekh kabob, karahi gosht and naan - quantity was enough for 4 hungry adults. The food is a little pricey!', '9 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz-fppp-wJIgRJ_lv29vZ73g', 'Mohammad Shaikh', 1, 'Nihari Cafe has one good thing, nihari. But if you ever even think about getting the korma, you''re making a big mistake. The customer service was atrocious.  It took 40 minutes to make the food. They didn''t even pass out the plates. The water tasted bad, and when we asked for a water change and the waiter poured the water into the jug on our table, and then mixed up every cup. We ordered Mutton Korma, but were later told it wasn''t being served. To top it all off, we were charged 18% gratuity for the worst customer service I''ve ever experienced. 18%!? This isn''t even a classy place where gratuity can be charged, let alone deserved. Anyways, if you''re feeling brave to try this place anyways, I wish you luck.', '11 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz-fppp-wJIgRJ_lv29vZ73g', 'Aaliyah H', 1, 'The place isn''t very clean,  you can see the dirt on the backs of the sofa chairs, and when they put the plates on the table it had old food stuck to it.
+Poor customer service, the guys who take your order don''t actually speak or say anything, they didn''t smile even once the whole time we were there. Really Dull & gloomy atmosphere & vibe
+The Nihari had no spice at all,  the balance of the flavors/spices were off & there was something sweet in there that made it the opposite of what nihari should be . It tastes more like a dessert then dinner & the biryani was subpar. Not authentic Pakistani food.', '8 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz-fppp-wJIgRJ_lv29vZ73g', 'Mohammad Jafferany', 1, 'The food quality is average however staff is very rude and non-courteous. I have been there many times in the past. The food quality is worsening day by day, They stopped giving salad, the naan getting half/baked. Worst of all bathroom is dirtiest ever I have seen in any ethnic restaurant. Bottom line: not worth of your money or time.', '9 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJz-fppp-wJIgRJ_lv29vZ73g', 'Rabiya Lone', 4, 'it''s good place to try for authentic punjabi flavors.  The must try IF THEY ARE AVAILABLE, Haleem, Nihari, Chappli Kabab, and tikka.  This place is small and not so great for parties.  some dishes are great, but are not always on the menu, price is average.  family of 6 end up spending about $80.  I have had some food under cooked', '8 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUeXQkGxJIgRyYJvqVJ09pU', 'Hershey', 3, 'Tried a variety of dishes here and overall the experience was average, nothing that gave a real “wow” factor, but it wasn’t disappointing either.
+Gongura Chicken Biryani – 7/10: Decent flavor, the gongura tang was present but could have been more pronounced.Mutton Vijayawada Biryani – 6/10: Average taste, mutton was okay but lacked that authentic spice kick.Gongura Veg Biryani – 4/10: Didn’t really work for me; flavors felt mild and underwhelming.Dragon Chicken – 8/10: The best dish of the lot crispy, spicy, and well-seasoned, definitely worth trying. They also had a Buy 2 Get 1 Biryani offer, which was actually a good deal and added value to the meal.
+The staff were attentive, polite, and helpful, which made the dining experience better. Service was prompt and courteous.
+Overall: Good place for a casual meal, but if you’re looking for standout or memorable flavors, it may fall a bit short.🥲🥲', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUeXQkGxJIgRyYJvqVJ09pU', 'Carli Mansfield', 5, 'When I say this is the BEST Indian in the area- I am speaking from a place of personally trying every Indian restaurant surrounding and then some. They are so consistently good, always delicious, and we look forward to ordering once a week every. single. week. You all at Mama Eatz make our week!!! GREAT JOB!! ', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUeXQkGxJIgRyYJvqVJ09pU', 'Reddipradeep Kumar', 1, 'I’m really disappointed with my recent orders from Mamaeatz. I purchased Haleem (12 oz) for $15, but nearly 4 oz was just bones, leaving very little actual Haleem. For the price, the quantity and value were not worth it.
+
+This is the second time I’ve had this experience. Earlier, I ordered the Sankranthi veg thali for $20. The portions were extremely small—about 2 oz each—and the chicken bundle had only around 4 oz of chicken. On top of that, all veg thali items were packed together in a single to-go box instead of being packed separately, which affected the overall quality and presentation.
+
+Overall, the quantity feels misleading and the taste was only average. Please improve portion sizes, packaging, and value for money. Sharing this review so others are aware.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUeXQkGxJIgRyYJvqVJ09pU', 'Sharat Kumar', 5, 'Good restaurant with less lighting looked very dull while entered. Snack items also available. Live Chats like pani puri, other chats available. Food is good here.', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJFUeXQkGxJIgRyYJvqVJ09pU', 'Tanjim Chowdhury', 4, 'I recently dined at MamaEatz and had the pleasure of trying their Hyderabadi Dum Biriyani and Triveni Chicken Biriyani. Both dishes were quite enjoyable and had a rich, authentic taste. The Hyderabadi Dum Biriyani was flavorful, with perfectly cooked rice and tender pieces of meat. The Triveni Chicken Biriyani offered a unique blend of spices that made it stand out.
+
+While the food was very good, it didn''t quite reach the level of perfection for a 5-star rating. Nevertheless, MamaEatz is a great spot for biriyani lovers looking for a delicious and satisfying meal. The ambiance and service were also commendable, adding to an overall pleasant dining experience. I would definitely recommend giving it a try!', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqcjTtiGwJIgRXi5gsUKnWCU', 'Yohana Isabella', 5, 'This is 100% very authentic halal Indian food! They serve the best Biryani 💯👍
+
+🐔 Thalappakatti chicken biryani- cooked inside the banana leaves with jeera samba rice
+🐐 Goat sukha
+🐐 Goat matka claypot biryani
+🍗 Chicken lollipop
+🐔 Chicken 555
+🥭 Mango lassi
+
+The owner Ziggy was very friendly. He explained patiently the ingredients of the items I tried. The spices are 100% imported directly from India.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqcjTtiGwJIgRXi5gsUKnWCU', 'Sabbir Ahmed', 5, 'Traditional Indian food, love it. I went there couple of time. Taste of the food was okay, but last day there was Ziggy present and think what it was boom 💥. Every food was marvelously delicious. Thanks to dear Ziggy.
+I come again again and again for those food. Love it 🥰
+Recommended', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqcjTtiGwJIgRXi5gsUKnWCU', 'Nishanth Alluri', 3, 'The food has gotten better over the years, they are open later than most Indian restaurants, which is a plus. However, the price has increased over the years, quantity has decreased. Decent/average place for biryani in metro Detroit. 3.5 stars.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqcjTtiGwJIgRXi5gsUKnWCU', 'Nitin Dasari', 1, 'Even after reading all the negative reviews we decided to give it a try because it’s closer to our place and the name is so familiar. It didn’t take much time to realize how big of a mistake that was. Firstly, the service and the accuracy of this place is subpar. When we called the restaurant to place the order we  were told our order will be ready by 7, and it wasn’t until 7:30. And from other reviews it looks like they lie to you about the pick up time all the time. So unless you are okay waiting for your food all the time avoid this place.
+
+Secondly, we order 2 biryanis - old city spl chicken biryani and old city spl egg biryani. Egg biryani is not even egg biryani, it’s veg biryani rice with just 1 boiled egg on top. There’s scrambled egg mixed in that rice to make it a special biryani but even that is full of red color and half cooked. Coming to the chicken biryani, it’s boneless biryani mixed with food color to decieve it as a seperate biryani. I could only taste color from it and eating that biryani made my stomach upset.
+
+I’m sick of Indian restaurants listing specials to sell old and unsold food. This is the worst food I ever had in any restaurants let alone be Paradise. Avoid at all costs.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqcjTtiGwJIgRXi5gsUKnWCU', 'Ketharapu Sreekanth Reddy', 1, 'I recently had the opportunity to try the "Old City Special Chicken Biryani" from Paradise Biryani Pointe, a dish that came highly recommended. The aroma was inviting, and the initial bites were promising. However, my experience quickly took a turn for the worse when, to my utter disbelief, I found a sharp piece of glass in my mouth as I was savoring the meal. This was not only shocking but also raised serious concerns about the restaurant''s safety and quality control standards. Understandably, this harrowing encounter completely diminished my appetite, and I felt compelled to discard the remainder of the biryani. Such incidents can be detrimental to one''s health and well-being, and I sincerely hope the restaurant takes this feedback seriously to prevent any future occurrences. Safety should always be paramount when it comes to food preparation.', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJlcb0ArCxJIgRZq-rHvOCCXI', 'Rahul S', 5, 'Excellent buffet, that too on a Saturday for lunch. Very pleased with the variety, quality and overall cleanliness of the place. The menu was full of variety from meat options to vegetarian and desserts. I’d recommend this place and will definitely be back.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJlcb0ArCxJIgRZq-rHvOCCXI', 'Venkat Srinivasan', 5, 'Authentic flavors, comforting vibes!
+Last weekend we visited Namaste Flavours, and it truly lived up to its name. The food was rich, authentic, and full of traditional Indian flavors — every dish tasted freshly prepared and perfectly spiced.
+From the warm, aromatic curries to the soft, fluffy naan, everything was spot on. You can really tell the chefs know their craft. The ambience was calm and welcoming, making it a great place to enjoy a relaxed meal with family or friends.
+The service was friendly and attentive, and the overall experience felt genuinely authentic rather than commercial.
+If you’re craving real Indian cuisine that reminds you of home-style cooking, Namaste Flavours is absolutely worth a visit. We’ll definitely be coming back! 🙏🍛', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJlcb0ArCxJIgRZq-rHvOCCXI', 'SR R', 1, 'I’ve been coming to Namasthe Flavors - Farmington hills since 2014 and never had an issue until today. My sister Sandy picked up cut-mirchi to go, and we live just 10 minutes away. By the time we got home, it was rock solid — couldn’t even chew it.
+I called them and they asked us to bring it back, promising a replacement. We drove back, and guess what? Came home EMPTY-HANDED. Total waste of time. We went back and forth four times for nothing 😔
+
+What’s more frustrating is that I’ve supported this place for years. I recently placed a $360 order for 10+ people under my cousin Siva’s name. and that’s just one order I’m mentioning. There have been many other to-go orders like that.
+
+This is how loyal customers get treated?
+
+Not going back again.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJlcb0ArCxJIgRZq-rHvOCCXI', 'Praveen Yalavarty', 4, 'We have been going to this place for over 15 years and the taste of food remained consistent. In my view, this is commendable. Some dishes are really good and some are not upto the mark and they remained that way. We now get only carryout during weekends. But, we will continue to support this restaurant for its quality of food.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJlcb0ArCxJIgRZq-rHvOCCXI', 'Brenda Johnson', 2, 'This review is from over the years not just recent visit. Many products were found to be expired & when brought to the cashiers notice they thanked us and put them back on the shelves. Beware what you buy from this grocery store.', '3 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJt8c47tOsJIgRyhNUNxzl5BM', 'aishwarya raj', 3, 'Biryani tasted more like pulav and lacked salt, which was disappointing. However, the chicken handi was amazing  rich, flavorful, and absolutely delicious!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJt8c47tOsJIgRyhNUNxzl5BM', 'Ravi', 1, 'Not a fine dine at all! 🥹 the food was horribly sour! Except mango lassi didn’t like anything!
+
+Had ordered paneer lababdar, butter chicken, saag corn along with sesame cauliflower and paneer starter but every dish had either too much vinegar added or had too much lemon ! Without lemon they would have tasted better but with so many sour things on plate, just ended up eating plain onions and garlic bread that we ordered!
+
+Will never visit again!', '8 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJt8c47tOsJIgRyhNUNxzl5BM', 'Andrea McCoy', 5, 'We had a wonderful meal at Pakwaan after enjoying the Ice Festival. The service is impeccable. Each booth has high backs that are cloth, absorbing sound for excellent conversation and privacy. The meals are made with fresh and traditional ingredients. The food is excellent! Prices are very reasonable.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJt8c47tOsJIgRyhNUNxzl5BM', 'Anjelica Peruzzi', 5, 'Came here on a recommendation of a co worker/friend who said this is the best Indian food he’s had. Sure enough this is probably some of the best Indian food I’ve ever had. I haven’t eaten at many Indian restaurants but this was sooo so good. And the restaurant itself is a really nice environment. We came in and did the buffet. And I love being able to try a wide variety. Definitely beyond worth the price. I was shocked we were one of two couples in there for a Saturday lunch buffet. But it was a holiday weekend. If you’re considering trying it here just do it. I promise you’ll find something you like. I liked everything and tried multiple things I had never had. The butter chicken I could eat everyday!', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJt8c47tOsJIgRyhNUNxzl5BM', 'Alexandra F (Alex)', 5, 'WOW! Pakwaan blew me away with their bread options, delicious vegetarian paneer choices, and incredible butter chicken. Everything was incredibly tasteful and the service was superior. Everything we ordered was incredible, hot, and filled to the brim with spices. Great atmosphere for a date night or fancy going out that doesn’t break the bank too.', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Marsha Naidoo', 5, 'We called in advance with questions on menu items- got a really patient and helpful response. Mutton Dum biryani, mutton karahi and rice pudding were delicious. Loved that the rice was seasoned with clove and cumin. We will definitely be back to try other items. There will be a dinner buffet during Ramadan starting Feb 18. Looking forward to trying it', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Abid Mahmood', 5, 'Here’s a polished 5-star review you can copy and paste:
+
+⭐️⭐️⭐️⭐️⭐️
+I had an absolutely amazing experience! The chicken karahi was rich, aromatic, and bursting with true Pakistani flavor. The Pakistani-style beef seekh kabab was perfectly seasoned and tender, and the warm kulcha naan instantly reminded me of classic Lahori naan — soft, fresh, and full of nostalgia.
+
+The mango lassi was smooth and refreshing, the perfect balance of sweetness and mango flavor. I finished with badam kheer and a cup of ilaichi (cardamom) chai, and both were outstanding.
+
+Every single item tasted authentically Pakistani, especially Lahori-style. Highly recommended!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Kiara Hope', 5, '✨️HIDDEN GEM ALERT✨️ WOW this was GOODDD! The food was authentic, delicious and filling. We had the tikka and butter chicken. Came with rice, and as we also bought the garlic naan. She also let us try something else and I cant wait to get it next time! Cant remember the name though. The woman inside was so sweet. This is def going to be our new local spot to stop ❤️', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Tanzeela Nusrat', 5, 'Tandoori Korner is a great restaurant with really good food. Everything tastes fresh and full of flavor. The tandoori dishes are cooked perfectly, and the spices are just right. The portions are big, and the prices are fair. If you want tasty Pakistani food, Tandoori korner
+is a great place to go.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Roosevelt Fernando-Rizzo', 5, 'Absolute hidden gem! Food is always excellent with generous portions. The house-made naan is worth the visit alone. Staff are so welcoming and always ready with a suggestion for those looking to try something new!', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdciDbw9TO4gRmM8Kx59AgcU', 'Tariq Mahmud', 5, 'We had a pickup order of Chicken Karahi and Samosa. We enjoyed it. The quality n the quantity can not be compromised. Very courteous customer service. Since they moved to a bigger place adjacent to the old location, the sitting are has lot more accommodations to dine in. If you are in search of good Pakistani cuisine in metro Detroit, this is the place to go. Worth to try it.', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdciDbw9TO4gRmM8Kx59AgcU', 'Asem Al Seidi', 5, 'This is me being 💯 honest, this is a family business, they are very genuine, nice, and will gladly serve you good food. I went for Ramadan iftar. It was amazing really. Very authentic food, really tasted like back home. Very good tandoori chicken. Good for them, I really recommend. Thank you Mr Saif.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdciDbw9TO4gRmM8Kx59AgcU', 'Ifrah Naz', 5, 'Delicious karhai, best in the area to be honest! The beef samosa was also really good, im sure the other apps are yummy too. Naan was solid as was the behari kabob!
+This place is small, but BIG on flavor
+flavor. The owner was the sweetest and obviously passionate about her restaurant! For good reason! It was delicious! A lot of ppl did carry out but they do have seating, its bench seats about 3 tables. Maybe 12 ppl can be seated at once. This worked out great for us bc it was cozy and my easily over stimulated toddler was happy with our seats !
+Would come back next time im in town!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdciDbw9TO4gRmM8Kx59AgcU', 'Zubair Mufti', 1, 'Hi there, we ordered beef Nihari with some Kakobs to go. We got shocked to see the Nihari at the dinner table. The meat was not a stew beef but consisted of fat and garbage. That spoiled our whole dinner. I made some pictures
+for others to look at and stay away from these cheaters. Totally unprofessional.
+
+Their reply: "we offered you a free replacement" is a total lie. I wasn''t provided any such offer but I want my refund for that dish as I am not coming back to you for another horrible experience. The customers can see their pathetic reviews to be cautious.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdciDbw9TO4gRmM8Kx59AgcU', 'ravi raza', 5, 'We have been taking out from here for 3 years now. They are pretty consistent and the timing has improved quite a lot. Our go to dishes are chicken seekh kabab, chicken biryani, highway Karahi, beef samosas and the Sunday halwa puri breakfast. All these dishes are on point and amazing. We love these and will continue ordering from here. Prices are decent too.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ3_3bVIyxJIgRnYtvzopV3ko', 'akash', 5, 'Visited multiple times but first time review.
+Ordered onion samosa and daal kachori today.
+I can say just one word. “Yummyyyyyy”.
+I took order to go. Both were crispy even after 30 min. Must have.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ3_3bVIyxJIgRnYtvzopV3ko', 'Hershey', 5, 'I shared a Pinterest photo for my birthday cake, and they recreated it perfectly!
+The design, color, and decoration were exactly as I imagined simple, elegant, and adorable.Absolutely loved it.thank you for making my day extra special! 💜🎂.
+When it comes to snacks, this place is an absolute gem!😍', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ3_3bVIyxJIgRnYtvzopV3ko', 'Sanam Sharif', 4, 'Nice place. Lots of different flavored pastries and cakes. Price is also reasonable.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ3_3bVIyxJIgRnYtvzopV3ko', 'mayur godase', 5, 'We order cake for 1st birthday of our baby. It was delicious and well decor.  Chef Jitendra personally takes order for cake and customises according to your theme and event.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ3_3bVIyxJIgRnYtvzopV3ko', 'Ooky Cooky', 5, 'Updated: Today tried Veggie Pizza & Pav Bhaji...both were flavorful...liked it...it was worth the wait time.
+
+October 2022: New place...nice people...tried Punjabi Samosa, Veg Puff & a Pastry...
+Pastry was nice
+Samosa was nice too..taste is same as in Indian stores..
+Veg Puff was okay for me..I was hoping for more potato mixture then peas & beans 🙃 could also taste hint of ghee in the flakes
+..surely will explore more items', '3 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJMxdmAQBTO4gRw0D-w_AVsKg', 'Bharti Barot', 5, 'We hosted a large event at our home for 60+ guests. Catering order was perfect. Timely delivery, efficient service, great service in ensuring we were provided  warmers and serving utensils.
+
+Great serving portions, the Methi Chaman was a hit, the vegetarian biryani was delicious, we also got mango lemonade which the kids loved!
+
+Guests loved the food, they were very happy. Nitin is accommodating and very easy to work with. I will definitely be using them again.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJMxdmAQBTO4gRw0D-w_AVsKg', 'Ruturaj Bhalerao', 1, 'We happened to get this place reading good amount of reviews suggesting that the food was good, when we turned in to our surprise no one was there for or on counter. We happened to call from the counter to the restaurant so that someone could come outside and help us but still didn''t work, so we had to go behind the counter n partially through the kitchen door to call someone. Then we placed order for 5-6 dishes, Paneer dish, Dal as recommended, Schezwan fried rice n schezwan fried noodles. Whatever was made n bought to the table was extremely oily and no flavor at all except the Dal Paneer sabji, the Roti n Naan were ordered butter they came without Indo Chinese food was a laugh as no flavor and looks. When asked for to explain what was served was given an answer Hakka Noodles and Fried Rice when told about Schezwan we were served with Ketchup and Chili sauce mixture and were told this is how we make it.
+We decided to eat whatever was edible/little bit flavorful and rest we left the food and called our night.
+Definitely not recommend for Vegetarian options if looking for.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJMxdmAQBTO4gRw0D-w_AVsKg', 'Mahima Iyer', 2, 'Our first time here was great. Nice portions and flavors! Noodles were tasty, appetizers and ghee dosa too. The service was a bit slow but overall we had a good time.
+We visited a second time, the service was slower, had to wait for so long and ask multiple times for things. The chutney was not fresh and sambar was stale too. Not appetizing. Everything was pretty average, super slow and appetizers could have used more salt and seasoning', '8 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJMxdmAQBTO4gRw0D-w_AVsKg', 'Elijah Greenman', 5, 'Seldom have I been lucky enough to find such wonderful authentic Indian cuisine! The richness, freshness, and depth of flavor was equally matched by the energy of the staff. The willingness of staff to discuss the various dishes and to share in the joy of food was very welcoming and will surely make diners feel at ease, especially those new to Indian food. It was a true blessing to encounter this spot. My stomach and heart are both full after my visit. I look forward to the next time!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJMxdmAQBTO4gRw0D-w_AVsKg', 'Amy Ansara', 5, 'I came here for the lunch buffet, and it did not disappoint! Lots of options, including vegan, vegetarian, and meat variety! The butter chicken was fantastic. Kind and generous staff they have dinner buffet Thursday evenings as well, which I’m looking forward to! Highly recommended!!', '6 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJj1NM_XRTO4gRylq-aog9woA', 'Brian Warner', 5, 'The other night, craving Indian food but uninspired by my usual rotation of local spots, I found myself thinking back to a place I hadn’t visited in ages: Delhi Hut.
+What would I have.  Ah, yes.  Indo‑Chinese sounded perfect.
+I called in an order for Manchurian Chicken and Hakka Chicken Noodles, making a point to request the dishes hot, truly spicy.
+When I arrived, my order was ready right on time.
+Delhi Hut operates as takeout‑only, so I grabbed the bag and headed toward my truck.
+I thought, wow - This bad is heavy.
+Since, I was so hungry, I need to sample some food before I got home.
+Right?
+The portions were astonishing.
+I’d ordered two entrées out of habit—too many restaurants serve portions that barely qualify as a meal.
+They are more like an appetizer.
+Delhi Hut, however, delivered enough food for dinner that night and two generous lunches the following days.
+Both dishes were deeply flavorful, the kind of Indo‑Chinese comfort food that hits all the right notes.
+My lone critique: the spice level.
+Despite my request, the heat landed squarely in “white‑man hot” territory.
+Next time, I’ll be explicit—Asian‑man hot, please.
+And yes, there will absolutely be a next time.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJj1NM_XRTO4gRylq-aog9woA', 'Tish van den Bremer', 5, 'Take out only. Good prices and good portions. Food was wonderful. We ordered on the spot and were told 20 min wait,  when we came back it was ready to go. Live in Livonia and drive past another more expensive restaurant to get to the Delhi hut, will definitely use this as my go to for Indian food. Food was still hot when we got home!', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJj1NM_XRTO4gRylq-aog9woA', 'navjit kaur', 5, 'Delhi hut
+Amazing place for delicious food! I absolutely love their tandoori chicken and tandoori fish — always cooked perfectly with great flavor. The service is excellent, and the quality of food is consistently outstanding. Thank you for serving the community with such great care and delicious meals. Highly recommend!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJj1NM_XRTO4gRylq-aog9woA', 'Saransh Dave', 5, 'We have been missing out on Indian food since many past weeks. Then we came to know about this place and damn, it was sooo sooo good! It’s very fortunate to get to eat such good Indian food in NZ. Especially the aloo paratha. I don’t remember if I’ve had such a good paratha even in India.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJj1NM_XRTO4gRylq-aog9woA', 'S W', 1, 'I got 2 pieces of hair in my butter chicken!! I need a refund', '3 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIxLZNx1TO4gRO48CGGIhids', 'sreeram Srinivas kalyan', 1, '⭐ 1/5 — Extremely Disappointing Experience
+We were driving from GRR to Detroit and decided to stop by this restaurant because of its high ratings and positive reviews. We thought it would be a great place to try authentic Indian food, but it turned out to be one of the most disappointing experiences we’ve had.
+We ordered three items:
+Gobi Manchurian
+Veg Fried Rice
+Mutton Sukka Dum Biryani
+Unfortunately, none of them were flavorful or properly cooked.
+The Gobi Manchurian was undercooked and lacked taste.
+The Veg Fried Rice was nothing like fried rice — it was mostly cabbage with very little rice. I’ve attached pictures for comparison.
+The Mutton Sukka Dum Biryani was bland and had no authentic biryani flavor.
+We paid $49 for these three items, and the quantity was very small for the price. Because the food was so bad, we had to order something else later at night — we didn’t want to go to bed hungry.
+If you can’t maintain food quality or authenticity, please reconsider your approach, because customers trust good reviews and end up wasting their money and appetite. I do not recommend this place at all.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIxLZNx1TO4gRO48CGGIhids', 'soushik', 5, 'Absolutely loved the food! The quantity was very generous and totally worth it. I have been imagining this taste in my mind for the last two years, and finally I got to enjoy it this time.
+
+The Gongura Mutton Biryani was outstanding – perfect spice, rich flavor, and authentic taste. The Kodi Vepudu was equally amazing, cooked perfectly and full of flavor.
+
+Really enjoyed every bite. Will definitely visit again! 🔥🍽️', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIxLZNx1TO4gRO48CGGIhids', 'yaswanth ganapathi', 4, 'The chili chicken and naan were delicious. The dosa was good but could be improved. The coffee was excellent, and the staff were very warm and friendly.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIxLZNx1TO4gRO48CGGIhids', 'A B', 5, 'A traditional, Indian restaurant.
+
+Amazing food, what you see in the photos is the butter chicken (comes with the chicken and the rice) with the garlic naan order as well.
+
+You have four choices of spice level, mild, medium, hot, and Indian hot.
+
+We haven’t tried Indian hot. My partner prefers medium, I prefer hot. Indian hot is probably ghost pepper sauce spice level in every bite.
+
+Mango Lassi also very good.', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIxLZNx1TO4gRO48CGGIhids', 'Moustapha Mamlouk', 5, 'So first the staff is very welcoming 🙏.. the food is just amazing . I was looking for an authentic restaurant that does not shy from real spices and this was a jackpot. This will be my regular place.', '7 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEx3iIUFTO4gRz9hJQU_a-cA', 'Rohit Pawar', 5, 'Amazing experience at Authentikka!
+The entrance itself sets a nice vibe — there’s a beautiful Ganesh murti and a calm, welcoming feel as soon as you walk in. The whole place has a classy ambience, perfect lighting, and a great decor. There’s even a bar area if you want to grab a drink, which adds to the overall setup.
+
+They also have a big Banquet hall inside — it’s really spacious with elegant chandeliers. Looks like the perfect spot for parties or functions. Very impressive.
+
+Now the food — honestly, everything we tried was spot on.
+We had Methi Malai Mutter Paneer and Veg Kadai, both were amazing in flavor and cooked perfectly. The Gobi Manchurian was crispy, flavorful, and had that authentic Indo-Chinese kick. The Manchow Soup was nice too.
+
+And the sweets — I have no words! The Gajar Halwa and Gulab Jamun were just amazing. Soft, fresh, and absolutely worth trying.
+
+Service was friendly and quick. Overall, a really good experience. Great food, great atmosphere, and a place I’d definitely recommend for both dining and special occasions', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEx3iIUFTO4gRz9hJQU_a-cA', 'Mahima Iyer', 4, 'Our host Ashley was very kind, friendly, and especially sweet with my toddler.
+We ordered the Manchow soup, paneer tikka masala, garlic naan, and fries. The food was decent overall, though the entrée could’ve had a bit more spice. We ordered medium but it tasted more mild. We had a nice time.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEx3iIUFTO4gRz9hJQU_a-cA', 'Paul Dubois', 5, 'We picked this place almost at random for Indian food during a stay over in Wayne. The GPS sent us strange ways to get there, but the experience was totally worth it. We expected to choose a few dishes to share, but the buffet eliminated the need for that.
+There were several bases (rice etc.) and dishes (butter chicken, tikka, etc.) naan, sauces, filled crepes made on the spot (potato , paneer, chopped onions and cilantro) you could choose your own fillings.
+The mango lassi is also great (not part.of the buffet unfortunately!) and there was a chai tea that was part of it (as far as I know.)
+The hostess led us through the line explaining why each dish was. So very helpful, but overwhelming to remember it all!
+We were very happy with the choice although we went home a little too full!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEx3iIUFTO4gRz9hJQU_a-cA', 'Jenna Carpenter', 5, 'I absolutely loved this restaurant. My boyfriend and I went for the first time, and the service, the food, and the atmosphere were 10/10. I will definitely go back when I''m craving indian cuisine. I got the chicken Tiki Masala and I loved how you could choose the level of spiciness in it. The staff was very friendly, and the food came out fast. Can''t recommend this enough, will be back there for sure.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEx3iIUFTO4gRz9hJQU_a-cA', 'Brittany M', 5, 'My server was amazing, kind and very attentive! The food was hot and delicious! Very clean and comfortable atmosphere! I ordered the mango lassi, tandoori pomfret, butter chicken masla and garlic naan. I highly recommend them all!', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbVHtB6FTO4gRNH32eZ4pIyI', 'Michael St. Louis', 5, 'Namaste is FANTASTIC! The korma and butter chicken are delicious and full of flavor. The onion kulcha is light yet crispy and positively fantastic. The restaurant is warm and inviting. We had wonderful service and cannot recommend Namaste highly enough. I’ll be back every time I’m in town. Thanks Namaste for the terrific experience!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbVHtB6FTO4gRNH32eZ4pIyI', 's e s h a', 4, 'My wife and I stopped in for dinner on a Friday evening at 5:30pm. Since it was early, there were only two other people in the restaurant. The staff are very friendly and helpful if you have questions about anything on the menu.  I ordered a matter paneer and some plain naan and it came with rice.  The matter paneer was good but seemed to be a little watery for my taste. The portion size was perfectly fine. My wife ordered a plain dosa and she said it was the best dosa she has had in Michigan. The dosa was very crispy which is exactly how she likes it, she cannot stand some of the dosa’s she has had in other Indian restaurants because they were soggy. She also ordered some samosa and said that was good as well.
+
+The pricing at this restaurant is fine and acceptable and their portion sizes are very good. Our bill was $41 including the tip.
+
+We will definitely stop in at this restaurant again and try some of their lamb and goat curries.', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbVHtB6FTO4gRNH32eZ4pIyI', 'Sriram', 5, 'Food was delicious and the staff was very friendly. Great atmosphere. I tried mirchi Bajji in many places but this place is the best place I tried so far! And also I tried lamb Biryani it was delicious and the mango lassi was topnotch with great texture and smoothness and it was very delicious.My new year started with wonderful and delicious food 🥳😍😍 I will highly recommend this place.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbVHtB6FTO4gRNH32eZ4pIyI', 'Ani Daher', 5, 'Amazing food and wonderful friendly service. The meals are priced very well and there''s lots of vegetarian options. Can''t wait to go back!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbVHtB6FTO4gRNH32eZ4pIyI', 'Libby Wedesky', 4, 'Came in to get take out and the gentleman helping me was super nice and friendly. I ordered samosas, paneer 65, and butter naan. I took it home and gave it all a try, the samosa has a nice spice on the outside, and the flavor inside was good, but very spicy. The naan was good, but not crispy, or buttery. The paneer was not what I expected. It was so spicy I could barely eat it. Maybe I’m just not used to the spice, but too much for me.', '6 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM4IENplTO4gRU_eMcp_ozFM', 'akash', 5, 'One of the best restaurants for chat, tiffins and desserts(live jalebi counter).
+Visited recently after 10yrs and the taste and ambience are still maintained very well.
+Love that they have an open kitchen.
+Ambience is very good, service is pretty fast.
+
+We ordered the chats platter, benne dosa, poori, idly vada combo, and enjoyed everything especiallly the jalebi.
+
+Updated 19thNov:
+Manchurian gravy with rice - 2/5
+Manchurian balls are very bad. Gravy was amazing. Also it’s not worth 14.99.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM4IENplTO4gRU_eMcp_ozFM', 'Rohit Pawar', 5, 'Nehees is one of those places where every dish hits the spot. We tried Masala Dosa, Pav Bhaji, Chole Bhature, Vada Pav, Schezwan Rice, Schezwan Noodles, Jalebi, and Falooda — everything was flavorful and freshly made. The dosa was crisp, the chole bhature perfectly spiced, and the Jalebi was just the right kind of sweet.
+
+They offer a great variety of options, covering both South Indian classics and Mumbai street food favorites. The restaurant is spacious with tables of all sizes, perfect for families or groups. Service is quick, staff is friendly, and the overall vibe is relaxed.
+
+Definitely a go-to spot for authentic Indian comfort food in Canton.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM4IENplTO4gRU_eMcp_ozFM', 'Kevin Adams', 5, 'Was invited to this restaurant by my friend Harsh. I let him do all the ordering as he is from the same area of India as this food originates from. We ordered way more food than we needed but somehow we still finished it all. Every bite was fantastic. Can not recommend this place enough.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM4IENplTO4gRU_eMcp_ozFM', 'Jaimi Patel', 5, 'Absolutely the Best Indian Food Ever!
+I was blown away by the quality and quantity of the food—everything was fresh, flavorful, and hygienically prepared. Ordering was quick and easy, and the whole experience was smooth from start to finish.
+
+Plenty of parking made getting in and out a breeze. The staff were super friendly and welcoming, and my kids absolutely loved the food too!
+
+This place is a must-try for anyone craving authentic Indian cuisine. Highly recommended!', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM4IENplTO4gRU_eMcp_ozFM', 'aishwarya raj', 3, 'The restaurant offers a pleasant dining experience with a good selection of dishes. While the food was prepared well and presented nicely, I found the excessive use of butter to be overwhelming, masking some of the natural flavors of the ingredients. A more balanced approach to seasoning and richness could elevate the overall taste and make the meal more enjoyable.', '7 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJR6YxsXNTO4gR32p7JXIBcAw', 'Anshuman Swain', 5, 'Fantastic spot! Found out about this place a week back and the food did not disappoint. We had the Mysore Masala dosa, dry goat fry, Chicken Kothu paratha, Mutton Biryani, coffeee and kheer. Everything was nicely spiced and flavorful.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJR6YxsXNTO4gR32p7JXIBcAw', 'Kashyap Upadhyayula', 5, 'This has become our go to place very quick. Love the way they maintain the same taste every time.
+Feel free to try this restaurant. " Karampudi chicken is a must.🔥🔥"', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJR6YxsXNTO4gR32p7JXIBcAw', 'DINESH REDDY', 5, 'Chennai Express: A Truly Memorable Biryani Experience
+
+I recently ordered the Chicken 65 Biryani (Single Order) from Chennai Express and was so impressed that I ended up ordering a quarter tray again the very next day. The flavor was exceptional…. rich, aromatic, and delightfully unique compared to the usual styles of biryani. Within just an hour and a half, three of us at home had finished it completely, which itself speaks volumes about the taste and quality.
+
+Apart from the food, the service deserves equal appreciation. The team at the front desk (Karthik Govindaraj & Bhaskar) was extremely professional, courteous, and communicated with great clarity, making the entire experience even more delightful.
+
+I highly recommend Chennai Express to anyone craving delicious, satisfying biryani. And to my friends who enjoy pairing great food with a good drink, this biryani makes a perfect companion. You’ll thank me later 😀.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJR6YxsXNTO4gR32p7JXIBcAw', 'Ryan Lynch', 1, 'I’ve been eating India food for years and normally always order from a restaurant on Ford road. We decided to try this place one night for Butter Chicken and it was absolutely disgusting. The chicken had bones, skin and I found myself spitting it out 50% of the time. When I washed waiting in line I noticed someone sitting there eating also spitting into a napkin, which was my first red flag.
+
+The chickpeas and sauces were fine, but if your chicken isn’t edible why would I ever come back. Gross!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJR6YxsXNTO4gR32p7JXIBcAw', 'Thrishith Ravi', 5, 'Ordered goat paaya with parotta and meen varuval. I was skeptical about how the paaya would turn out, but it completely proved me wrong… hands down the best paaya I’ve had in the States. The meen varuval was good too… the fish was so fresh, definitely not frozen. It’s hard to find Indian restaurants that maintain such high quality, and I’d say this one truly tops them all.  It’s so cozy to dine in other than that best spot.', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ08cyIkhNO4gRDq2-n55AWPs', 'Eman Bazzi', 5, '10/10! I’ve been raving to my coworkers and friends about this restaurant since finding it. Completely vegetarian menu, many options, tons of flavor. Excited to go back. Highly recommend the Methi Pakoda! Try something new, I’m sure you’ll enjoy it. The restaurant was very nice and clean inside.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ08cyIkhNO4gRDq2-n55AWPs', 'Chait', 1, 'I went to this place while I was in the area for work. Just wanted a quick bite, Googled, and this came up. Worst decision. The place was almost empty except for one family, which made sense later. Looks like all good reviews are from people who are not used to regular  Indian food.
+
+It’s self-service. We ordered one vada pav ($4.99), one hakka noodles ($10.99), and one stuffed cut mirchi ($9.99). The order took forever. They first brought the vada pav and noodles, both in small paper takeaway trays.  There was a tiny hair beneath the vadapav. Eww!!! Besides that, paper try for vadapav is okay but For noodles? Seriously? Eleven bucks for that? And the portions were tiny.
+
+The vada pav was literally a burger bun with the vada smashed flat inside it. There’s a Kroger next door Hawaiian king rolls if that’s what they’re going for. The hakka noodles were even worse just soy sauce noodles, no taste, nothing. Don’t know how you mess up something that simple.
+
+After this I went back to Google reviews, and guess what!!  another customer had said the portions were small too. The owner’s reply? That it’s “supposed to be a single serving, not a full meal.” First of all, that’s not mentioned anywhere on the menu. Second, $10.99 for a sad paper-tray of bland noodles is not “single serve,” it’s just a rip-off. Any other Indian restaurant around gives better food, better portions, and for basically the same price.
+
+After a while came the mirchi. Stuffed with some stale-tasting masala, borderline spoiled. Straight to the trash.
+
+To top it off, they were rude to another customer while we were sitting there. So clearly they don’t care about service either. I know several self service places have water which we can get ourself but here the bottles were inside the fridge and priced at 30 or 70 cents. Don''t remeber this one.
+
+Overall, the food was bad, portions were worse, service was nonexistent. Wouldn’t recommend this place to anyone. Canton has far better options, don’t waste your time or money here.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ08cyIkhNO4gRDq2-n55AWPs', 'LALIT BHASIN', 5, 'I visited with my son and his children and had a very pleasant experience. The Vada Pav was excellent—fresh, well-spiced, and truly authentic in taste. The Bombay sandwich was equally enjoyable, nicely grilled with the right balance of chutneys and vegetables.
+
+The kids enjoyed the pasta, which was prepared well and suited their taste. The atmosphere was warm and family-friendly, making it a comfortable place to dine with children.
+
+Good food, generous portions, and a nice traditional touch throughout. We would be happy to visit again.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ08cyIkhNO4gRDq2-n55AWPs', 'Sushant Bhasin', 5, '⭐⭐⭐⭐⭐
+Absolutely loved my meal here. The chilli paneer was perfectly balanced—crispy on the outside, soft inside, and packed with flavor without being overly heavy. The Hakka noodles were just as good: fresh, well-seasoned, and cooked exactly right, not greasy at all.
+
+What really stands out is the consistency and care in the food. You can tell a lot of thought goes into both taste and quality. The atmosphere is welcoming, service is smooth, and the food comes out hot and fresh.
+
+If you’re looking for Indian-Chinese dishes done right, this place is a must-try. I’ll definitely be back.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ08cyIkhNO4gRDq2-n55AWPs', 'Harpreet Kaur', 5, 'Kumkum Restaurant in Westland, Wayne County is an absolute gem! Easily one of the best vada pav I’ve had—perfectly spiced and super fresh. The noodles were delicious, and the pav bhaji was rich, flavorful, and comforting in the best way. You can truly tell the food is made fresh with care. And the chai? Hands down the best chai ever—strong, aromatic, and perfectly balanced. If you’re craving authentic, fresh Indian street food, this place is a must-visit. Highly recommend!', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJy4zD41ZTO4gR0SmHYjzu7gI', 'Bakasura', 4, 'First time here and really enjoyed the food that we ordered. They have a good choice of Indian vegetarian food. Much needed for folk who enjoyed vegetarian.
+
+Given its new, there is something they can improve when it comes to service like bringing in appetizers first, followed by main course etc.
+But the food is good and recommended. I hope they maintain the standard and quality throughout.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJy4zD41ZTO4gR0SmHYjzu7gI', 'Sha', 3, 'We finally tried this place after wanting to visit since it opened. It was a last-minute stop on a weekend evening. Surprisingly, it wasn''t crowded. The space is large and clean. We walked in thinking it was a café, but it turned out to be a proper vegetarian restaurant. We came in without reading any reviews, so our expectations were neutral
+
+I ordered the Chikku shake and Dahi puri. My friend ordered Pav bhaji, Rava onion dosa, and a cold coco shake. My chikku shake and dahi puri were decent, nothing outstanding, but enjoyable.
+
+The Pav bhaji was just okay, but the pav wasn''t fresh, which took away from the dish. The Rava onion dosa was the biggest letdown, it looked appetizing, but the taste didn''t match. Even the accompaniments didn''t pair well, which was surprising. The cold coco shake tasted more like vanilla ice cream with a light sprinkle of cocoa powder rather than a rich chocolate drink.
+
+Overall, the place has a nice atmosphere and is well maintained, but the food didn''t live up to how good it looked. With better execution and fresher ingredients, it could be much better. As of now, it was a hit-or-miss experience.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJy4zD41ZTO4gR0SmHYjzu7gI', 'Mahima Iyer', 5, 'Everything we tried was delicious! The Dabang Dosa is a must-try!! As someone who loves fusion dosa, it was a total hit. We also really liked the sambar and chutney. The veg kofta curry was really flavorful , though I do wish the curry portion was a bit bigger. The garlic naan was soft and fresh. The paneer chilli appetizer was decent. Kulfi was a perfect dessert for the meal. Overall, authentic flavors and amazing food. We’ll definitely be back!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJy4zD41ZTO4gR0SmHYjzu7gI', 'Drashti Bhatt', 5, 'OMG, I''m still drooling thinking about the food at Honest! The service was top-notch, our server was attentive and knowledgeable about the menu. The ambiance was cozy and inviting, perfect for a family dinner specifically my 4-year-old loved the kids'' menu!
+The food, oh the food! It was TO DIE FOR. I had the Veg. Kolhapuri and roti, and it was cooked to perfection. The flavors were spot on, and I couldn''t get enough.
+Definitely a 5-star experience, and I''ll be back!"', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJy4zD41ZTO4gR0SmHYjzu7gI', 'Bhupen S.', 4, 'Tried Honest Restaurant recently and loved it! The pav bhaji was rich and flavorful, the dosa was crisp and perfectly cooked, and the paneer curry went so well with their soft naan. I ended the meal with kulfi, which was creamy and just the right amount of sweet.
+The food tasted authentic, the staff was friendly, and the place was clean and lively. Definitely coming back soon!', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJv51jaQBRO4gRyrno1v-OcxY', 'Mariam Majeed', 4, 'We had a bad experience back when they newly opened but glad we gave it another try. Their fresh naan and Chicken Karahi is amazing and their drinks are fun and refreshing. Would definitely recommend if you’re in the area and want some authentic Pakistani food!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJv51jaQBRO4gRyrno1v-OcxY', 'Zohaib Hussaini', 5, 'This is the third time went their, and got to know alot about this restaurant.
+They make all their food fresh, papri for the chaat, they make inhouse.
+It took some time to get the food ready, but i am satisfied that food was made fresh.
+The taste was authentic, i could confidently say that their checking Karhai was top notch.
+I highly recommend all those who want to have a nice time with family and enjoy the authentic Palistani cuisine.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJv51jaQBRO4gRyrno1v-OcxY', 'Sara Khan', 5, 'If you think you’ve had great karhai before, Barbqnite in Canton is about to humble you.
+
+I’ve eaten Pakistani food across Toronto, Windsor, and throughout Michigan, and their karhai genuinely stands above the rest. The flavors are bold and fresh, the tomatoes taste like they were chopped minutes before hitting the pan, and the spice balance is exactly what you want when you’re craving real, homestyle desi cooking.
+
+On top of that, the portions are generous, the prices are refreshingly affordable, and nothing feels heavy or overly oily, just clean, vibrant flavor in every bite. Tastes like home', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJv51jaQBRO4gRyrno1v-OcxY', 'MD SAKIBUR HASAN', 4, 'The restaurant needs to improve to earn 5 star rating. For instance, the atmosphere of the restaurant they can work on to make it more clean and good looking inside. We went there few times.
+
+They lack welcoming gesture. There is an uncle wearing glassses with white beard: he is very extrovert and rarely smiles. Without making a judgement on from where you are actually, they think you are from Pakistan/India and start talking in urdu/hindi.
+
+We orderd Halfway Chickena Karahi ($19.99), the amount was less than that of 1st time we tried, and they served mostly wings part of chicken and cooking was not up to the mark compared to the 1st day we tried!!! We ordered gazar (Carrot) halwa, the server said that he needs to check if available and said they will make it and serve. When we were served the halwa, I found it is not freshly made, but they took time defrost it and then put in woven to warm and served. I think they don''t make it in house but buy readymade as frozen!!!! It is deceiving!!!! I saw a video of aunty of the restaurant that showing samusa frying and claiming "ye frozen nehi he". I wonder why did they deceive serving frozen halwa!!
+
+While I was waiting for food, I found that a lady was waiting for takeout, she was surprised seeing the amount chicken karahi in a small bown spending without tax $12.99!!! Really, their price is little high, but quality of the food-they need to improve.
+
+In summary,  still they need work on to get a good rating!!!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJv51jaQBRO4gRyrno1v-OcxY', 'ronita', 5, 'This authentic Pakistani spread is a masterclass in bold, traditional flavors. From the sizzling, juicy kababs to the rich, aromatic gravies, every dish is perfectly seasoned and satisfying. The fluffy naan serves as the ideal base for scooping up the hearty curries. Finishing with the warm Gulab Jamun and creamy Kheer makes for an unforgettable sweet ending. It’s a must-try for anyone seeking a true soul-food experience!', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn938M5lTO4gRviAtOnXAPDc', 'Rohit Pawar', 1, 'My recent order from here was a major disappointment, especially given the prices. I ordered the Paneer Tikka Pizza and the Veg (Soy) Manchurian Pizza.
+
+The Paneer Tikka Pizza was just okay—nothing special, but passable.
+
+The Veg (Soy) Manchurian Pizza, however, was frankly inedible and a complete disaster. It was severely burnt on the edges, had a terrible, over-powering taste of soy sauce, and was aggressively spicy. The dark, oily appearance (as shown in the picture) and heavy flavor profile made the whole thing feel incredibly unhealthy and poorly prepared.
+
+When I called to complain about the quality of the Manchurian pizza, the service was severely lacking. I received a very poor and unhelpful response. The staff seemed uninterested.
+
+Extreme lack of quality control combined with the terrible customer service, means I cannot recommend this place.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn938M5lTO4gRviAtOnXAPDc', 'Kal El', 2, 'Absolutely disappointed. This was my favorite pizza. Specifically the Chicken Tikka pizza. Recently the menu was overhauled and is now a bit of a confusing mess. Yet I was able to see on the new menu that the pizza is now called to “forge” with that pizza pictured with chicken. Ordered it, got it, no chicken. Now that’s an add on and an up charge. I could roll with that but the picture is misleading, and I’m just gonna accept another restaurant I like is a no go for me.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn938M5lTO4gRviAtOnXAPDc', 'Sai Sanivarapu', 2, 'We were really disappointed with our latest takeout order. This has been our go-to desi pizza spot for at least 10 years. Even though there are many places around Farmington Hills that sell Indian-style pizzas, nothing ever came close to the Pizzawala (formerly Curry on Crust) style. Our family and even friends from different cities have always loved their pizzas.
+
+However, the recent changes to the menu are quite confusing. Ordering used to be simple and quick, but now it feels like you have to study the menu. It should be easy to place an order within a minute.
+
+We were also disappointed to see that the original Paneer Tikka pizza is no longer available.
+They still do have Tikka style pizza but with added price for normal Toppings & The new smoky version just doesn’t have the same authentic taste that we loved for years.', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn938M5lTO4gRviAtOnXAPDc', 'Ludia Kim', 5, 'Great takeout Indian pizzas! We had the Vita and the Forge with paneer on crispy crust. Two 10” pizzas would easily feed 3-4 people. Excellent flavors on both with the right amount of spice. We ordered onsite and the wait was short. The owner and staff were very kind.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJn938M5lTO4gRviAtOnXAPDc', 'Huyen Tran Nguyen (Vysturbed)', 5, 'Indian pizza, masala fries, and veggie puffs 🔥
+
+We got the Achari Veg Pizza made vegan:
+Kadhai sauce with cheese, tomato, potato, onion, green pepper, baby corn, and seasoned with achari masala). Super good!
+
+Word to the wise: Do NOT order the Veg (Soy) Manchurian Pizza no matter how good it sounds if you do not have a GODLY amount of spice tolerance. Every bite was delicious agonizing pain that we could only withstand two pieces before having to discard the rest because it was too spicy for us to continue.
+
+Highly recommend for a unique spin on pizza tho and the puffs were so flaky and good.', '11 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJU-IGkgOzJIgRAo8kyZngfek', 'Marsha Naidoo', 5, 'This was our first visit to the Thursday night chaat buffet. There''s lots of on-site parking. The restaurant is quite large and was surprisingly full for a Thursday, but we were seated right away. There are many options on the buffet and it was easy to find something we really liked. The chaat options are only available on Thursdays and those were really interesting. In addition to multiple entree options, as well as the street food (chaat), there was a seasoned milk, juice and coffee as part of the buffet. The hosts were very welcoming and the team was helpful in explaining the various chaat options and how to enjoy them.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJU-IGkgOzJIgRAo8kyZngfek', 'Holly Sysol', 5, 'This was our first time trying this restaurant.  Service was amazing. We were given a tour of the buffet and an explanation of what everything was. The staff was always there to take our plates or refill our water before we even thought to ask. Food was very good, and if you aren''t sure of what to order it is a good way to sample a lot of different items from their menu.', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJU-IGkgOzJIgRAo8kyZngfek', 'Caleb Purdy', 5, 'Punjab Indian Cuisine is easily one of the cleanest and most welcoming spots in Livonia. The service was absolutely top-notch—the staff was incredibly friendly, prompt, and genuinely helpful our waiter was Fernandes when it came to navigating the menu and offering recommendations.
+A quick tip for first-timers: When you arrive, the main floor is actually a beautiful banquet/private party space. If there’s an event going on, it’s easy to accidentally wander in! Look for the small sign directing you upstairs to the main restaurant. Once you find the stairs, you’re golden.
+The atmosphere is pristine, the food is fantastic, and the staff makes you feel right at home. Definitely worth the visit!
+Review Highlights:
+Service: 5/5 (Prompt & Knowledgeable)
+Cleanliness: 5/5
+Vibe: Professional yet welcoming', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJU-IGkgOzJIgRAo8kyZngfek', 'NIHARIKA BHATIA', 4, 'Must visit – Punjab Indian Cuisine! 🇮🇳
+They’ve truly brought authentic Indian flavors right here to the US. From the wide variety of dishes to the rich, comforting taste – everything feels like home.
+The live stations of dosa, pani puri and veg pakodas are simply irresistible 🤤
+And that filtered coffee… total shaadi-wali vibes! ☕
+Hands down, one of the best buffets in Michigan.
+Topping it all off is their amazing hospitality – the staff is incredibly warm, welcoming, and kind.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJU-IGkgOzJIgRAo8kyZngfek', 'Harold H', 5, 'Food tasted great, all the food came out at once and service was speedy.
+
+The atmosphere is elegant /w soft modern instrumental songs playing in the background.
+
+The staff to guest ratio is high, so you never feel like your not being taken care of.
+
+The outside of the establishment is decorated with with mopeds and tongas (two-wheeled horse-drawn carriages).
+
+This place is a great place to host weddings and gatherings.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJjfjp_m-yJIgRpgVW9Wz31Bk', 'Shiva Kumar rc', 1, 'The food was really not fresh as the chicken Manchurian is not fresh and quality is not good and every other items I felt was really not good and taste was also average', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJjfjp_m-yJIgRpgVW9Wz31Bk', 'Neha Singh', 1, 'Deeply disappointed by the Indo-Chinese fried rice. This place used to be my go-to, but the quality has plummeted over my last few orders. Today’s meal was practically inedible—the rice was undercooked and the vegetables were so hard they were difficult to chew. To top it off, the flavor was completely bland and tasteless. It was a total waste of money, and unfortunately, I won’t be ordering from here again. One more thing they only respond on 5 ratings reviews and they won’t show up on below that.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJjfjp_m-yJIgRpgVW9Wz31Bk', 'Brian Martini', 5, 'Went and tried the lunch buffet and it was amazing. The staff was very attentive and filled up my water glass several times. The food was very good quality, the chutney was very fresh and vibrant, and the Gobi Manchurian dish was my favorite and tasted awesome. The only criticism I have is that it wasn’t easily apparent that there was naan at the buffet until I saw someone open a serving lid and pull out a piece of naan, but otherwise I thought the buffet was excellent. I’ve tried other Indian buffets locally and haven’t been impressed, but Raj Palace was a very good place and I will absolutely return.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJjfjp_m-yJIgRpgVW9Wz31Bk', 'Tammy G.', 5, 'Delicious food, rich flavors and lots of variety. Nice atmosphere the lunch buffet lets you get a taste of everything highly recommended!', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJjfjp_m-yJIgRpgVW9Wz31Bk', 'Joe Blalock', 5, 'Raj Palace is hands-down my new favorite spot for Indian food. The flavors are rich and authentic, the portions are generous, and everything comes out hot and fresh. The butter chicken is unbelievably smooth, the naan is perfectly fluffy. Cozy atmosphere, great value, and consistently delicious. Highly recommend!', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJe4lP5LmtJIgR5puN0YQBADI', 'John Gonsalves', 5, 'Everything tasted very fresh and full of flavor. You can tell the ingredients are high quality and prepared with care. The spices were balanced perfectly nothing overpowering, just really well done. Service was friendly and the food came out at a good pace. Overall, a great spot if you’re looking for authentic, flavorful Indian food. Definitely would come back.', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJe4lP5LmtJIgR5puN0YQBADI', 'syedrahman', 5, 'Must try indian Hyderabadi food in Detroit. Im here on vacation loved the food. Biryani is awesome. The senior guy helped me with the food choices great atmosphere. Had chai in the end. Magar was too gooddd musstttttt tryyyyyyy 🔥♥️', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJe4lP5LmtJIgR5puN0YQBADI', 'Mary Burns', 5, 'Such a great experience! The food was fantastic and my friend and l received 5 star service from our server Abdul Majeeb.
+The Fish, Shrimp, Haleem and Butter chicken were my favorites.  The flavors and spice were perfect.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJe4lP5LmtJIgR5puN0YQBADI', 'Fiyin Lasisi', 4, 'The food was warm, fresh, and flavorful. My favorite item was the naan bread—it was soft, warm, and clearly just made. Overall, the dishes were delicious and offered a great variety. They were still setting up when we arrived, so we had to wait a bit for a few items to be ready, but it was worth it. I’d definitely recommend this place, especially because it’s a buffet—you get to sample many different kinds of tasty Indian food. Plus, they offer a wide range of vegetarian options.', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJe4lP5LmtJIgR5puN0YQBADI', 'Terra Nischik', 5, 'We dropped in last minute, yet we were treated like kings. The food was so good. We had the Daal soup and chicken shawarma. That was the best shawarma I have ever had. The sandwich was huge so I took half home for lunch today. It was just as good today. The service was impeccable. We were very happy we chose this restaurant.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5-x1egCxJIgRlabaAp7TeQk', 'Sunny Grewal', 5, 'Madhurs finally opened up as we''ve been anxiously waiting. It was worth the wait!
+
+The wife and I had lunch here this afternoon on their 3rd official day open. She ordered the classic dosa with sambhar (her tried and true dish) and I went off the recommendation of the owner.
+
+We started with the Curry Leaf Chicken as an appetizer and had their Masakali Chicken Biryani Boneless as my dish. Both were amazing yet humbling with the spice level. We ended with traditional tea to sweeten the spice. All dishes were amazing! With 360+ items on the menu, it''ll be years before I have a chance to try everything but I accept the challenge.
+
+Stop by and see for yourself!', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5-x1egCxJIgRlabaAp7TeQk', 'Neel Trivedi', 5, 'Absolutely loved the dosa buffet here! Every dosa we tried was fresh, delicious, and full of flavor. The owner was extremely kind and personally ensured that we received top-quality food and service. The ambience was clean and welcoming, making the experience even better. On top of that, the pricing is one of the most competitive in the area. Highly recommend this place to anyone looking for a great South Indian buffet!', '8 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5-x1egCxJIgRlabaAp7TeQk', 'vinodharani murugadoss', 2, 'Spacious restaurant with beautiful ambience and genuinely welcoming service! 🌟 The food had some hits and lot of room for improvement. Loved the uniqueness of the Nattu Kodi Rasam, and the tandoori chicken had great flavor but could’ve done with a little less ghee. The Kothu Parotta was — maybe too ghee-forward — and the Vijayawada boneless biryani, while tasty, didn’t quite hit the authentic note. The karampodi fish was just okay, though better when brought out the second time. Huge shoutout to the staff for being so responsive — they really listened to our feedback and offered replacements.', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5-x1egCxJIgRlabaAp7TeQk', 'John Gonsalves', 5, '“Flavor-packed South Indian buffet with live dosa station!”
+
+Madhur’s Royal South Indian Food is a hidden gem. I came for the buffet and was blown away by how extensive it was. They had four different kinds of rice, including goat biryani, vegetable biryani, and lemon rice—each one full of flavor and cooked just right.
+
+One of the highlights was the live dosa station. Watching them make dosas fresh to order adds to the whole experience—and they came out hot, crispy, and delicious every time.
+
+The variety of chutneys was also impressive—coconut, mint, tomato, and a few more I hadn’t tried before, all packed with flavor and clearly made in-house.
+
+The staff were super friendly and attentive—they kept checking in and making sure everything was fresh and well-stocked. The whole place felt welcoming and well run.
+
+If you''re a fan of South Indian food (or even if you''re new to it), this spot is worth the visit. Come hungry—there’s a lot to try, and it’s all good!', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5-x1egCxJIgRlabaAp7TeQk', 'Ramachandra Reddy', 1, 'I recently visited this South Indian restaurant to celebrate my friend''s birthday, drawn in by the promise of a buffet featuring 50 items. Unfortunately, the experience was incredibly disappointing.
+
+The starters—Punugulu, Mix Veg Pakora, and Sabudana Cutlet—were excessively greasy, setting a poor tone for the meal. The Tandoori Kebab was passable but nothing memorable, while the Hariyali Kebab was undercooked and lacked flavor. The Goat Boti Liver Curry was possibly the worst I’ve ever had, completely undercooked and unpleasant to eat. Similarly, the Telangana Chicken Curry tasted nothing like it should, and the Bagara Rice failed to resemble its traditional Telangana style or even simple Jeera rice. The Lemon Rice was just yellow-tinted grains lacking any real flavor.
+
+Desserts didn’t fare any better—Rava Kesari was an absolute letdown, with unroasted rava, no ghee, and barely any sweetness, making it taste like raw semolina. The live dosa station and chutneys, which should have been the highlight, lacked any authentic taste.
+
+Among the 50 items, the Thalapakatti Goat Biryani and Mix Veg Korma were at least edible, though far from impressive. Ironically, the best item on the menu was the watermelon—thankfully untouched by the kitchen.
+
+At $21.99 plus tax, this buffet is far from worth the price. The owner should focus less on making dosas—which clearly aren''t his strength—and instead prioritize quality control and customer feedback to improve the authenticity of the food. Without a real South Indian chef who understands traditional flavors, I won’t be returning.
+
+If you''re unfamiliar with South Indian cuisine and just want to try a variety of dishes without regard for taste, this place might suffice!
+
+Update based on Management response:
+
+Thank you for responding to my review, though I’m disappointed by the accusation that my feedback was influenced by outside motives. As a South Indian, I was excited to try the variety of dishes on your buffet, expecting authentic flavors. However, the taste fell far short of expectations, leaving me thoroughly disappointed.
+
+I honestly gave feedback on each item I tried, highlighting specific issues rather than making a vague complaint. If you question whether I disliked everything, I suggest reading my review again. I clearly pointed out the items that were at least edible.
+
+Instead of addressing customer concerns, your response dismisses genuine feedback and discredits an honest review. Expertise should reflect in the quality and taste of the food served, and unfortunately, that was lacking. A responsible business listens to criticism and strives to improve, not deflects blame onto the customer.
+
+I hope you take this as an opportunity to reassess and do better rather than assume negative reviews are attacks.', '9 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdXXJe7exJIgRitP0fgXDgeI', 'Mateo Gebon', 5, 'I stopped here for dinner with a colleague of mine.  It was pretty empty when we first arrived, but it got busier as time went on.  It had a pleasant atmosphere and the staff seemed professional and interested in making sure we were happy.  I got lamb rogan josh with masala chai on the side.  The drink was quite flavorful and didn’t need any extra sugar, and the lamb was wonderfully spiced.  I ordered it with medium spice, and it was quite nice.  My coworker who asked for a much milder spice level was unfortunately disappointed, but these are excellent curries.  I was very happy with the meal, and I’d have no problem going back.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdXXJe7exJIgRitP0fgXDgeI', 'S Y', 4, 'I recently visited an Indian buffet, and it was a great experience. Since many Indian dishes are new and unfamiliar to me, I actually prefer buffets over ordering à la carte—it’s the best way to try a wide variety of flavors. For anyone who enjoys being adventurous with food, I definitely recommend going for the buffet.
+
+Farmington has quite a few Indian restaurants, but this one stood out because the flavors and spices were on the bolder side, and little bit salty.. The Tandoori Chicken and Butter Chicken were delicious, and I was pleasantly surprised to see Fish Fry on the menu—it tasted similar to catfish, though I’m not entirely sure what fish it was.
+
+To balance out the strong spices, I finished my meal with some sweet desserts: mango mousse and strawberry mousse. It was a perfect way to end the meal. Overall, a flavorful and satisfying buffet experience.', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdXXJe7exJIgRitP0fgXDgeI', 'Tom d', 5, 'Ate here for the Saturday buffet.  Had to drive 30 minutes to get there and was worth the drive.  The food was spicier than the Indian places by me and I like that it was spicier.  All the food we tried was wonderful and I will be coming back.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdXXJe7exJIgRitP0fgXDgeI', 'Sha', 4, 'Aahar has been one of our absolute favorite restaurants in Michigan for a buffet, and we’ve been driving all the way to Farmington Hills for years just to enjoy their amazing spread. They offer a wide variety in every category—whether it’s starters, main courses, gravies, or desserts. What sets them apart is the consistent quality and the fact that there’s truly something for everyone to enjoy.
+
+Their multiple options for both chicken and mutton are a big highlight, making it a delight for non-vegetarian food lovers. When we crave an elaborate buffet experience, Aahar is always our first choice. For vegetarians, they have plenty of delicious options, including regular favorites like lady’s finger fry, bitter gourd, or yam fry. For kids, they provide fruits, colorful papads that are a hit, naan, and noodles, ensuring the little ones are happy too.
+
+This week’s spread featured Amaravati Biryani and Goat Pulao, both of which were flavorful and satisfying. Other standout items included chicken pakora, Chettinad chicken, butter chicken, vada, samosa chaat, and a variety of other dishes. Their desserts were equally delightful, with strawberry mousse and mango custard stealing the show. The yogurt rice paired with avakkai pickle was a perfect and comforting finish to the meal.
+
+The restaurant has plenty of seating, making it comfortable even during busy hours. However, I highly recommend arriving early to fully enjoy the delicious spread, as the last serving ends at 2:45 PM, and they do not refill dishes after that.
+
+The location is quite popular, as it’s close to Indian stores, Paparoti, and the Chai place. This makes the area bustling, especially during weekends, and while the restaurant has a large parking lot, finding a spot can be a challenge during peak times.
+
+Overall, Aahar continues to impress with its variety, quality, and consistency. It’s undoubtedly a must-visit destination for anyone who enjoys a hearty Indian buffet!', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJdXXJe7exJIgRitP0fgXDgeI', 'S K P', 4, 'I usually avoid eating at indian places. I was visiting the Indian store nearby and decided to try takeout from this restaurant(because the smell of food coming outside this restaurant was amazing). I ordered Gobhi Manchurian and Chicken 555. Both were good. si ce then I''ve ordered this combo twice. Next time, I would be trying something else from their menu. Definitely worth trying.', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ4TOANWutJIgRvazxxJjRQRE', 'Mohd junaid', 5, 'I first tried this place a couple weeks ago, the atmosphere is so nice, the service is very friendly, and the food is amazing! I’ve tried multiple items now and consistency checks out, everything has been hot, fresh and flavorful! You can really tell that they care about what they’re putting out. Do not hesitate to give this place a try!', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ4TOANWutJIgRvazxxJjRQRE', 'Kareem Alosman', 5, 'I loved the food they served us. Especially the butter chicken. I really recommend people try this restaurant.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ4TOANWutJIgRvazxxJjRQRE', 'mahesh sampara', 1, 'Ordered chicken 65 biryani on doordash
+1) packaging was terrible. Who does styrofoam packing for biryani? That’s itself shows how cheap their quality is
+2) biryani rice was ‘sweet’. Never in my life I’ve had biryani that’s sweet. There are million ways to suppress spice in the cuisine, but adding sugar is the chepest among them.
+3)rice was definitely reheated, which I could tell from the dryness. Understandably - I’ve had diarrhea for the next consecutive days.
+-there are other places that do a 100% better job than these guys.
+-not even worth a try.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ4TOANWutJIgRvazxxJjRQRE', 'SHIVA SAI KANCHI', 3, 'Taste is good but they added to much color to it', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ4TOANWutJIgRvazxxJjRQRE', 'Andrew Hanzel', 2, 'Ordered Tandoori chicken (as they were ‘out of’ sheik kabob) with mulligatawny  soup, and garlic naan…just two other tables busy but waited at least 10 minutes before owner noticed me…everything arrived at the same time after abt 15mins…tandoori chicken was dried out and a minuscule portion but extra naan? I don’t understand how they can serve such a small winglet, drumstick and back…seriously there wasn’t 2 ounces of chicken there…no rice…just onion, pepper , and a plethora of bones…soup was pretty good  but needed more steep time…my impression wasn’t helped by observing two families eating their entire meals with their hands…sometimes using bread but mostly scooping the rice and sauce with their fingers then shaking off the residual and licking their fingers bleeach!! Also, by the way, this is no longer Noor Jahan ownership', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbSzjy2OrJIgRNGAg3aEnGag', 'Dan', 1, 'I am very disappointed with my recent experience under the new management.
+
+On Sunday (03/01/2026), the restaurant advertised a promotion stating that if you buy two biriyanis, the second one would be 50% off. I ordered two biriyanis based on that offer. Although the printed bill showed “50% off,” I was actually charged full price for both items.
+
+When I questioned this, one of the owners explained that they had added extra chicken instead of giving the discount. However, this was never mentioned in the promotion, and I was not informed about this change when ordering.
+
+This felt misleading and unprofessional. Additionally, the quality of the food was not up to expectations.
+
+I hope the management improves their transparency and food quality going forward.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbSzjy2OrJIgRNGAg3aEnGag', 'abhishek chakrala', 3, 'I had a mixed experience with the food. The taste was okay overall, but there were some disappointments. The Punugulu was not cooked inside, and the Chilli Baby Corn dish turned out to be a disaster. However, I must say that the Paneer Tikka Masala was quite good. The service was average, and I found the quantity of food to be lacking.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbSzjy2OrJIgRNGAg3aEnGag', 'Joanne Aiders', 5, 'Wow!  Very impressive menu of mostly Hyderabad style cuisine. Friendly family run casual atmosphere.  I loved the gongura chicken and masala dosa and chikoo drink.  Other favorites of my family was the shrimp biryani, palk paneer, vegetable pakora, dahi vada and the various sauces.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbSzjy2OrJIgRNGAg3aEnGag', 'Yashaswita R. Bhoir', 5, 'Ordered Egg Biryani for pickup from Atidhi, especially since it''s open near me for so long and I hadn''t tried it! The Biryani is brilliant, perfectly spiced, and each rice grain is so flavorful! Love the place - I had a very delightful experience! This place earns my highest recommendation!', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJbSzjy2OrJIgRNGAg3aEnGag', 'ApK', 1, 'I ordered vada and bhel from this place.  The Bhel which seemed to be the easiest to make was stale, soggy and had way too much turmeric than needed.   The vada was for sure at least a couple of days old.
+
+Seeing the number of one star reviews and their comments, I am surprised how a food inspector  allowed this restaurant to continue to be in business.', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'Rishita Ayachi', 5, 'We recently celebrated our sons second birthday at Basil Indian Bistro, and the entire experience was truly exceptional and everything from the food to the service was handled flawlessly.
+
+Hema, the owner, was incredibly helpful throughout the entire process. She guided us with planning, decor, and every little detail, always with a smile. The staff was extremely professional, the space was beautifully clean, and the atmosphere felt warm and welcoming.
+
+The food was absolutely delicious. The gajar ka halwa was honestly the best I have had in years, and the chole were full of authentic flavor. What touched us the most was how thoughtfully Hema went above and beyond for our sons birthday. She even made a beautiful Hot Wheels themed cake, even though they usually does not customize cakes. It turned out perfect and made the occasion extra special for us.
+
+We never felt rushed or restricted during the decor setup. Instead, Hema provided everything we needed and made sure we felt supported the whole time.
+
+Overall, Basil Indian Bistro is one of the cleanest, most well managed, and genuinely welcoming Indian restaurants we have visited. It truly delivers on the promise it makes when you walk in. Highly recommended for both dining and hosting special events!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'aishwarya raj', 1, 'Visited this place recently and the experience was quite disappointing. The glasses were not clean and even had lipstick marks on them, which was a big turn-off. The curry was too oily and the naan was unusually thick, making it heavy. The taste was just okay only if you add extra salt and ironically, there was no salt or pepper on the table, nor any napkins provided.
+
+The only positive was the ambiance, which was actually quite nice. But overall, based on the food quality and hygiene issues, I don’t think I’ll be going back again.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'Chintan Patel', 5, 'Absolutely delicious food. Probably the best Indian food my wife and I have had in Michigan. Especially their signature dishes were out of the world tasty. Also, the prices were fairly reasonable and portions were huge. Highly recommended.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'Rachel Devries', 5, 'We absolutely loved our experience at Basil Indian Bistro! The food was incredibly tasty and so filling—every bite was packed with flavor. The cocktails were just as impressive, especially with their fun and delicious sugar rims. The space itself is stunning—beautifully curated and full of light. But what truly made our visit unforgettable was the warmth and kindness of the staff. Hema, the owner, is the sweetest and most thoughtful hostess you could imagine. She made us feel so welcome, and we’re beyond excited to be having our wedding rehearsal dinner here this summer! Highly recommend!', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'Luisa Fernanda Gomez Forero', 5, 'Amazing experience at Basil Indian Bistro! We made our reservation through Fusion Table, and everything went super smoothly. The service was excellent — very attentive, friendly, and welcoming from the moment we arrived.
+
+The food was absolutely incredible, full of flavor and beautifully prepared. Everything tasted fresh and delicious, and you can really tell they care about quality. Overall, a wonderful dining experience. Highly recommend, and I’ll definitely be coming back!', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJd44gs7FTO4gR2jISQ9k3vf0', 'Kay', 5, 'Highly recommend!!
+This place has the most unique and tasty chai I’ve ever had. You can ask for samples (which I recommend) and they give you little cups with a good amount of the drink to try.
+The BBQ kati wrap was delicious. Just enough sauce so that it wasn’t leaking out and making a mess everywhere (which I love). It was flakey and super filling.
+There are two public restrooms in the back that are decent. The tables were clean and the vibes were serene. They have an area for a little photo op which is too cute.
+The staff members were all super kind. I asked for recommendations on what chai I should get and he did not let me down. The bonbon and rodeo are MOUTHWATERING and so good.
+There’s outdoor seating available during the warm months and plenty of indoor seating. This business hosts game nights as well so I recommend checking out their instagram!😊', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJd44gs7FTO4gR2jISQ9k3vf0', 'Mahima Iyer', 4, 'Nice ambience and good music. The Pistachio Kulfi Espresso was great, but the pistachio flavor was very mild. A bit misleading since it was barely noticeable. The gulab jamun cheesecake was tasty; slightly overpriced, but still good.
+
+We were seated at a table in the back. Since the staff brought our drinks to the table, we assumed the dessert would be served the same way. We ended up waiting for quite a while, only to realize it had to be picked up from the counter? A simple heads-up would have saved us some time. Overall we had a good time.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJd44gs7FTO4gR2jISQ9k3vf0', 'S K', 5, 'Absolutely loved this snack!
+The chai was perfectly brewed—rich, aromatic, and comforting.
+The cookies were soft and fresh, pairing so well with the tea.
+The Achari Paneer wrap was generously filled, making every bite satisfying. Everything tasted fresh and authentic, and it felt like a comforting, homely meal. Definitely a great spot for a quick and delicious tea-time snack. Will be coming back again!”', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJd44gs7FTO4gR2jISQ9k3vf0', 'Mihir Joshi', 3, 'I wish they had smaller size of chai tea options available. The regular size is too much for one person. I know for some people it ain''t that much but the real standard serving size is 6 oz for the actual chai.
+The samosas have too taste but only complaint I have with these is that the potatoes are almost always undercooked in the stuffing. Not sure if they are being air fried but needs more time to cook. They are crip enough though.
+The chutneys that are served with samosas also need big time change. They just don''t feel on point.
+Rest of the selection in the menu is pretty standard. Service is friendly and quick.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJd44gs7FTO4gR2jISQ9k3vf0', 'Rachel Gandhi', 5, 'I ordered chai Samosa‘s and a paneer chutney wrap from DoorDash. The food was absolutely amazing. The chai was actually like chai not the stuff that we get at coffee shops. The paneer wrap was a little small, but it was very tasty. Small but might, as some may say. I haven’t actually been to the restaurant, so I don’t know anything about the service or the atmosphere there, but it looks quite lovely based on the pictures. Really wishing this place well cause the food and the beverage that I consumed was absolutely amazing. Will definitely be a frequent Consumer of their food and beverages. They have a few different options for Chai just to specify. I had the Kadak chai, And I had them add Saffron and cinnamon powder Just for a sample to see how It is. But now venture out and try the amor chai and some of the other flavors that they have. Very excited for this place.', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwZ4NScDfJIgR_tiKePVAxw0', 'mighty mess', 5, 'So yummy! I got take out, everything is hot and fresh. Flavors are on point and portion sizes are large. Chicken tikka masala, garlic naan, and the best gulab jamun I''ve had!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwZ4NScDfJIgR_tiKePVAxw0', 'saiful islam', 5, 'We had Chili chicken & Chicken hot & Sour soup. The chili chicken was great! For the main course, we had Tandoori Biriyani, Goat bhuna & Chicken bhuna. The main course and all the food were excellent. For the food, I would say 5 stars but the atmosphere is not so great. I think it was a Chinese restaurant before and the new owner turned it into an Indian restaurant. They should have changed the interior, seating, floor, and bathroom not so clean. Rust everywhere. I am giving 5 stars just because of the Food only.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwZ4NScDfJIgR_tiKePVAxw0', 'Scott V', 5, 'Don''t let the looks of the outside fool you, this place has amazing food and that''s what you''re going for.
+
+Service was prompt and polite, made a great appetizer suggestion, and brought out boxes once they noticed we were done.
+
+I went with mild spice, next time I''ll bump it up a bit, just never know.
+
+If in the area and looking for great Indian food, give them a try.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwZ4NScDfJIgR_tiKePVAxw0', 'William Khabbaz', 5, 'Deshi Kitchen is a hidden gem! From the moment we stepped in, we were greeted warmly and treated like family. We tried their Goat biryani, and it was absolutely divine! The flavors were authentic and rich, just like home-cooked meals. The staff were attentive and friendly, ensuring we had everything we needed throughout our meal. Deshi Kitchen has definitely become our new favorite spot!', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwZ4NScDfJIgR_tiKePVAxw0', 'Farzana Zaman', 5, 'they sat us in very quickly, we were a big party as well. the mixed tandoori grill was very delicious and fresh. the shrimp here is also really good, we had about 3 different dishes. the service was very quick and nice. Definitely coming here again.', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJoZoOqTDdJIgR5nXC_D50Pyw', 'Aren Stobby', 5, 'Bold flavors & great execution on the Tandoori Chicken. The Pakora & Samosa we crispy & the sauces were familiar, but had their own unique flavors. The Vindaloo Curry had subtle qualities that ramped up while enjoying it. I ordered iy very hot & had a great spice experience. I could taste their passion for their recipes.  The quality to price is incredibly fair.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJoZoOqTDdJIgR5nXC_D50Pyw', 'Crystal Travis', 5, 'We stopped here not knowing what to expect, never heard of it. We sure are glad we did! Every thing we got on the menu was amazing. We will definitely be back if ever this way again! -Great food, good service! 5 stars  The southerners', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJoZoOqTDdJIgR5nXC_D50Pyw', 'Nick Jaksa', 5, 'Muhev, our server, was wonderful! Food was excellent! Well worth the drive. Kheer(rice pudding) was exceptional.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJoZoOqTDdJIgR5nXC_D50Pyw', 'Nuran Chowdhury', 5, 'Kashmiri Kitchen Indian Restaurant is an absolute gem in Sterling Heights. From the moment you walk in, you''re welcomed with warmth that matches the food perfectly. The flavors are rich, authentic, and clearly made with careevery dish tastes like it was prepared fresh, not rushed. Service is friendly, attentive, and genuinely kind, which makes the experience even better. If you''re looking for real Indian food with authentic taste and a welcoming atmosphere, Kashmiri Kitchen Indian Restaurant is a must-visit. Easily one of the best Indian restaurants in the area.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJoZoOqTDdJIgR5nXC_D50Pyw', 'Mike MacLean', 5, 'I don''t understand how this place is isn''t packed all day and night. This place had excellent, homemade Indian food, served by an attentive waitress who was an excellent guide to our culinary nirvana. Please just try this place; I think it''ll blow you away. This is going to be a weekly stop for me.', '4 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7VfPlbDEJIgRt_IELgOMjdk', 'Aisha M. Farooqi', 5, 'Manju is absolutely wonderful! I reached out to her to help organize a lunch for about 12 people, and she pulled everything together within 24 hours! Such a great place to enjoy a meal. Delicious food, warm atmosphere, and amazing hospitality. Highly recommend!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7VfPlbDEJIgRt_IELgOMjdk', 'Nand Kishore Gajarajan', 5, 'As someone who grew up eating authentic Indian food every day, I’m always judgemental about trying Indian restaurants in the U.S. — but New Delhi Restaurant in Sterling Heights truly surprised me in the best way.
+The flavors here genuinely reminded me of home. The butter chicken was rich and aromatic, the paneer dishes were perfectly cooked, and the samosas tasted just like the ones you''d get from a proper Halwai back in India.
+
+What impressed me even more was the warmth of the staff. They were patient, friendly, and happy to accommodate preferences like making certain dishes without onion or garlic — something many Indians look for but rarely find in U.S. restaurants. Their hospitality made the meal feel personal, especially dining in with our friends from the west coast.
+
+The atmosphere was cozy and inviting, with the kind of familiar comfort that makes you want to linger over your meal. And the portions were generous — exactly what you expect from a restaurant that takes pride in feeding people well.
+
+For anyone craving authentic, home‑style Indian food in Metro Detroit, this place is a must‑visit. I left with a full stomach and a warm heart. Highly recommended!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7VfPlbDEJIgRt_IELgOMjdk', 'Suchi Chaudhary', 5, 'Amazing Food and Warm Hospitality!
+
+I recently visited New Delhi Indian restaurant in Sterling Heights, and it was an absolutely wonderful experience. From the moment we walked in, the staff made us feel welcome with their friendly and attentive service.
+
+We started with the vegetable samosas and chicken tikka — both were fresh, flavorful, and perfectly spiced. For the main course, we ordered butter chicken, paneer tikka masala, garlic naan, and vegetable biryani. The butter chicken was rich and creamy with just the right level of sweetness, and the paneer was soft and cooked beautifully. The naan came out hot and fluffy, straight from the tandoor.
+
+The ambiance was cozy with soft Indian videos playing in the background, making it a great place for both family dinners and date nights. Portions were generous, and prices were reasonable for the quality of food.
+
+If you enjoy authentic Indian flavors with great service, I highly recommend this restaurant. We’ll definitely be coming back!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7VfPlbDEJIgRt_IELgOMjdk', 'NIDHI ANEJA', 5, 'Absolutely loved the food! The flavors were rich and authentic, and every dish tasted freshly made. The spices were perfectly balanced — not too mild, not overpowering. The ambience was warm and inviting, and the service was friendly and attentive. Definitely a great spot for yummy Indian food. Highly recommend!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7VfPlbDEJIgRt_IELgOMjdk', 'Nirav Rana', 5, 'I’ve been going to this place for over 10 years now, and it’s consistently amazing. The food is always fresh, flavorful, and perfectly spiced. Their shahi paneer is truly one of a kind — I honestly don’t think anyone else makes it like New Delhi Restaurant. The bullet garlic naan is one of my go-tos, and it never disappoints.
+
+Their carryout is always reliable, and the catering is just as great — it’s been a huge hit at parties and family events. Plus, everything is reasonably priced for the quality and portions you get. And don’t forget the green chili they include with the catering — make sure you ask for it. It’s the bomb! Definitely one of my longtime favorites!', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJi6fcB6vdJIgRXplPErYqU80', 'Brand Blouse-Moore', 2, 'Compare my photo to other kerala fish curries.  I got a measly two fish pieces the size of a chicken nugget.  The fish was dry.  The sauce was good, but overall I was hungry within a few hrs. having that been the only meal I had all day.  I assume they figure one will fill up on that side.  It looks like samosa filling but is different & not that good.  It was unique, but naan is just better.  Furthermore they did not have the green chutney pesto-looking sauce for the samosa.  $14.99 for the below dish.  Much better Indian options in the area.', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJi6fcB6vdJIgRXplPErYqU80', 'Dylan Robidoux', 5, 'Got an order of butter chicken, tiki chicken masala they were really good. It was even better the next day. The portions were good, I would recommend going. I definitely want to eat there next time.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJi6fcB6vdJIgRXplPErYqU80', 'Thulasi B M', 5, 'Ordered Onam sadhya the food was tasty and came in good portions. Service was great as well. overall a very good experience.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJi6fcB6vdJIgRXplPErYqU80', 'Sarah P', 5, 'What a wonderful little restaurant!! Food was ABSOLUTELY on point, hot and sooooo delicious! Owner was so pleasant, treated us like family. HIGHLY recommend their Gobi Manchurian, absolutely to die for! I could eat plate after plate of it. Come visit this little gem, you won’t regret it!', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJi6fcB6vdJIgRXplPErYqU80', 'Kiran Doppalapudi', 5, 'Delicious Fennel Custard. I tasted Chef’s special today and it’s mouth watering. Staff is very friendly and I admire their service.', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJUbR-ulPbJIgReFQc0UDRh8Q', 'Md. Shamannoor', 5, 'I’ve actually been to Masala Junction twice now, and both times the food really hit the spot. It’s becoming one of those reliable go to places when I’m craving authentic Indian flavors.So whenever I visit Michigan i go to that restaurant..
+
+So far I have tried
+
+Crispy Pakora: These were a great way to start. They were super crunchy on the outside and not too oily, with a nice savory flavor inside.
+
+Chilli Chicken Momo (Spicy because I prefer spicy): If you like heat, you’ll love these. They have a serious kick! The chicken was tender, and the spicy sauce they’re tossed in is bold. Definitely keep a drink nearby 😂😂
+
+Tandoori Chicken: This had a really nice smoky flavor from the grill. The meat was well marinated in spices and had that classic charred look.
+
+Soup: It was a nice, warm, and simple way to prep the stomach before all the heavy spices.It was snowing outside so I think I ordered the best thing.
+
+The Main Course
+
+Chola Bature: This was a huge highlight. The chickpeas were savory and perfectly spiced, and the fried bread was big, fluffy, and satisfying. It’s a very filling dish.
+
+Butter Chicken: The ultimate comfort food. It was very creamy and rich with that slightly sweet tomato base. It’s perfect if you aren’t in the mood for anything too spicy but still want a lot of flavor.
+
+Chicken Vindalo: This was the complete opposite of the butter chicken. It was tangy, sharp, and had a deep spice to it. If you like your curry to have some real "oomph," this is the one to get.
+
+Garlic Naan: You can’t have Indian food without naan. This was soft, buttery, and had plenty of garlic on top. It’s a must have for dipping into the Butter Chicken and Vindalo sauces.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJUbR-ulPbJIgReFQc0UDRh8Q', 'Joseph Badalamenti', 5, 'Finally an awesome Indian Restaurant in Metro Detroit - worth the drive!
+So tasty- delicious!
+Everything homemade & served with a smile on real china plates (sturdy steel utensils).
+
+Nice ambiance. I’m hooked after my first visit!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJUbR-ulPbJIgReFQc0UDRh8Q', 'Adrian Adiwidjaja', 5, 'The food was. AMAZING… sooo good, definitely my favorite indian cuisine restaurant in the area. The server running the place was super kind and helpful with my choices and boy oh boy was he right! I got the Shrimp Korma and my friends got the Butter Chicken and Chicken Tika Masala and ofc we got THREE orders of garlic naan. Definitely coming back for that lunch special next time! ALSO i forgot to take a picture cause I was so excited to dive in, but I ATE THAT UP. #BEASTED', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJUbR-ulPbJIgReFQc0UDRh8Q', 'Huss', 5, 'The food was delicious and varied, with the lamb biryani being particularly tasty. It had enough portion for two to three people. The interior design was nice, and the customer service was excellent!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJUbR-ulPbJIgReFQc0UDRh8Q', 'Joe Hakim', 5, 'Incredible experience. Generous portions, wonderfully friendly hospitality, excellent flavors. This place really impressed me. The food is truly fantastic. I especially loved the dumpling soup. The complex broth with lots of chicken and those exquisite dumplings is a perfect combination for cold weather comfort food.', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqUXjxe3FJIgRSACBDdDvrzg', 'Chris N', 5, 'Lunch Buffet is back!  Better than ever.  The moment we walked in, we were greeted graciously by the owner as he remembered us being long term patrons of this establishment since 2010. The management has changed a few times since then, but the quality of food and service hasn''t- always been exceptional!
+
+We always are excited about the ever-changing menu of the buffet. The butter chicken,samosas, garlic naan, palak paneer, chicken manchurian, biriyani dishes, mango mousse and gulab jamon here are some of our all-time favorites! Best authentic indian food in Michigan!
+
+We also love the completely new decor, so refreshing and  beautiful! We will continue to bring our family and friends here. Such a wonderful family- owned restaurant!', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqUXjxe3FJIgRSACBDdDvrzg', 'Mark S', 5, 'Today was the first day Shahi Palace opened. I went there and was immediately greater by the owner, Nate. The chief also came out to greet me as well. I got 3 carryouts from the buffet plus ordered King Prawn Jalfiezi off of the extensive menu. I should mention that the carryout menu has extensive descriptions and color pictures which makes it very easy to order even for a first timer. The buffet was loaded with delicious option for both the meat and chicken eater as well as many options for the vegetarian or vegan eaters as well. As an example, the vegetarian Biryani was a delicious complex set of flavors of cardamon, cinnamon, cilantro, and mixed vegetables (even potatoes). The tandoori chicken was seasoned perfectly and very tender plus still juicy. They have the all you can eat buffet everyday of the week and weekend as well. The naans we''re perfectly made and still chewy (not over cooked). I''m also very happy as they have extended hours since I tend to be a late eater for dinner.
+Everything was great, the place was clean and there were beautiful pictures even on the walls. I cannot say enough good things about Shahi Palace and I''m very excited to have them open so close to my home. You can''t go wrong here! And their service was like a 4 star restaurant. As a last note, even items custom ordered from the menu, came out quickly from the kitchen so very little waiting. Go here, you won''t be sorry! Mark', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqUXjxe3FJIgRSACBDdDvrzg', 'Marsol Daman', 5, 'Fantastic service and the food was really good, above average for the area. I would definitely come back. The corn soup was very tasty and the naan was cooked perfectly. They gave me complimentary rice and the mango lassi was amazing as well.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqUXjxe3FJIgRSACBDdDvrzg', 'J Matts', 5, 'My group of 4 tried Shahi Palace on a Saturday for the lunch buffet. We loved it and will be back!
+
+There are a wide variety of dishes, and they all tasted fresh - that''s tough to do for a buffet-style setup. I was partial to the palak paneer, but the tandoori chicken and biryani were tasty too. Endless naan is dangerous, and I needed to restrain myself!
+
+The service was quick and polite, making the experience pleasant as well as delicious.
+
+For those new to Indian: If you like things on the milder side, you''ll find plenty to eat here. My husband avoids heat, and he ate every different thing he tried! I like things spicier, and I spoke to the owner who mentioned the spice levels will be built to reflect the community. If you order individual dishes, they will also make the heat to your preference.
+
+Give Shahi Palace a try - I hope you''ll like it as much as we did!', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJqUXjxe3FJIgRSACBDdDvrzg', 'n k', 4, 'Average buffet spread, although chicken dishes were good, especially butter chicken and chilli chicken. Naans came out hot and fresh. Vegetarian dishes were sub par, all gravies - channa masala, paneer gravy, dal makhni need improvement. No desserts except for a rice pudding. Sunday lunch buffet price: $14.99', '3 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQVZljnTnJIgRlNHUcRZxCmk', 'bon kas-mikha', 5, 'Wow best service! Had the tandoori biryani and the buttered chicken. So good! Got the cheese Naan and the garlic Naan. App got the samosa with meat and peas. Not greasy and very tasty. They give you 3 sauces for the samosas we used the green and red for our other food and with the bread. The yellowish one is sweet good too. Definitely should try. They were so nice! Will definitely come again! My daughter had the mango Lassi drink delicious. Had the masala Chai comes with milk so good too!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQVZljnTnJIgRlNHUcRZxCmk', 'Melanie Cochrill', 5, 'We walked into an almost empty restaurant around 6:30 on a Monday evening.  We were warmly greeted and brought to a nicely set table with teak flowers and stemmed water glasses.  Throughout the evening we had outstanding service from Zaf. He answered all of our questions happily and truly seemed to care about what we thought. He made suggestions when we said this was our first time trying Indian food.  Everything he suggested was great.  For our party of 6, we ordered Butter Chicken,  Mango Goat, Lamb Passanda, and Tandoori Mixed Grill, plus a bowl of chicken soup,  three bowls of rice, a butter naan, and a garlic cheese naan. We also had a mango lassi and Chai. Every single item was excellent. We couldn''t decide which item was our favorite.  Everyone has a different favorite.  All are agreed that we must come back! We really hope that Monday nights are just slow.  It would be sad to see such a wonderful gem struggle.
+If you love Indian food,  come here! If,  like us before today, you haven''t tried Indian food,  this is the place to go! You can get customized spice levels for everything,  so no worries about food being spicy,  unless you want it that way.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQVZljnTnJIgRlNHUcRZxCmk', 'Jacques Dugger', 5, 'I drive far and wide for my job, and i must say, this is the best Indian buffet around! I just wish i lived closer, I’d be here every day! They even have goat curry on the daily lunch buffet…Unheard of! Also plenty of vegetarian option on the buffet as well. Great, friendly staff. A+ all the way!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQVZljnTnJIgRlNHUcRZxCmk', 'Omar and Joette Sanchez-Barragan', 5, 'My daughter and I went there today for our first time trying Indian food. Not only was the food amazing but the staff and owner were so nice! They were very busy went we went and a little behind but the food was well worth the wait! The portions they give are huge and we each went home with enough leftover for another meal. Can’t wait to go back!!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQVZljnTnJIgRlNHUcRZxCmk', 'Aisha Kayani', 5, 'I have been to this place multiple times for their lunch buffet that’s THE BEST in MI. But recently I arranged a party for 100 people there and I cannot explain enough how good the service was. From proactive staff to efficient refilling of food, from clean environment to fresh and yummiest food there is no match of their hospitality and service 👌👌👌', '3 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJu-RWpBvhJIgRMp6bEk-1R_U', 'Star Danyal', 5, 'My experience at Pink Garlic was absolutely incredible. I love everything about this place. The atmosphere is very cute and quaint. The service was amazing. Our waiter was a very friendly, polite, professional, and funny person. We felt extremely welcome and he answered all of our questions and gave us great recommendations. The food was to die for. I love Indian cuisine and this became my favorite Indian restaurant. Everything was delicious and the portions were amazing since we could not finish everything, so it was enough to take home and enjoy it when we were hungry. We ordered a variety of things from the menu including butter chicken, chicken tikka masala, chana masala (a chickpea curry), a vegetarian curry, vegetarian biryani, garlic naan, an appetizer whose name I did not know the name of, cheese naan, and a mango drink. Everything was so very delicious and we were left extremely full and happy. I am definitely returning and recommending this place to my friends and family.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJu-RWpBvhJIgRMp6bEk-1R_U', 'S K', 5, 'Really enjoyed the food here! The biryani tastes much better than most other places we’ve tried, and the samosa stuffing was flavorful and fresh. The host, Saif, was very welcoming and made us feel comfortable.
+Only suggestion — the mutton pieces could be a bit more tender.
+
+Overall, a great experience. Highly recommended!👌😊', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJu-RWpBvhJIgRMp6bEk-1R_U', 'Rebecca D', 5, '💯💯Amazing and outstanding first time experience.
+
+If you''re looking for an unforgettable dining experience, look no further than The Pink Garlic! From the moment we stepped inside, we were greeted with warmth and hospitality that made us feel right at home. This was our first visit, and it certainly won''t be our last!
+
+The food was nothing short of spectacular. Each dish is made to order, and the wait was absolutely worth it—everything was fresh, hot, and bursting with flavor. You can really tell that the chefs pour their hearts into every meal. We savored every bite and left wishing we could try more!
+
+What truly stood out was the attentive service. The manager was actively ensuring that every guest was happy, checking in at each table with genuine care. It’s this kind of personal touch that makes a dining experience truly special.
+
+Whether you''re a longtime lover of Indian cuisine or new to it, The Pink Garlic is a must-visit. We left a great and delicious experience and happy hearts, and we can’t wait to return as regulars. Treat yourself to a meal here—you won’t be disappointed!', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJu-RWpBvhJIgRMp6bEk-1R_U', 'Abhilash N K', 1, 'Ordered Chicken Manchurian and biryani, hoping for comfort food — ended up with a chewing workout instead. The chicken was so hard to bite that I started wondering if it had a previous life. Definitely didn’t feel fresh, unless “aged to perfection” is the new recipe.
+
+The biryani looked promising but the taste didn’t quite show up.
+Overall, not the kind of meal you expect when ordering Indian food — more like a reminder to appreciate home cooking.
+
+Sadly, won’t be ordering again.
+
+And lesson learned- google reviews are fake.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJu-RWpBvhJIgRMp6bEk-1R_U', 'John Wiegert', 4, 'Really friendly staff and convenient takeout ordering and pickup.
+
+Indian food is almost always delicious, including this, however I have had better from some other restaurants. Portions were also a bit small. The items in the picture cost $92
+
+We tried a selection of paneer and chicken dishes as well as garlic naan. The chicken curry was my favorite of the chicken dishes, but some of the other dishes were not as flavorful as I have had elsewhere.', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJN8OqrmLbJIgRH1Kadn4Trq4', 'George Bellomo', 5, 'The spice combination is something I''m not familiar with! It  says Portuguese and West African influenced but of a Turkish origin. I had the Peri Peri bowl. My partner had the Doner wrap. Such good flavor!!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJN8OqrmLbJIgRH1Kadn4Trq4', 'Wayfarer', 3, '3 stars for the nice customer service but the food didn’t taste good. Chicken too dry and tastes bland. I will give them another chance maybe for a different dish to see if they do better. A little bit more effort on food may make it to 5 stars next time.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJN8OqrmLbJIgRH1Kadn4Trq4', 'Ahms Chowdhury', 5, 'Menu Highlights
+* Flame-Grilled Chicken: The centerpiece of the menu is marinated for 24 hours and basted with signature sauces. Customers consistently describe the chicken as juicy and tender, even the white meat portions.
+* Signature Doners: The Spicy Naga Doner is a top recommendation for those with a high spice tolerance.
+* Best-Selling Sides: The Peri Fries and Grilled Corn are widely praised as "fire". The Portuguese Rice is another frequent favorite, though some diners noted the mashed potatoes can taste like a boxed variety.
+* Spice Levels: You can customize your heat from mild (Lemon & Herb, Mango & Lime) to Extra Hot.
+
+Dining Experience
+* Atmosphere: The restaurant has a clean, contemporary, and "chic" interior that is suitable for family dinners or casual lunch dates.
+* Service: Service is generally reported as friendly and attentive, though food preparation can sometimes take longer on busy Sunday afternoons.
+* Portion Sizes: Diners frequently mention that portions are large enough to be shared, with family platters offering significant value.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJN8OqrmLbJIgRH1Kadn4Trq4', 'Nafees Sabbir', 2, 'Chicken drier than the Sahara desert. You could see them putting cooked chicken on the grill for defrosting, the breast piece was inedible and the wings tasted burnt and the fries tasted cheap and store bought. Charging 3.50 for a drink is diabolical. Even airports and 5 star restaurants charge less. Overall a very bad experience, definitely wont be coming here again.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJN8OqrmLbJIgRH1Kadn4Trq4', 'Md Minhajul Amin', 5, 'Best Peri Peri chicken and doner platter in town! I absolutely loved their service and the cozy indoor atmosphere. Highly recommended!', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7fmtM2LbJIgR6s8inf7pLoU', 'Essam Suleiman', 5, 'This place offers delicious and authentic Indian and Bangladeshi cuisine with a warm atmosphere. It''s very clean, has convenient parking, and the staff are incredibly friendly. We tried the buffet, which had a wide variety of dishes, and everything was delicious and authentic. I highly recommend it for a family outing or just a regular lunch if you''re craving a true taste of India. All food is Hallal.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7fmtM2LbJIgR6s8inf7pLoU', 'Rowshon Jahan', 4, 'Cool buffet spot for lunch. They have their buffet open from around 11-2:30 PM allowing for plenty of time to get something to eat. Good variety of things to try out and they even have hot tea and dessert available. Food wasn’t spicy and probably more on the “mild” to “low spice” level. Very hospitable too.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7fmtM2LbJIgR6s8inf7pLoU', 'Sukanto Mondal', 5, 'I was very delighted with their food and enviroment. I was taking their weekend buffet. A lot meat iteam, that impressed me.  At 6 items of meats including beef brinyani, mutton rejala, butter chicken, tunduri chicken etc. I throughly enjoyed the food. They also has nice appetizer including chanan, smausa etc. Their naan was super good to me. In desert had golapnjamun, khir payes. Whats else do i need to have wonderfull meal. They also had a lot other iteam, icluding pakura, dal, vegtable, white rice etc. The resturents atmosphere was very nice, good palce for hang out with friends and family while enjoying delicious foods. They had a lot of free parking spots. This place is highly recommend if you are detroit michigan area.', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7fmtM2LbJIgR6s8inf7pLoU', 'Masum Mojumdar', 5, 'I had an amazing experience at Shaad Deshi Cuisine during their lunch buffet. Every dish was flavorful, fresh, and truly authentic — you can taste the care that goes into the cooking. The variety was excellent, and everything I tried was delicious.
+
+A special shout-out to Dina for her warm hospitality and exceptional service. She made the experience even better with her kindness and professionalism.
+
+Highly recommended — I’ll definitely be back!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ7fmtM2LbJIgR6s8inf7pLoU', 'James Basara', 2, 'I''m not an expert of Idian cuisine although we dabble with cooking Indian at home and are familiar with the spices, etc. That being said, the buffet experience was less than satisfying. The quality of the food was good but nothing that would induce a return visit. Unfortunately, we arrived at the end of the lunch rush and much of the buffet was picked over and not refilled. In addition to that insult, what was available was room temperature. The situation didn''t change much during the course of our meal and we played that game whereby web were forced to get up and run for hot items as they trickled out of the kitchen.
+
+It is understandable that the business aspect of a buffet requires careful control of waste but that should not infringe on the experience of the cash paying customer. It wasn''t like we strolled in off the street at 3pm, it wasn''t even 1 o''clock yet.
+
+The side dish selection was poor with lack of chutneys and sauces. I''ve seen much better buffets than this one.
+
+I cannot recommend this place.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJB0pBc9nPJIgRiQXEeiz-MC8', 'Georgann Formella', 5, 'This was my first time tasting Indian cuisine and I definitely fell in love with the flavors! My food was served hot, delicious and just enough spice, with a pretty big portion! The service was amazing! I’m glad to be a new customer.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJB0pBc9nPJIgRiQXEeiz-MC8', 'Florence B', 5, 'Came here with my friends for dinner and was so happy with the food and service! Food was absolutely delicious!! The chef and our waiter were so nice. Highly recommend coming here!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJB0pBc9nPJIgRiQXEeiz-MC8', 'Andrew Klein', 5, 'I circle the date on my calendar when I see Royal Oak Masala coming to my job through the GuestRaunt program. The butter chicken and chili chicken are so good that I have a hard time deciding, so I usually get both. Good value, great food, great service.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJB0pBc9nPJIgRiQXEeiz-MC8', 'Amaan Khan', 5, 'Great food and great service. Staff were very nice and courteous. Food was also delicious with a generous serving size. Will definitely come back here. A+', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJB0pBc9nPJIgRiQXEeiz-MC8', 'T S', 5, 'Everything was very delicious 🤤 food is fresh and tasty. We took medium spice level and it was just perfect. Service was nice and friendly. We got in just about when they were getting ready for a lunch break. But they kindly allowed us to order. Tables by the window were nice and comfortable. The place has additional seating area in back. Overall great experience', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ042CrufJJIgRQxGuSpxYeGg', 'C C', 5, 'Parking at the back.
+Back door entrance as well. Quick serving time. Peshawari Naan was delicious and good for kids as it is sweet. Food was Delicious n fresh. Customer service was wonderful. Food quantity was ok and normal like other places. Public washroom available.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ042CrufJJIgRQxGuSpxYeGg', 'jessica jenkins', 5, 'The staff is SO friendly and helpful. The serving portions are great, some dishes are definitely big enough to feed two people. They brought multiple complimentary items over and everything was delicious. 100% recommend!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ042CrufJJIgRQxGuSpxYeGg', 'Natalie Bernacki', 5, 'We had such a great experience here and have been meaning to come here since moving into the area over a year ago. Everything was absolutely delicious and full of flavor. We ordered the mutton tikka masala and the butter chicken, both mild. Garlic cheese Naan was super yummy too!
+
+Service was friendly and welcoming, and the whole meal felt like a treat. We’ll definitely be back.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ042CrufJJIgRQxGuSpxYeGg', 'Mark Yamin', 5, 'This restaurant is a little gem. I heard great things from other patrons so I had to try it. My lunch was served promptly, was delicious and very reasonably priced. Tanha was my waitress and she was the nicest! She also gave me informative recommendations for my next visit. Can’t wait to come back!!', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ042CrufJJIgRQxGuSpxYeGg', 'Timmy Daniels', 5, 'Tanha was our waitress here and she’s so friendly and nice and helpful, smily and cheerful… snd the food!!  - this place is soooo deliciousssss.  And the masala chai is so amazing chicken tiki Marsala', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ55FWoEHPJIgRl_T2CM2gqOw', 'Jacque Steudtel', 4, 'Interesting variety, Garlic Lamb was delicious & company was enjoyable it added to the experience.  BOGO coupon also lunch buffet.  Excellent service!  Smiling waiters a plus!', '7 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ55FWoEHPJIgRl_T2CM2gqOw', 'Rosy H', 4, 'This is my 10year old''s fave restaurant.  She likes the butter naan bread; I love the flavors. It is BYOB which is my only reason for giving 4 stars. But if you''re looking for tasty Indian food, you need to go here. They also have take-outs.', '7 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ55FWoEHPJIgRl_T2CM2gqOw', 'Chris Bekofske', 3, 'I''ve been here a few times and the experience has been very hit or miss. The first time when we ordered entrees, service was slow and non-responsive: we were there over an hour and got our drinks refilled once, then all of our food arrived at once (soups/salads, an appetizer, and entrees) leaving very little room on the small table. The entrees were good, not mind-blowing though and a bit pricey for what we got... great presentation but not a lot of food.
+
+I''ve also stopped by a few times for the lunch buffet, which is one of the better Indian buffets in the area; it has a ton of great appetizers/sides that you don''t normally find, with some great goat curry and butter chicken. They restock everything fairly quickly, and there''s usually a good selection of veg and non-veg items to choose from.
+
+I like some of the other Indian restaurants in the area better, especially since those are a bit more consistent. But I would definitely stop by here for the lunch buffet, and may give their dinner experience another chance.', '8 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ55FWoEHPJIgRl_T2CM2gqOw', 'Audrionna A.', 5, 'This place should have been packed from wall to wall. The food there is phenomenal and you get large portions for your money. Bang for your buck. Will be back.', '7 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ55FWoEHPJIgRl_T2CM2gqOw', 'Michael Hakes', 5, 'I''ve been going to Moti Mahal for over 30 years now, since it was located on Main Street. In 30 years I have been unable to find any restaurant that is better (or even equal).  I''ve had Indian food at over 50 different restaurants in the United States and Canada and am always happy to get back to Royal Oak to enjoy their uniquely flavorful dishes. I''ve ordered every item off of their menu over the years and have never been disappointed. The decor is absolutely beautiful. The entire staff is extremely friendly, fast and knowledgeable. They use the most flavorful spices that I have ever tasted and the food is always fresh and served hot. I highly recommend both the lunch buffet (because of it''s great price and variety of dishes) as well as the dinner menu.  I wish that I could give it more than 5 stars because I would. Thanks for the great food and great memories Moti Mahal!
+
+UPDATE: Joe and his Dad are back, hurray! Can''t wait to get back to Royal Oak to see them and once again feast on the BEST indian food (or any food for that matter) on this continent!! See you soon guys :)', '7 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQf2suPOJIgRMHDAtde7mgs', 'Abhay Gupta', 4, 'A Satisfying Experience at Star of India, Detroit!
+
+Rating: 4/5 stars
+
+I recently dined at Star of India in Detroit and had a pleasant experience. The moment I walked in, I was struck by the warm and inviting ambiance. The decor was elegant, and the service was attentive.
+
+The food was good, with some standout dishes and a few that didn''t quite hit the mark. The daal makhani, appetizer combo, and alu karai were all flavorful, but I felt that the taste could be improved upon. However, the bread options were excellent, with a variety of naan and roti to choose from.
+
+Overall, Star of India offers a decent range of options for Indian food lovers. While the taste may not be exceptional, the quality of the food and the ambiance make it a solid choice for a night out.
+
+Recommended for: Fans of Indian cuisine, those looking for a cozy dining experience.
+
+Will I return? Yes, I''d like to try more of their dishes and see if they refine their flavors.
+
+Rating Breakdown:
+
+- Food quality: 3.5/5
+- Service: 4/5
+- Ambiance: 4.5/5
+- Value: 4/5
+
+If you''re in the Detroit area and craving Indian food, Star of India is worth a visit. With some tweaks to their recipes, they could elevate their game and become a top-rated spot.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQf2suPOJIgRMHDAtde7mgs', 'R D Olson', 4, 'Visit was 10/25.
+
+A solid 4 and 1/2 Stars. The service was friendly and and inviting, the portions were of a reasonable size and the prices were not that far off from average.
+
+Pictured is the boneless chicken byriani, medium spicy. (Remind me next time to go lower on the spice since I''m an American and my poor body is not used to this, LOL)
+
+What made this an even better experience was the service from the two gentlemen that helped me. Both were incredibly warm, friendly and accommodating. Something so rare to see nowadays.
+
+Next time I''m back home in Michigan I look forward to coming back and trying a couple of their other dishes.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQf2suPOJIgRMHDAtde7mgs', 'Scottie Watson', 5, 'This was my first experience with Indian cuisine; I''d like to give my take on it. As you enter the dining area, you are greeted with smiling faces from the staff; the sweet yet spicy aroma already has your senses tingling. I decided to try this place based on the recommendation from a reel I watched from "Chow Down Detroit." I decided to order exactly what he ordered in the video, and I was not let down by any means. It was sweet on the first bite, and by the third a little kick joined the party. It was absolutely delicious.
+Now let me touch on the staff. Out of 5 stars I''d give them 10, out of all the restaurants that I have visited I''ve never experienced better service than I did here. They were extremely greatful that you choose their place to dine at. They were very attentive and consistent available if we needed anything. The restaurant was exceptionally clean, probably the cleanest place I''ve ever been to.
+I highly recommend you visit this restaurant and try for yourself. I will absolutely return, but I will order something different off the menu. From the pictures on the menu I would be short changing myself if I didn''t. Everything looked so good.
+1000% recommend', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQf2suPOJIgRMHDAtde7mgs', 'Mike Fritz', 5, 'I really enjoyed the quality of the chicken and depth of flavor. I was delighted to find a mango pickle in the chicken achari. I ordered “mild” and it was indeed mild.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQf2suPOJIgRMHDAtde7mgs', 'Alexandra F (Alex)', 5, 'BEST SAMOSAS EVER. LITERALLY. This has easily become one of the tastiest, and plentiful Indian restaurants I’ve ever been to. Service was immaculate and the staff was so so kind. Please take your money here. VERY GOOD PORTIONS > PRICE!!!!!', '10 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLbGeconPJIgRF3M5l2sfeRg', 'Todd Johnson', 4, 'Stopped in for a quick lunch. Orders are taken at the counter and then food is brought to the table. I would have preferred to look over a paper menu for a few minutes because I did feel slightly rushed at the counter. My server Tazul was friendly and had a good sense of urgency. I ordered Bombay Aloo which came with basmati rice. Food has a good spice to it. Flavors were good. Potatoes could''ve been cooked a smidge longer.
+
+I would order again from this place next time I''m in town.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLbGeconPJIgRF3M5l2sfeRg', 'DL FS', 5, 'We love Noorjahan and frequently visit the one in Berkley so were excited to try this new location. We ordered our usual butter chicken and saag paneer, along with chicken tikka biryani and garlic naan. Food was delicious and service was great. Our server Tazul was very friendly and made our visit enjoyable!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLbGeconPJIgRF3M5l2sfeRg', 'Erica Lee', 5, 'First time trying authentic Indian food and I love it. So spicy and fresh. The service was great and the portions were huge. I had Boba tea and it was amazing. I love that they have heat levels. You must try this place its new.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLbGeconPJIgRF3M5l2sfeRg', 'Adrienne Ramsey', 5, 'Food was very authentic and tasty, service was excellent. Tazul was our waiter and helped us have a wonderful experience. We can’t wait to come back soon!', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLbGeconPJIgRF3M5l2sfeRg', 'Jose Beltran', 5, 'Was amazing place, awesome food and services was excelente, it was mi first time trying Indian food and definitely I will comeback again!!!
+The lamb jerfous
+Tezul was very nice and make our experience so great', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBXWMX7_PJIgR7IldCaA9XnQ', 'Sandman', 5, 'Best Halal place in Royal oak!!!!
+
+I had the Detroit burger yesterday and it was divine. It had an egg, a beef patty, and a slice of steak. Everything was seasoned perfectly and I love a sunny side egg with the yolk runny, and it didn’t have the yucky uncooked whites. I got the Cajun fries and asked for extra Cajun seasoning.
+
+Today we had the beef lo mein and it was also to die for. They put some lima beans in it, which I’ve never had before, but I loved it. The beef was so soft instead of the annoying chewy steaks that are in most lo mein.
+
+Get some soy sauce packets though, because I need my noodles soaked and drenched. The butter chicken with garlic naan is yum. I like it more than the cheese naan. Not a fan of the General Tso since I don’t like sweet stuff.
+
+24 hours later and no stomach aches!
+
+They also had friends playing on one TV and videos of Turkey playing on another. I love friends!🤗', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBXWMX7_PJIgR7IldCaA9XnQ', 'Lawrence Bruce', 5, 'Don’t skip the fries. Seriously. They’re crispy and perfectly seasoned with paprika and some other subtle spices that give them this really good, slightly smoky flavor. They’re not your basic, bland side — they actually have personality. The service was great too, which always makes a difference. It’s set up as an outdoor order window with a handful of high-top tables outside, so it has that fun, street-food energy. You grab your food and just chill outside, which I love when the weather’s nice. It’s casual, quick, and hits the spot every time. Definitely one of those low-key local favorites that just gets it right.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBXWMX7_PJIgR7IldCaA9XnQ', 'Abdual l', 5, 'Everything was delicious. Jamaican beef patty was crispy and savory. Chicken lamb over rice was served with tender meat and the perfect sauce. The butter chicken was also silky smooth with tender chicken and chewy chicken. Enjoyed with my fresh basil lemonade and great fast service.', '8 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBXWMX7_PJIgR7IldCaA9XnQ', 'Milan Patel', 5, 'Detroit Eatery was an incredible experience from start to finish. We decided to try a variety of dishes so we could really get a feel for the menu, and every single item exceeded our expectations. We ordered four dishes including butter chicken, chicken 65, General Tso’s chicken, and lo mein, and it was honestly hard to pick a favorite because they were all that good.
+
+The butter chicken was rich, creamy, and full of flavor without being too heavy. The chicken was tender and cooked perfectly, and the sauce had the ideal balance of spice and smoothness. The chicken 65 had amazing flavor and a great kick to it. It was crispy on the outside, juicy on the inside, and seasoned extremely well. The General Tso’s chicken was another standout with the perfect mix of sweetness, spice, and crunch, and it did not feel overly greasy like it sometimes can at other places. The lo mein tied everything together perfectly. It was flavorful, well seasoned, and cooked just right, making it a great complement to the other dishes.
+
+What really stood out was how fresh everything tasted and how well the flavors came together across different styles of cuisine. You could tell the food was made with care and attention to detail. We ordered a lot of food and still ended up finishing the majority of it because it was just that good.
+
+If you are looking for a place that offers great variety, generous portions, and consistently amazing flavor, Detroit Eatery is the spot. Everything we tried was a hit, and we will definitely be back to try even more of the menu. Highly recommend.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJBXWMX7_PJIgR7IldCaA9XnQ', 'audrey Noel', 5, 'Great food great place. My favorite 😍  is chicken and lamb NY style rice bowl omelet so good. And now I''ve tried the butter chicken and yes it''s spicy but it''s good really good. Can''t wait to try more. Most definitely coming back.', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLfisrqQ1O4gRoSRwXqR8Fms', 'Alec Constable', 5, 'Some of the best Indian food I''ve ever had. Everything was fresh, seasoned to perfection, and absolutely delicious. We had the Samosas, Chicken Tikka and Lamb Vindaloo. This is a must try if you''re looking for authentic Indian flavors and not the watered down stuff we typically find in the states. The restaurant was cozy and the environment felt warm and inviting. Will absolutely return!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLfisrqQ1O4gRoSRwXqR8Fms', 'JetSetExplorer', 5, 'Himalayan Flames is a serious hidden gem in Dearborn. The Chili Gobi cauliflower had the perfect balance of heat and flavor with crispy peppers. The Chicken vindaloo was rich, bold, and packed with real spicy not the watered-down version you get elsewhere. And the Garlic Naan was soft, fresh, and perfect for scooping up the sauces.
+
+Great flavor, generous portions, and a cozy vibe. Definitely one of the better Indo-Nepali spots in the area. Will be back for sure.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLfisrqQ1O4gRoSRwXqR8Fms', 'Traveler353', 4, 'Had a very nice time here for a mid-week dinner. I wasn’t a huge fan of the panipuri, but that’s just a personal preference. The butter chicken, on the other hand, was out of this world. It was a very decent portion size (I only wish there was a bit more rice) and was so flavorful. The mango lassi was also fabulous. Everything was very reasonably priced.
+
+My only “complaint” is that the staff made us feel very rushed to finish and pay, despite there being several empty tables available (restaurant was half full at max). We would have liked to sit and chat, but the staff kept coming over while we were still actively eating, asking if we wanted boxes and the bill. It did feel uncomfortable and slightly affected how I felt about the whole experience. I will likely return again but may opt for takeout.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLfisrqQ1O4gRoSRwXqR8Fms', 'Nasifa Khan', 3, 'Overall, my experience was quite enjoyable. The atmosphere of the place had a cozy charm that instantly made me feel at home. I appreciated the good vibes that surrounded the restaurant, making it a pleasant spot to hang out.
+
+However, I realized I should have requested a spicier option for my dish, which was entirely my oversight. The biryani, unfortunately, didn’t meet my expectations and missed the mark for me personally. Despite that, I would still recommend this spot to others because of the overall ambiance and quality of the other offerings.', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJLfisrqQ1O4gRoSRwXqR8Fms', 'Ricardo Ware (Scientists Of Soundz)', 5, 'Nice food ok atmosphere 👌🏾 the Naple chicken chow mein is the bomb😋 with a side of Lassoni Gobi ❤️', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPSISIU41O4gRHFggQ1WUNsc', 'Larry Wright', 5, 'Nestled in the heart of Dearborn, Paradise restaurant truly lives up to its name, offering a serene escape from the hustle and bustle of daily life. As soon as you step through the doors, you are welcomed into a peaceful atmosphere that instantly sets your mind at ease. Soft lighting, tasteful decor, and calming sounds create an ambiance that encourages relaxation—perfect for unwinding after a long day or enjoying a leisurely meal with loved ones.
+
+Now, let’s talk about the food because it’s nothing short of extraordinary. I had the pleasure of indulging in the buttery richness of the butter chicken paired with fluffy rice, and it was an absolute revelation. The chicken was incredibly tender, enveloped in a sauce bursting with flavor—a harmonious blend of spices that ties back to cherished culinary traditions. Each bite tells a story, reflecting the heritage that inspires the menu at Paradise.
+
+To complement my meal, I opted for the samosas as a side dish. These delightful pockets of crisp pastry are filled with savory goodness that dances on your palate. And of course, the buttered naan bread is a must-try; it’s soft, warm, and perfect for scooping up every last bit of that delicious sauce.
+
+What made my visit even more special was the warm welcome I received from Leila, the first person you meet upon entering Paradise. Her genuine smile and infectious enthusiasm immediately make you feel at home. Leila not only excels at her job but also embodies the spirit of hospitality that makes dining here memorable. It’s clear that she takes pride in ensuring every guest feels valued and appreciated.
+
+In conclusion, Paradise restaurant isn’t just a place to eat; it’s an experience that relaxes your soul and delights your taste buds. With its tranquil atmosphere, heritage-driven dishes, and the remarkable service provided by Leila, it’s a gem that deserves to be cherished. I can''t wait to return and discover more of what this wonderful place has to offer.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPSISIU41O4gRHFggQ1WUNsc', 'Moataz Elsabbagh', 5, 'Very delicious food, and the waiters are beyond nice and amazing. I had my one year old with me and he wouldnt sit still and kept wondering off to the front desk area, and the waitress picked him up and told my wife to enjoy the food when she tried to get him back to the table. The whole kitchen crew started entertaining the little one and it was so sweet and lovely to watch how friendly everyone!! Best customer service i have ever seen 😂 Will definitely become my go to spot for indian food in detroit!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPSISIU41O4gRHFggQ1WUNsc', 'Val Z', 5, 'I learnt about this place in "Eater Best Restaurants in Detroit" list. I cannot explain how delicious the food was. Very affordable and big portions too. 100% would come back and recommend.', '4 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPSISIU41O4gRHFggQ1WUNsc', 'Kareem Elgafy', 5, 'Overall great authentic flavors and good portions. Really enjoyed the Onion-Chili-Cheese Masala Dosa, Dum Biryani and Korma/Kurma. If you want a unique drink try the Badam, they also have good chai.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPSISIU41O4gRHFggQ1WUNsc', 'Sushma', 5, 'We’ve visited this Indian restaurant multiple times and have always been satisfied with the food and service. The ambience is warm and inviting, making the dining experience even better. We tried many options from the menu, and everything has been consistently good. The chef’s specials are definitely worth trying, and the Karak tea is a must-have. A great spot for authentic Indian flavors!', '6 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8dQ85ObTJIgRowOmgdCBGAc', 'Andrew McDonnell', 5, 'Very good Indian food appears to be fairly clean no wine no beer Services non-existent it''s kind of a self serve facility tip accordingly. I would describe the food as fairly spectacular.', '2 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8dQ85ObTJIgRowOmgdCBGAc', 'Rahil Kochi Peedika', 5, 'Foods are delicious over here, we tried their chicken noodle and it was so good 8/10. The best part is they serve Tea/ chai as complimentary which I had seen only at few places. Thanks to the owner.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8dQ85ObTJIgRowOmgdCBGAc', 'Nayem 201', 4, 'I’m a regular at this restaurant since it’s conveniently located right across from Wayne State University, and I wanted to share an honest review based on multiple visits.
+
+My go-to order is always the Chicken Dum Biryani (boneless)—a friend recommended it to me, and I haven’t looked back since. Hands down, it’s the best biryani I’ve had, and no other place has matched its flavor. I’ve tried some of their other biryani options, but they didn’t quite hit the mark for me—just not my preference.
+
+The only reason I’m giving 4 stars instead of 5 is due to a recent experience with the gulab jamun. Unfortunately, it tasted old and seemed to have been reheated in used oil, which really affected the flavor. It was disappointing, especially compared to how great the biryani is.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8dQ85ObTJIgRowOmgdCBGAc', 'Shop Per', 5, 'This place was the best, very clean and amazing customer service! Their food is soo good and they are really nice. Everything was seasoned great, cooked to perfection and the portions were beyond what i expected. They also have a long list of different kinds of food that you can try. I have two small kids who run and play a lot and since they are so young they don’t like sitting for long. The lady in there didn’t care and in fact started playing with them, carrying them and put on music and started dancing along with them; something that not a lot of people do. Overall I would definitely come back to this place and try the rest of their menu options', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ8dQ85ObTJIgRowOmgdCBGAc', 'Dump Smart', 1, 'I originally planned to go to Ima for pho, but they were fully reserved. Then I saw Charminar Biryani House and was instantly drawn in, so I went in with two other people. The cashier and server were really nice, and at first everything seemed great.
+The food smelled amazing, but things went downhill once we started eating. The Chicken 65 had an extremely strong garlic taste and didn’t taste like Chicken 65 at all. The Garlic Naan felt like it had just been warmed up and was tough to chew, almost like sandpaper. The Lamb Biryani is what I was most excited for which didn’t taste like lamb, was very dry, and was hard to swallow also it lacked flavor.', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJkxXGAjE1O4gRYkRpcdz_A9g', 'Vidhya Elango', 5, '*YUMMY FOOD..GREAT SERVICE*
+
+I discovered this new Indian Cuisine today, and I couldn''t wait to try it out. The moment I stepped in, I was struck by the amazing ambiance. The food was equally impressive - the Chicken 65 and Chicken Biryani I ordered were absolutely delicious.
+
+What truly stood out, however, was the exceptional service. The staff went above and beyond to ensure we were satisfied and content throughout our meal. Although I only tried a couple of dishes, the outstanding service has already won me over.
+
+I''m eagerly looking forward to my next visit to explore more of their menu! 🌟 🌟 🌟 🌟 🌟', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJkxXGAjE1O4gRYkRpcdz_A9g', 'Mike Peterson', 5, 'Amazing discovery!  Some of the best tandoori meats I’ve ever had. Everything is fresh and very flavorful. Lincoln is extremely attentive and made sure everyone was satisfied.  I will absolutely return.', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJkxXGAjE1O4gRYkRpcdz_A9g', 'Bradley Lake', 5, 'The food is of great quality, they always are very kind and have great customer service. Lincon is a great server who is always there when I go on Saturdays. The buffet is daily from 11am-230pm and the food is always fresh, hot and a good price  of 14dollars.  I definitely reccomend this place.', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJkxXGAjE1O4gRYkRpcdz_A9g', 'saja sirat', 5, 'My personal review of Saffron Indian Cuisine – A Flavorful Escape to Elegance!
+
+If you’re searching for a restaurant that masterfully blends elegance with bold, unforgettable flavors, look no further than Saffron Indian Cuisine. From the moment you walk in, the atmosphere sets the tone—warm lighting, sophisticated decor, and a vibe that strikes the perfect balance between upscale and inviting.
+
+Now let’s talk food—because wow. Every dish at Saffron is a testament to authenticity and passion, but the garlic naan deserves its own standing ovation. It’s a full-on flavor bomb: warm, pillowy, perfectly crisped edges, and packed with rich roasted garlic and herbs. Pair it with literally anything on the menu and your taste buds will thank you.
+
+The curries? Heavenly. Each sauce is silky, aromatic, and deeply spiced without overpowering the main ingredients. Whether you’re diving into their creamy butter chicken, spicy lamb vindaloo, or fragrant vegetable biryani, the flavors are layered and luxurious. You can tell every element is crafted with care.
+
+Service is just as impressive—attentive without being overbearing, with a staff that’s happy to guide you through the menu if you’re unsure what to try (though honestly, you can’t go wrong).
+
+Saffron Indian Cuisine isn’t just a meal—it’s an experience. Elegant, soulful, and absolutely to die for. I’ll be dreaming about that garlic naan until my next visit.
+Thank you so much staff
+- saja 😉', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJkxXGAjE1O4gRYkRpcdz_A9g', 'Westwood JH', 5, 'Ordered butter chicken and Tikka masala with chicken and it was amazing!!! My kids devoured it too. The rice was soft and everything was fresh.', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeymZQaY5O4gRAEtbVGhV_jo', 'Juliana Martin', 5, 'I highly recommend the Coriander if you are curious to try Indian food for the first time. I am the only one in my family who loves Indian food, and I was able to convince my daughter to tag along to check this place out. We ordered the mango lassi, meat samosas, naan, chicken tikka masala, and chicken co-co mango. Everything tasted amazing!!!! I do want to point out that they  have chicken fingers and fries on their menu which I appreciate. I''m planning on coming back and next time I''ll bring my younger pickier children. The service was great and I loved the cheerful vibe of the restaurant. I''m already looking forward to my next visit. :)', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeymZQaY5O4gRAEtbVGhV_jo', 'Trisha Bartel', 5, 'Cannot recommend this place enough!!!! I stopped in for a to go order without calling ahead and the service was fast and friendly, thanks Ali! I had the chicken biryani (medium spice level) and it was absolutely perfect. Spices on point and so flavorful. The portions are enough for two or more meals. Can’t wait to come back and try something else.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeymZQaY5O4gRAEtbVGhV_jo', 'Kyleigh Rhodes', 5, 'Some of the best Indian food I’ve had in Michigan. I’ve tried three different entrees (saag paneer, chicken tikka, chicken biryani), the naan and the dal soup so far and all of it has been superb. Full of flavor, not too salty, and great portion sizes especially for the price. Very happy to have them in the neighborhood!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeymZQaY5O4gRAEtbVGhV_jo', 'danwallaceorg', 5, 'UPDATE: we ordered for a second time this month, and again, the food was was absolutely delicious!
+
+We ordered for carry out. The food was absolutely delicious. The prices are very good. The order was about 14 minutes later than the estimate. The dining room is very clean, but the lighting is very bright LED lighting. So the atmosphere is not exactly intimate.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJeymZQaY5O4gRAEtbVGhV_jo', 'Brianna Snodgrass', 5, 'This is by far the best restaurant I''ve been to. The food look just like the pictures on the wall and tasted even better! They had plenty of spice level options for babies like me. The owner waited on us and was super kind. Highly recommend this awesome little restaurant!', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ0ReIYzU3O4gRtj4r_NBWg4M', 'Sai Chaitanya', 1, 'I gave 1 star because the food was very disappointing. The biryani had too much oil and the taste was not good at all. I asked them to remake it, and they did with less oil, but it still didn’t taste good. I also asked for raita, and they gave sweet raita — no one eats biryani with sweet raita.
+
+I went to this restaurant mainly because it had a 4.8 rating, but my experience was nowhere close to that. Definitely not worth it.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ0ReIYzU3O4gRtj4r_NBWg4M', 'Palace', 4, 'This was experience.. point blank there is no other way to describe this restaurant. The staff are almost too kind and will truly wait on you in such an old fashioned sense. Pulling out chairs, opening menus, pouring your drinks, carting your food to the table, giving you a wet towel to clean your hands. Truly a remarkable and an absolutely memorable on too. But to top it off, the food was impeccable, a basic dish like chicken curry is done to perfection the aroma is amazing and so flavorful. Please please pleasee come here I couldn’t say it more if they paid me to say it. For anyone looking for their first Indian experience do yourself a favor and visit pink garlic their many can suit all your tastes.
+4 Stars', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ0ReIYzU3O4gRtj4r_NBWg4M', 'Areej Daghlas', 5, 'rom the moment I walked in, I knew this place was going to be something special! I love a good hole in the wall spot, and this one did not disappoint. The staff was so kind, and the food was honestly some of the best Indian I’ve had in town. The garlic cheese naan was phenomenal a must try! I ordered the chicken korma (so flavorful), and my friends got the tikka masala, biryani, and chicken tandoori everything was amazing! Super authentic flavors, generous portions, and just an all-around great experience. I’ll definitely be back (or ordering takeout soon)!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ0ReIYzU3O4gRtj4r_NBWg4M', 'Theresa “QueenB” Birdiett', 5, 'The most finest Indian Restaurant by far let’s talk about the greeting and hospitality of the staff (Bromig) walking through the door Dressed or Casual atmosphere you choose, linen on the tables. The appetizers Momos
+is not just bread its Heaven,
+Entree Half Tandoori with rice, Saag Aloo and Garlic Naan, Mango Iassi was AMAZING the flavors were authentic and the portions were more than enough. The Indian music set
+the mood.
+This is a great date night place. If you are new to Indian food Pink Garlic should be your first choice. Tell them the QueenB sent you ❤️🐝', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ0ReIYzU3O4gRtj4r_NBWg4M', 'Sabs Eltari', 5, 'Amazing Indian food and outstanding service! Everything we ordered was phenomenal. The appetizers came out fresh and flavorful, setting the tone for an incredible meal. The tandoori chicken was tender and smoky, the butter chicken was rich and creamy, and the chicken tikka masala was packed with flavor. The lamb biryani was aromatic and perfectly spiced. The naan was warm, soft, and perfect for dipping. The staff were top-tier, incredibly kind and attentive, and even surprised our table with free mango lassis. Easily one of the best Indian restaurants!', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOXMmwQCtJIgRQBkLczlI6Aw', 'Amy Ansara', 5, 'I am an Indian food snob and this place has checked off all the boxes! I Loved their lunch buffet. Absolutely delicious food, warm hospitality from the staff, they even provided naan bread at no additional charge. Not to mention it was such a reasonable price for the lunch buffet, considering so many high-quality options! I couldn’t get enough… definitely going back!', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOXMmwQCtJIgRQBkLczlI6Aw', 'Megan Murphy', 5, 'Stopped in here after going to the airport and had the best experience. Food was delicious and the man working even gave us a very SIZEABLE sample of a dish we were interested in trying but didn’t end up ordering!! So sweet❤️❤️ Will definitely be back if I am ever around the butter chicken was delicious as well as the naan, egg bonda, and chicken palak! The person working was also super helpful in understanding ingredients in each dish on the menu, as my Mom has a lot of food allergies!!', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOXMmwQCtJIgRQBkLczlI6Aw', 'Siddhesh', 5, 'Amazing food. Great customer service. We mostly had their Sount Indian food items - Maysore Masala Dosa, Idli, and Idli Wada Combo.
+Rose milk (I guess Rooafza) was also tasty.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOXMmwQCtJIgRQBkLczlI6Aw', 'Navaneetha uppu', 2, 'Went for a buffet on Sunday noon. Food is so mild no taste at all. Adding veg varieties and keeping 3 varieties of just chicken is what they call a buffet. The food is cold. They kept the buffet open without lids in front of the door in cold winter. Whenever the door opens its damn cold and food gets dry. When gave a feedback to the employees there,they mentioned many Americans visit so they don''t eat spice at all. So I understood  its only American served restaurant with Indian dishes. I Don''t think Indians specially South cannot eat that food. Salt less, tasteless.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOXMmwQCtJIgRQBkLczlI6Aw', 'Mari', 4, 'A fast-casual style Indian spot in the perfect location on Haggerty!
+
+Pros: good options, super customizable, great food, nice employees, clean interior, convenient location, rather affordable
+
+Cons: none really! It''s not the best Indian food I''ve ever had but at the more affordable price point--I like it!
+
+I will definitely be back!', '4 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJS2_G4k7TJIgRAYwCZzimzv0', 'Nusaiba Mim', 5, 'Alhamdulillah, I just have to share this about Deshi Bhoj.
+
+A big salute to the chef and the entire management team. I honestly don’t know how he makes every single item taste so amazing. I’ve tried many different dishes, and each one is even more impressive than the last.
+
+The food was fresh, perfectly cooked, and full of flavor. I usually order online and have tried many other restaurants, but Deshi Bhoj truly stands out. Everything was perfect. Even the iftar packaging was done beautifully. You can really see the care and professionalism in every detail.
+
+May Allah put barakah in your business and reward your hard work. Deshi Bhoj is truly one of the best. Highly recommended.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJS2_G4k7TJIgRAYwCZzimzv0', 'Naeema Naeema', 5, 'Tonight I ordered the Fish Combo with Hilsa from
+Deshi Bhoj  Restaurant on Conant, and honestly, the experience was unbelievable. The combo came with Hilsa fish, Aloo Bhorta, and Dal, and the quantity and quality were beyond explanation.
+
+And the taste — oh my goodness — so, so, so tasty. What shocked me the most is that this was an online DoorDash delivery order, yet all the food was fresh, truly fresh. Normally, when you order a combo, it comes with two or three curries and rice, but it’s rare to get everything fresh through delivery. I’ve tried food from so many restaurants, and this is the first time I received such fresh food in an online order.
+
+This is what you call authentic Bangladeshi taste. I can challenge anyone: if you have cravings for real Bangladeshi food, this restaurant is highly recommended. Highly, highly, highly recommended.
+
+I don’t know about their other dishes, but the one I ordered was superb — truly superb. From the very first bite, I felt like it was my responsibility to share this with the community. The quality, quantity, taste — everything was just speechless.
+
+Oh my god… too good.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJS2_G4k7TJIgRAYwCZzimzv0', 'Avik Mukherjee', 5, 'Food is delicious and the owner is gracious. I ate and packed rest of it for my dinner. Deshi combo with 1 bhorta, fried hilsha fish (2 pieces), daal and salad was awesome, I added goat curry and begun bharta to it. Rosomalai was so good. Loita bhorta and aloo bhorta was yummy to eat with daal n rice. Hilsha fry with green chili and oil in which it is fried is still making me salivate. Goat curry reminded me of homemade curry. Overall highly recommend this gem on Detroit for authentic Bangladeshi food.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJS2_G4k7TJIgRAYwCZzimzv0', 'Jessica Nathan (The White Rabbit)', 5, 'Excellent service and truly unique, distinct cuisine! Bangladeshi HOT! We tried both the dum chicken briyani and the fish briyani. Tasty tasty tasty. Shrimp curry was delicious. Service was great. Bring cash and avoid the service charge.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJS2_G4k7TJIgRAYwCZzimzv0', 'abu hasnat', 5, 'I tried it and really liked it. The rice was fluffy, the meat was tender, and the spices were perfectly balanced. I truly enjoyed the authentic Kacchi Biryani flavor.', '2 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Amaan Rizvi', 2, 'I''ve been here a few times the past few years, but honestly this year the quality has dropped. They had a buffet which was a switch from their menu. The food options were quite limited, which was a minus for me. Sadly the food was cold, and was quite mediocre. The best dish was their jalebi, but even that was ok.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Kamrun Nahar', 5, 'Today I tried jalebi and haleem at Aladdin Sweets and Cafe, and everything was so good. The jalebi was fresh and sweet, and the haleem was rich, warm, and very tasty. Thank you to the Aladdin Sweets and Cafe team for making such delicious food for us.I really enjoyed it!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Md. Al-Amin', 5, 'Premium quality Bangladeshi food in a clean and nicely maintained place. Spice level is optimum and so mouth watering. Staffs are super cordial. Provide plenty of options for Appetizers and Desserts. Can’t recommend more.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Aditi Roy', 1, 'The service is horrible, orders take an extremely long time to be prepared. The food quality is very poor. This place used to offer good-quality Bengali snacks and meals, but that’s no longer the case. On top of that, the staff is very unfriendly. Overall, a very disappointing experience.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Adam Imam', 1, 'A horrible and disrespectful place and it happened right in front of the restaurant owner who himself were standing up front in the line and he allowed doing live video for a female customers who were standing in the line on the month of Ramadan 2026 (1st Day) ???
+
+A simple blogger called himself a Journalist (Stupid) was doing video without asking a permission from female Customers. How is that possible in these days. Specially is USA …
+
+A group of young girls were in the line and they were not feeling comfortable taking their live video. No respect for a female customers..
+
+I had to raise my voice and step in and had to stopped that blogger doing video without female customer consent. That is illegal doing a live video inside any business place or restaurant without female customer consent. Again thats illegal.
+
+I never recommend this kind of place as a family environment restaurant. Do not support this kind of restaurant in our community where female has no privacy inside the restaurant.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ__9zcz3SJIgRZkNLhh82u7A', 'Rumana Begum', 1, 'Ordered a good amount of food thinking it was going to be good. Ordered Chicken 65, 65 biryani, tandoori chicken and naan! VERYYY disappointed!! Really curious to know where the chef got his license from. Everything looked like it was made from scratch and aunty from Africa made it.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ__9zcz3SJIgRZkNLhh82u7A', 'Yvette', 3, 'We ordered the chicken wrap, fusca (pani puri), and a mango lassi.  Food was good and hot. I always wanted to stop in. Service was ok. He forgot my chuntneys. Restaurant could''ve been cleaner. Counter was nasty and cups on the floor. Atmosphere were all older guys sitting around, dark and gloomy on the inside. Not kid friendly. We waited about 15 minutes for our food. The food was the star of this experience.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ__9zcz3SJIgRZkNLhh82u7A', 'Christopher Vinson', 5, 'Great little Buffett.  $7.99 for lunch!
+They treated me kindly.
+The food was fresh and hot.
+Please keep in mind India, Pakistán, and Bangladesh were all one country at one period of time in history.
+They share the sane cuisine!
+I will be back.
+Very romatic setting.', '6 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ__9zcz3SJIgRZkNLhh82u7A', 'Nayem Official', 1, 'Here’s the honest experience with Bonoful
+
+We ordered
+1 beef biryani
+1 chicken curry and 2 non
+
+This order took around 35 minutes to make it ready. Then we didn’t get water on the table with the food. Had to ask her salad guess what they didn’t give us any.
+Oh the slowest customer service I have ever seen in my life.
+
+Honestly I don’t remember you guys to dine in here.
+Honestly they don’t give a shitt about customers!!!', '4 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ__9zcz3SJIgRZkNLhh82u7A', 'Tayefur Rahman', 1, 'The worst food and service in the town. I have visited almost all local Indian food restaurants, but this experience was terrible. Just look at this beef biriyani picture!!! They put 4 large size bones on my plate. Oily and salty.. service was poor. Do nit waste your money there..', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Ibnath Nabiha', 2, 'The food was good but the walima roast wasnt looking like walima roast. The essence of a lil bit of sweetness is missing. Now the biggest complain comes with the plate shape and quantity. HOW CAN YOU CHOOSE TO HAVE A SATURN SHAPED PLATE JUST TO GIVE US LESS QUANTITY . The owner should just break them all plates and buy a new set for at least a decent amount. Finally “ premium “ name premium taste but not at all premium quantity', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Noor Anwar', 4, '6 piece gulab jaman 7 bucks.
+Abdu in canton price on cherry hill rd canton very good quick
+7 $ 14 pieces.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Sheikh in America', 5, 'I give 10/10 to Rasgullah', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Md Jahangir Alam', 4, 'This place sells Bangladeshi sweet snacks. The food quality is good.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Rahi Ahmed', 5, 'Same delicious sweets from the original location to our local neighborhood', '3 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWUNC1EzTJIgR5KGfpHRe9m0', 'ARIJA', 1, 'Very disappointed. This food truck used to be one of my favorites, and I never minded the wait because the food was always fresh and worth it. Unfortunately, my last visit changed that completely.
+
+We waited almost an hour and were served cold food that tasted old. Waiting that long only makes sense if the food is hot and freshly made. Cold l trashy food after such a long wait is unacceptable.
+
+When I called to ask why the food was cold (we only ordered two items), I was told they didn’t microwave it before giving it to us. We weren’t expecting reheated food, but we were expecting fresh, hot food, not something that felt like it came straight outta refrigerator or i would say straight outta grocery coz they didn’t even mind to chop up the meat.
+
+What’s also concerning is that negative feedback seems to get deleted instead of being addressed. As a regular customer, this experience was really disappointing. The quality has gone downhill, and I didn’t expect this from a place I used to enjoy.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWUNC1EzTJIgR5KGfpHRe9m0', 'Hussain Ahmed', 1, 'Very poor experience with the bhel puri takeout. The shells were soggy instead of crispy, which ruined the whole taste. Bhel puri is supposed to be crunchy and fresh, but this felt like it was prepared long before. It was also full of cilantro with nothing special in flavor no proper balance of chutney, spice, or texture. Waste of money and didn’t feel like restaurant quality. I wouldn’t recommend ordering bhel puri from here.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWUNC1EzTJIgR5KGfpHRe9m0', 'Karthik A', 3, 'The food I tried was okay, but it didn’t quite meet my expectations. I had a shawarma that my friend recommended, and I also decided to try the grilled chicken. While both items were decent in taste, they weren’t particularly memorable or exceptional. The flavors were there, but I felt something was missing that would have made the meal truly enjoyable.
+
+The shawarma was flavorful but a bit on the average side compared to what I’ve had elsewhere. The grilled chicken, on the other hand, was cooked well and tender, but I was expecting a bit more seasoning or a unique twist to make it stand out. Overall, the meal satisfied my hunger, but it didn’t leave a lasting impression.
+
+One positive aspect was the portion size—it was generous, and the food was served fresh and at the right temperature. The staff was friendly and accommodating, which added to the overall dining experience. However, I think the menu has potential, and I am curious to explore other items next time. There might be dishes that are more flavorful or innovative, which could offer a better representation of the restaurant’s offerings.
+
+In conclusion, while my experience this time was okay, it didn’t fully live up to the recommendation I received from my friend. I would like to try other dishes in the future to see if they are more impressive and better align with my taste preferences. There is room for improvement, but I am open to giving it another chance.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWUNC1EzTJIgR5KGfpHRe9m0', 'Orra Emran', 5, 'Bhelpuri and fuska ,these two dishes are a match made in street food heaven — simple yet full of flavor, nostalgic yet timeless.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWUNC1EzTJIgR5KGfpHRe9m0', 'Rahin Ahmed', 5, 'The food was really good! We tried the chotpoti, bhelpuri, and beef boti kabob — everything was fresh, flavorful, and well made. The kabob was tender and juicy, and the chotpoti/bhelpuri had that perfect street-style taste. Definitely recommend', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'Tom d', 5, 'Went for lunch buffet this weekend.  Really enjoyed everything I ate.   The goat was really tender and I think that was the best Chili Chicken I have ever eaten also ate a lot of butter chicken being that is my favorite Indian dish.  My wife and kids also enjoyed the food.  Staff was friendly and this is family owned and staffed.  They are new so please give them a try.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'LilFatBird', 5, 'We had the weekend buffet ($13.95 weekend, $11.95 weekday, kids under 5 eat for free), this place is perfect! Very clean, great service, affordable! There''s a super delicious dessert soup, also the bbq chicken (the red skin one) is so amazing. Not very spicy, we can withstand every dish! The pita there is just gorgeous. We also ordered a cup of mago lassi, $4, as good as we expect. Will visit again!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'Matthew Johnson', 5, 'Swagat Indian Cuisine is my new go-to for Indian food! The owner Arun is the epitome of hospitality. There daily lunch buffet is a great value and has variety of delicious dishes.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'Kevin K.', 5, 'This is a hidden gem of a restaurante.  I went tonight and had an amazing meal of Chicken Curry, Veg Biryani and Samosa Chat.  Everything was delicious and made perfectly.
+
+I like it spicy and the owner did a great job on the spice level and even brought out some extra chili''s he blistered on the stove.  Wow.  This is a must try if you are in the area and love indian food.
+
+I just wish I had taken pictures to share, but I just dug right in ...
+
+11/19 - Went back again tonight and it was as good or better than the first time. Had to have the Samosa Chat again and this time the owner recommended the Chicken Tikka Marsala.  He remembered that I like it spicy and he hit it perfectly.  Followed tje meal this time with the Carrot Halwa and it was the perfect amount of sweetness to contact the spice.
+
+Ill keep coming back when in town!!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJDbtIKQDFJIgRdic32WSYe5k', 'Jacques Dugger', 5, 'I decided to try Indian food this week and I tried Swagat and it was amazing! I went back the very next day! I’m not sure what I’m eating yet but it all tastes amazing. I’m sure I’ll be a regular here, great food!', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfWlYOzzSJIgRznPPUo14-yU', 'Andrew Busam', 3, 'I got the small Naga pizza it had a nice spice to it but, the chicken was mid and could have been seasoned a little bit more. The puzza had a nice combination of flavor with the onions and cilantro. The $16 price for a small pizza was a little high. I would definitely like to try the tandoori pizza ir the ghost.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfWlYOzzSJIgRznPPUo14-yU', 'Tahfia Islam', 1, '$18 for this is an actual joke. Some of the slices didn’t even have meat on them. Charging that price for any small size pizza should be a crime but we still decided to give it a chance. This is the disappointing we got. The taste was very mid definitely not worth $18 tho. It’s getting very hard to support small businesses in this community due to the price gouging. This was our first and last time ordering from here.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfWlYOzzSJIgRznPPUo14-yU', 'Rachel Lang', 5, 'The Seafood Pizza is SO good!
+I think about it often!
+Recommend checking out Amar Pizza if you’re into trying new and interesting pizzas! The Tandoori Pizza is excellent as well.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfWlYOzzSJIgRznPPUo14-yU', 'Abdul Redwan', 3, 'Their food is good but 12+ for this Philly sub on hotdogs is a no an their is a lot of salt.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfWlYOzzSJIgRznPPUo14-yU', 'Severin Vogt', 4, 'The ghost pepper pizza was not nearly as spicy as I had hoped. It had a good flavor and crust, but it would have been great with more sauce or chopped chilis. The pizzas are all very pricey.', '8 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEZaT4_zTJIgR1Dkbrqc6jBY', 'Ayesha Tabassum', 4, 'Very good option for Bangladeshi food. The taste is real bangali, not Indian like other Bengali restaurants. We had buffet for dinner, which has a plenty of items including 4 types vortas, chicken curry, beef curry, fish-lau curry, two types of daal, khichuri, and plain rice (sada vat). Vortas and khichuri are excellent. They also have semai as dessert. Per person is USD 9.99. I am giving 4 stars only because of the ambience of the restaurant, otherwise if you love deshi food it’s an excellent choice. The service is very good too.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEZaT4_zTJIgR1Dkbrqc6jBY', 'Aldrin', 3, 'I recently visited New Kabob House in Hamtramck and was disappointed with my experience. The food portions were small for the price, and the Thai soup was served in a tiny ramekin instead of a soup bowl. The restaurant itself was messy and unkempt, and the toilets were dirty and unhygienic, with smeared tissues on a basket. The service was also extremely slow, with the staff claiming they had to attend to large parties. Overall, I was not impressed with New Kabob House and would only give it a maximum of 3 out of 5 stars. Typical Bangla "ভাতের হোটেল" on US soil.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEZaT4_zTJIgR1Dkbrqc6jBY', 'Nayem Official', 1, 'The kabob house.
+
+One of the bad restaurants in the Hamtramck, Michigan 48212.
+
+We have arrived from 20 miles away just I dine in, late night. We have spent about $100.
+
+We ordered.
+
+Chicken biryani
+Beef biryani
+Shrimp biryani
+Beef khori
+5 mango lattice (mango shake)
+3 water bottles
+
+The experience we have received from this restaurant.
+
+1. No customer service (no greetings)
+2. Disrespectful to us
+3. Not serving water (we have to ask for it still no water)
+4. Food quality is worst ( my little cousin can cook better biryanis than this restaurant chef)
+5. Server attitude was unprofessional
+
+Honestly, I have had another bad experience in the past with cha but I let it go but this time I ain’t giving no discount. I could have write a lot more but this ain’t work it.
+
+Overall, don’t bring your family and friends in the restaurant you will surly be disappointed and wasting money and time.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEZaT4_zTJIgR1Dkbrqc6jBY', 'Atiya Afsana', 1, 'Ordered one large beef tehari based on friend''s review. We were late in picking up our order but once we got back home the food was smelling really bad. No taste, burned meat and some of the portion was smelling stinky. Cost us 120 total waste ..never cater from here. We want our money back. 😡😡', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJEZaT4_zTJIgR1Dkbrqc6jBY', 'Juthy Noor Mrittika', 4, 'We ate the buffet and chicken tikka masala. It was good but tikka masala was a little bit sweeter for me.
+The place is quite traditionally decorated.', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Ibnath Nabiha', 2, 'The food was good but the walima roast wasnt looking like walima roast. The essence of a lil bit of sweetness is missing. Now the biggest complain comes with the plate shape and quantity. HOW CAN YOU CHOOSE TO HAVE A SATURN SHAPED PLATE JUST TO GIVE US LESS QUANTITY . The owner should just break them all plates and buy a new set for at least a decent amount. Finally “ premium “ name premium taste but not at all premium quantity', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Noor Anwar', 4, '6 piece gulab jaman 7 bucks.
+Abdu in canton price on cherry hill rd canton very good quick
+7 $ 14 pieces.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Sheikh in America', 5, 'I give 10/10 to Rasgullah', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Md Jahangir Alam', 4, 'This place sells Bangladeshi sweet snacks. The food quality is good.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJM-2T_yTTJIgRqpqEXegjZ4E', 'Rahi Ahmed', 5, 'Same delicious sweets from the original location to our local neighborhood', '3 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbxzPz3SJIgRPxcz3kvDbNw', 'Tasfia Mahbub', 5, 'Food and ambiance were so great that we forgot to take photos of the rest of the items. Authentic Bangladeshi cuisine and exceptional service. Food portion is high and pricing was very reasonable. Very happy to have dined here and we wish them the best.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbxzPz3SJIgRPxcz3kvDbNw', 'Mudasser Zakaria', 5, 'Radhuni Restaurant is offering homely Bangladeshi food. It was an absolute delight!
+​We enjoyed a fantastic feast of authentic flavors, starting with Bhorta and comforting Daal. The Kala Bhuna was rich and tender, alongside the flavorful Chicken Karahi and Beef Tehari. We finished the perfect meal with traditional Deshi Cha. While we know there must be other Bangladeshi spots in the city and plan to explore more of their menu on our next visit!
+​Beyond the delicious food, the service was wonderful. A special thank you to our server, Mr. Habib, who provided attentive and great service throughout our visit. If you are in the city and seeking real comfort food, Radhuni is a must-try!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbxzPz3SJIgRPxcz3kvDbNw', 'Swapnil Moon', 3, 'Deshi Chinese? Not quite authentic Deshi, but does the job. Ordered Chicken 65 and Chicken Manchurian and they almost taste similar.
+Their puri was good and fuchka is alright.
+If you’re looking for a Bangladeshi restaurant to try out Deshi Chinese, I would look elsewhere, but Deshi items may be good, haven’t tried.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbxzPz3SJIgRPxcz3kvDbNw', 'Ray K', 5, 'Wow! This place is top notch! 🇧🇩 Food quality, taste, presentation and ambiance were very high and authentic. Service*** and cleanliness of the restaurant is quite impeccable compared to similar eateries. We had recently traveled to Bangladesh and stayed and dined at Renaissance Gulshan; went to Sultan’s Dine for Kachi Biryani, but this place has many items that tasted much better. We were so impressed and would love to back. So grateful for this restaurant and the chef; I travel the world; eat food, photograph and enjoy. This place was a delight. I am American-Bangladeshi, this is the real deal 🇧🇩: Can you believe they also have cold bottled water for us Americans 🇺🇸 - Tea and desert selection is also nice. Menu’s are beautiful!
+
+Just a pure delight, taste is better than Haath Bazar in Jackson Heights, NY; Premium Sweets, NY etc. The food taste and quality is on par or better than Premium Sweets in Toronto (Lebovic Avenue).', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJHbxzPz3SJIgRPxcz3kvDbNw', 'Sailor Ali', 5, 'We came from Virginia and stopped here to eat authentic Bangladeshi food and we were amazed. The plates were nice and glass and the place was clean. The food was fresh and spicy like we expected. Hands down this is the best restaurant in Hamtramck. This restaurant puts other restaurants like Aladin or Mouchak or bonoful on Conant street to shame.', '7 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJYdmk4lXTJIgRX_PSw06y-Ok', 'Beliya Ali', 5, 'I recently visited Midnight Temple in Eastern Market. The space is incredibly colorful and vibrant, yet still manages to feel cozy and romantic with its low lighting. It’s the perfect blend of lively and intimate. The music was on point, and they even have a DJ booth, which adds to the gastropub vibe. The only downside to the ambiance was the huge TV in the back playing movies, it felt a bit like an eyesore and distracted slightly from the otherwise beautiful aesthetic.
+
+This Indian gastropub is also great for large groups — just be sure to call ahead and RSVP so they can accommodate you comfortably.
+
+Now, the food. Everything we ordered was delicious. The butter chicken was rich and creamy, and I love that they allow you to adjust the spice level. We ordered ours spicy, and it was perfect. The chicken biryani was good. We also had the tandoori chicken, a mushroom dish, a cauliflower dish, and a goat dish; each one was well-seasoned and satisfying. You can absolutely tell the naan is freshly made, which makes such a difference.
+
+Overall, the experience was fantastic, great food, fun atmosphere, and a unique vibe in Eastern Market. I’ll definitely be back again.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJYdmk4lXTJIgRX_PSw06y-Ok', 'Sydney Wall', 5, 'My best and friend and I came up from Cleveland for a weekend in Detroit. After doing much research about different restaurants to go to, we decided to come to Midnight Temple because the vibes looked great. I made a reservation online but they didn’t even ask for my name, we just got seated immediately (you get to pick wherever you want to sit). Off the bat the vibes were great. There was moderately loud music and the lights are very colorful to match the vibe but they’re like muted colors so it’s not super in your face. For drinks, my friend got the Hidden Temple. She rates it a 7/10 and it is VERY strong. I got a mule (can’t remember the name of it but it started with a K) I give it 8/10. For appetizers, we got the Pani Puri & the chicken Tikka Rollups. We didn’t love the Pani Puri due to the dipping sauce being cold (i know it’s supposed to be that way) it just wasn’t our cup of tea. However, the tikka rollups were AMAZING!!! like seriously one of the best things i’ve ever had in my life 10/10. For dinner, I got butter chicken masala (not on the menu but i asked if they had it) it comes with rice and it was seriously some of the best butter chicken i’ve had ever. the sauce was a little bit sweeter than usual but in a good way. 10/10 for sure. My friend got the chicken biryani which she rates 8/10. It came with a yogurt sauce that was phenomenal and i actually asked for an extra side for myself. She gives it an 8 because it doesn’t come with any sauce (we know it’s not supposed to come with sauce) but it was a little bit dry without sauce. but the flavors were amazing she said and the chicken was super tender and not dry at all. (the chicken comes on a bone btw it’s 2 chicken legs). We also each got a side of naan. I got the butter naan and she got the garlic naan. I would give it 8.5/10, it was very good but mine was a little bit burnt on the bottom of some pieces. I think the garlic naan was better than the butter naan. For dessert we got the Kulfi which the flavor was vanilla. We give it a 6.5/7 out of 10. It was good but nothing amazing. Definitely give this place a try!!!!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJYdmk4lXTJIgRX_PSw06y-Ok', 'Devon Maziarz', 5, 'Visited for the first time with a good friend and was instantly impressed with the stairway up and the ambiance and atmosphere. Elton was awesome and recommended some great food options and gave some good info on the preparation. We had the chicken curry, the wings, and the vindaloo. Everything was absolutely delicious. Highly recommend', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJYdmk4lXTJIgRX_PSw06y-Ok', 'Remy Darnell', 5, 'For pre-Valentines Day celebration, my partner and I came here for dinner before catching a show at the Detroit Opera House. Our server/bartender Elton was wonderful, his recommendations were on point and suggestions for spice level helped us order a meal that we really enjoyed! We arrived a bit early, so they didn’t have everything quite up and running yet but we were patient and Elton was extremely helpful and informative, and still our appetizers came out before our entrees and everything was delicious! Drink selections great, food selections wonderful, flavors were impeccable, and we will definitely be back! Plus, we were well informed during our meal and on our way out about their special events and were invited to return for ongoing festivities. Thank you for a great experience Elton + the rest of the kitchen staff!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJYdmk4lXTJIgRX_PSw06y-Ok', 'Riccardo Alani', 5, 'Walk through the door and up the stairs, and you are immediately captured by a world of wonder that hghithens your senses. We had an amazing evening at Midnight Temple — the place is truly unique in the Detroit scene, with a perfect blend of authentic spicy food, a warm atmosphere, great lounge music, and the genuine cordiality of the staff. The owner has the charm and talent to bring all of this together.
+
+Well done!', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Amaan Rizvi', 2, 'I''ve been here a few times the past few years, but honestly this year the quality has dropped. They had a buffet which was a switch from their menu. The food options were quite limited, which was a minus for me. Sadly the food was cold, and was quite mediocre. The best dish was their jalebi, but even that was ok.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Kamrun Nahar', 5, 'Today I tried jalebi and haleem at Aladdin Sweets and Cafe, and everything was so good. The jalebi was fresh and sweet, and the haleem was rich, warm, and very tasty. Thank you to the Aladdin Sweets and Cafe team for making such delicious food for us.I really enjoyed it!', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Md. Al-Amin', 5, 'Premium quality Bangladeshi food in a clean and nicely maintained place. Spice level is optimum and so mouth watering. Staffs are super cordial. Provide plenty of options for Appetizers and Desserts. Can’t recommend more.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Aditi Roy', 1, 'The service is horrible, orders take an extremely long time to be prepared. The food quality is very poor. This place used to offer good-quality Bengali snacks and meals, but that’s no longer the case. On top of that, the staff is very unfriendly. Overall, a very disappointing experience.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJScacpj3SJIgRcOky0GfFpAQ', 'Adam Imam', 1, 'A horrible and disrespectful place and it happened right in front of the restaurant owner who himself were standing up front in the line and he allowed doing live video for a female customers who were standing in the line on the month of Ramadan 2026 (1st Day) ???
+
+A simple blogger called himself a Journalist (Stupid) was doing video without asking a permission from female Customers. How is that possible in these days. Specially is USA …
+
+A group of young girls were in the line and they were not feeling comfortable taking their live video. No respect for a female customers..
+
+I had to raise my voice and step in and had to stopped that blogger doing video without female customer consent. That is illegal doing a live video inside any business place or restaurant without female customer consent. Again thats illegal.
+
+I never recommend this kind of place as a family environment restaurant. Do not support this kind of restaurant in our community where female has no privacy inside the restaurant.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5xukbu5TO4gREwZMnI4avYI', 'Samragyee Pandey', 1, '⚠️ PRICE SCAMMERS
+They display one price when you add items to cart, then CHARGE YOU A DIFFERENT PRICE at checkout. The Maggi noodles and Cadbury chocolate showed specific prices in cart, but the actual charge? Completely inflated. Same exact products, same quantities, weights & sizes. I ordered through DoorDash.
+THIS HAS HAPPENED 3 SEPARATE TIMES across different orders on different days. Evidently, it''s their fraudulent business model. When I called to ask why, their response: "That''s how it is, and don''t buy from us if you have a problem." They have the audacity to say this!
+
+This is evidently deceptive pricing and systematic fraud. Even the strategic store naming seems to be done to attract a customer base they wouldn''t get otherwise. AVOID ⚠️
+
+#UPDATE: Their response literally CONFIRMS the scam; they admitted prices "differ between cart and checkout" then tried to justify it with "platform fees." NO business does that except them. If you''re charging more, show it UPFRONT in the cart, not at checkout. I''m not alone, another reviewer called out the exact same pricing tactic @ store. When I called them about it, their response was "That''s how it is, don''t buy from us if you have a problem." 0 accountability. Instead of fixing the issue, they responded to my review by attacking my character, victim-blaming me for ordering multiple times, threatening me about my "review pattern," Classic intimidation and gaslighting. Same products, mysteriously inflating prices. Screenshots and receipts don''t lie. Other customers deserve this warning.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5xukbu5TO4gREwZMnI4avYI', 'Brenda Vaishnav', 5, 'Clean, organized, and friendly. Many new brands and varieties I haven’t seen at other Indian grocery stores. Large frozen foods area. Small fresh foods area. Nice ice cream area too!  I found a pistachio kulfi ice cream cone that was delicious. Fun grocery store! Store expansion in progress. Nice beauty area for the ladies.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5xukbu5TO4gREwZMnI4avYI', 'Sharat Kumar', 4, 'Decent place, very clean, big store and responsive staff, almost all the items are available here from South Indian snacks to household things, groceries everything, but prices can be little bit less. Paying by cash gives a 3% discount on total.', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5xukbu5TO4gREwZMnI4avYI', 'Shah Darshan', 1, 'The sweets purchased from frozen sections all had fungi on them. I tried calling and sent email yet no response anywhere. Would rather prefer some other Indian grocery store from bunch of available options.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ5xukbu5TO4gREwZMnI4avYI', 'Avneesh Sisodia', 4, '**Nice Store**
+New Indian store in Plymouth neighborhood. Near by Joy and Ann Arbor communities.
+Items are cheaper compared to other Indian stores in Canton.
+There are lots of offer going on now. Every alternative days store is offering fresh vegetables.', '7 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQd-tQz-uPIgRnEKEr1N5Ink', 'Zach Hose', 4, 'Madras Masala is pretty solid! They have a lunch buffet on the weekends and it’s a great way to try a lot of different dishes. The lunch buffet has a wide selection and offers both vegetarian and meat options. The food itself is pretty good as well. The quality with the buffet is good, too! The service seemed a little disengaged but it could just be because it was busy. For example, we ordered a couple drinks and the didn’t come so we had to ask again for them after about 30 minutes. Not the end of the world by any means, but, just something to note. The atmosphere is fine - nothing too crazy but not bad by any means! Overall, a solid experience with some good food. The food was both South Indian and North Indian, but, it’s definitely more of a South Indian restaurant.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQd-tQz-uPIgRnEKEr1N5Ink', 'Marsha Naidoo', 4, 'First visit the weekend buffet at this location. It was easy to find parking as well as a seat at the restaurant. Good variety with a number of curries as well as biryanii and dessert. There were at least three vegetarian options.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQd-tQz-uPIgRnEKEr1N5Ink', 'Sk Raj.', 5, 'This is our first time here.  Finally we found excellent, truly authentic Indian restaurant in this area with so many varieties of foods to choose. The food was really great good amount of food for the price and well balanced taste. Excellent service from the start. No mess, no fuss and no drama. Keep up the great work.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQd-tQz-uPIgRnEKEr1N5Ink', 'Michelle Adams', 5, 'Welcoming place. Priscilla & her team is always the best. She makes the world a better place with her presence. Her Aura is so beautiful. Best spot for large gatherings. Always recommend. No disappointments.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJQd-tQz-uPIgRnEKEr1N5Ink', 'Brittany V', 5, 'The BUFFET IS BACK!!!!! Saturdays and Sundays. Cant wait to come back next week. Celebrating Indian culture today for my Goan late-father’s birthday. Thanks for having us Madras Masala', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJF34SZACvPIgR87SSP9gjOGU', 'Arunkumar B', 5, 'Wonderful discovery in MI. Delicious food although they could work on a better portion for Biriyani. Kothu parotta was also good.
+A big thanks to Priscilla who took our order and was great in understanding the needs of our group. They even gave complimentary sweet pongal for our group - delicious 😍
+
+Highly recommended for their service and taste.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJF34SZACvPIgR87SSP9gjOGU', 'Advanced Technology', 4, 'We are frequent visitors of the Packard location, even before, when it was at Menyard st, downtown. We love you guys!
+However: when ordering takeout: When we order the mild it lacks the flavor punch. But when we order medium it’s on the border of what we can handle heat-spice wise. When ordering takeout there is no other option. And putting it in the comments is hit-or-miss. Would be good if medium actually worked for flavor and a nice bit of heat, that is not on the uncomfortable edge.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJF34SZACvPIgR87SSP9gjOGU', 'Neal Bakshi', 5, 'We usually order delivery from another Indian place, but decided to do pick up and Madras Masala Express Broadway came up with great ratings. It definitely earned them!
+
+3 entrees, 2 appetizers, & 3 bread orders were ready in 15 mins and were still hot by the time they got home.
+
+I can genuinely recommend everything we got.
+- samosas (2 pieces/order)
+- samosa chaat (sleeper pick - highly recommend)
+- paneer tikka masala
+- chicken tikka masala
+- lamb saag
+- garlic naan
+- aloo pharata
+
+There’s also a 10% discount for paying cash and they even gave us two small cake pieces with our order.
+
+This place is super great, will order again.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJF34SZACvPIgR87SSP9gjOGU', 'Jordan Cleland', 5, 'We had such a great dinner here! This just became my favorite Indian joint in Ann
+Arbor. The curries were amazingly spiced and so delicious and the naan was very fluffy and warm! The owners even gave us a complimentary piece of coffee cake each, which was so kind. It’s a smaller place inside to eat but plenty of space. I’d recommend this location to anyone. Thanks Madras!', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJF34SZACvPIgR87SSP9gjOGU', 'Bill Poet', 5, 'Me and my wife had a delicious lunch from this place today, the chicken Tikka Masala was absolutely amazing. The garlic naan goes perfectly with it. The little sponge cakes that were included were a tasty surprise too!', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxxmItH-uPIgRDuvzf4RZ4BM', 'Abdulla Hida', 5, 'Came here for dinner with the wife. The food was great and the atmosphere was also great. Plenty of parking and located in a shopping plaza. The staff were friendly and kind. The dinner time was pretty busy, but there was still plenty of seating by the bar and outside area as well. We waited 5 minutes for a table.', '3 weeks ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxxmItH-uPIgRDuvzf4RZ4BM', 'Anandhi Chandran', 4, 'We were a large family group and after a wait, the host was able to accommodate us even though it was close to kitchen closing time. Service was amazing, food was great. However food is pricier than other Indian restaurants, appetizer portion sizes were small, main courses were smaller to just the right portions. Drinks were good. Overall, we had a good meal and had a good time.', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxxmItH-uPIgRDuvzf4RZ4BM', 'Cory Sakai', 5, 'Delicious Indian food for a reasonable price. Portion sizes are the correct size but may seem small to some.  We requested medium spice level and found it mild.  Friendly service. The place is popular and was packed at 5:30 on Sunday. The parking lot was fairly full.', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxxmItH-uPIgRDuvzf4RZ4BM', 'Robert Capogreco', 4, 'The food was good, don''t know enough about great tasting Indian food. Nothing was to die for. Server was slow. we were there an extra hour, because of the service. Had a good time there, with company at our table. When busy, they need more of a sense of urgency . Not a bad place', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxxmItH-uPIgRDuvzf4RZ4BM', 'Colleen Rodriguez', 5, 'My son finally likes Indian food and I’m so excited to share it with him!! We love everything and have appreciated the excellent veg options.', '3 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOSatXDyuPIgRehsG8WwjCRw', 'Madelyn Hutton', 2, 'I’ve dined in before and the meal was decent but recently ordered take out for one of their “tandoori specials” - for the price of $28.99 I was shocked when I received the very light bag. Inherently, I inspected the bag to see if everything was there and it seemed I was only missing the naan. The manager was very helpful and ran a fresh piece out to my car, but I was still dubious by the looks of the portion and weight of the bag.
+
+When I got home, my suspicions were unfortunately proved true, and for the whopping price of nearly $30, I got 4 small pieces of potato curry, maybe 1 chicken breast worth of tandoori chicken, 3 measly pieces of paneer, a small cup of rice, and a singular piece of naan.
+
+Also, I didn’t realize upon first inspection (my fault, I guess?) but they also forgot the mint chutney 🙄 what is tandoor without mint chutney!! At this rate I’m so frustrated I don’t even want to eat this food.
+
+Considering the regular half chicken tandoori is $18.99, I expected at least a half chicken’s worth. The manager did mention this was a new dish (not sure if that’s just excuse for naan mistake) but in general I was really disappointed. Don’t think I will be back.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOSatXDyuPIgRehsG8WwjCRw', 'Noa Gluskin', 5, 'The food is sooo good and the service is amazing. I go here almost weekly with my boyfriend for their amazing lunch buffet and the waiter gets us a lemonade right when he sees us now. The buffet has so many options  and the food is so flavorful and delicious!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOSatXDyuPIgRehsG8WwjCRw', 'Er. Shivam', 4, 'Overall ok!
+
+1) I asked for spicy Paneer Tikka Masala but it was mild and they provided chilly powder to add on top! This is not how it works … 💁🏻‍♂️
+2) Mango lassi was too thick to drink it via straw (not a complain really)
+3) Good that you accept payment via apple pay also.', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOSatXDyuPIgRehsG8WwjCRw', 'Heidi Trudell', 5, 'We went for the buffet and it looked beautiful… but *everything* (except the rice) had cilantro. I’m Benadryl levels of allergic. BUT staff was extremely kind and accommodating and made me a dish without any cilantro (mattar paneer, heavenly sauce). Mango lassi was delicious. Desserts, also delicious.
+
+Excellent service and atmosphere, and I really appreciated the cilantro accommodation.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJOSatXDyuPIgRehsG8WwjCRw', 'Paige Jordan', 5, 'In my line of work, choosing a lunch venue for client meetings is critical. The atmosphere must be conducive to conversation, the service discreet yet attentive, and the food impressive without being distracting. Shalimar excels on all fronts. The dining area is elegantly appointed with subtle décor, allowing for private conversation without overwhelming noise. The service team is polished—prompt with orders, knowledgeable about the menu, and intuitive about pacing. We shared the Tandoori Mixed Grill, which was an excellent, non-messy showcase dish, followed by the Dal Makhani and Basmati Rice. The flavors were sophisticated and universally appreciated, sparking positive conversation. The entire experience felt seamless and elevated, leaving a strong, professional impression. I will undoubtedly be making Shalimar my go-to for business lunches moving forward.', '3 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJP8H70z6uPIgR8T_P8lSxpvQ', 'Matthew Howell', 4, 'Very good food! This place definitely satisfied my craving for curry. One of our servers was great, but the other was pretty aloof. If not for that, this would have been a 5-star review!', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJP8H70z6uPIgR8T_P8lSxpvQ', 'Nitin Boddu', 1, 'I regularly get biryani from this place. But yesterday I bought biryani and it was terrible, it was the same since few months. I made a phone call order nd went to pick it up after 30 minutes nd they totally forgot about my order.  NO CHICKEN( hardly 3 pieces) there was just rice in it , No onions, no lemon, nd said they had no raitha. Very disappointed with the service.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJP8H70z6uPIgR8T_P8lSxpvQ', 'Sam Collie', 5, 'Impressively delicious food. Been coming here since before covid, they are an ann arbor staple. Highly recommend the chana masala especially if you are vegan or vegetarian. Also handled our allergies well.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJP8H70z6uPIgR8T_P8lSxpvQ', 'Crissy Bogan', 5, 'Family wanted some Indian food and I came across this place in Ann Arbor. It had good reviews so I figured we should give it a go. Im so glad we did because this was some of the best Indian food we’ve had in a long time. Everything we got tasted amazing. Even my husband loved everything and he always complains about something when we eat somewhere or bring it home. My husband got the shrimp vindaloo, me and my daughter got chicken tikka masala, and my son got the shrimp tikka. We also got vegetable pakodas and the cheese kulchas.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJP8H70z6uPIgR8T_P8lSxpvQ', 'MLW', 5, 'We had lunch at Namaste Flavours Arbor, and for some of us, it was our first time there. There were tons of options to pick from, and our server was super helpful in going over the menu. We tried a great mix of appetizers, drinks, and main dishes, and everything was tasty! We can totally see ourselves coming back when we''re in Ann Arbor.', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', 'Denise McMurray', 5, 'This was my first visit to Taste of India and I got to enjoy the lunch buffet. I was greeted in a timely manner which is always nice. I was gently guided to the buffet area and invited to order additional beverages. The food was absolutely delicious. There were plenty of dishes to try and I tried as many as I could. I''m glad the naan was out for the buffet and the music was nice bonus. Clean presentation. Tasty meal for a quick lunch break. Pleasant decor and good service.', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', 'B C', 5, 'Legit Indian food! Just beware that on weekends the price of buffet is $19.99, which is different than what they say on their website. Other wise good
+At least for our palates. My family loves it. The tandoori chicken is some of the best. The buffet is reasonably priced and has a great selection.', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', 'Sara V.', 5, 'Amazing first time experience! Highly recommend the chicken chili, chicken tikka masala, and the coffee—one of the best I’ve ever had!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', '_t.ba_', 4, 'They have lunch buffet all week with weekdays being the cheapest at 14.99, then saturday 15.99 and then sunday special lunch buffet being the most expensive at 17.99. I went to the saturday buffet and it was delicious! Tikka masala and gobi 65 was very good and fresh. Would recommend for the price, but the atmosphere and restaurant is a little old, and has not as much variety as I would''ve liked.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', 'Evan Stocker', 5, 'Fantastic food and servers. The kitchen helped make dishes that fit my dietary restrictions. (Gluten free, dairy free). Would recommend! Also the space is very clean and peaceful.', '3 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-WLvSFapPIgRZWKrvX2Na0w', 'Andrew McDonnell', 5, 'Very authentic Indian cuisine small restaurant the food is absolutely outstanding. The kitchen is open and you can tell it''s clean the vibrant menu full of automatic appetisers and clay oven specialities, highly recommended.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-WLvSFapPIgRZWKrvX2Na0w', 'Tamara Fry', 4, 'I went to Spice palace today and was greeted by a young lady. I asked if I could order to go and that I have never eaten here before. The restaurant was clean and there were many personnel behind the counter. I ordered the Fried Chicken roll, it was good and spicy which I like. The Samosa Chat I ordered with no raw onion, it looked good, but I could not eat it as it was topped with raw onion. I also ordered the Dal soup which was hot and very flavorful, I also wanted to try the Gajar Halwa a carrot dish sweetened and cooked with milk, sugar and raisins. The Halwa had a weird texture as the carrot was pulverized and was not grated, then heated in the microwave, it was not enjoyable. I also tried a lemon lime beverage from India which I could not drink till I washed the top of the can. The beverage was cold and had a mild lemon lime flavor. The total bill $34.46, unfortunately the star of the meal Samosa Chat I could not eat. I might give them another try but I will open the pkg and check the food before I leave the parking lot.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-WLvSFapPIgRZWKrvX2Na0w', 'Sarah Cleghorn', 5, 'I live in Lake Orion but drive to Ypsi for work.  This is my second time here. After our first visit I fell in love with the tikki masala and the garlic naan bread. I ordered again today. Incredibly flavorful and delicious!  I don’t know if I will ever be able order a different dish it is that addictive!  The lady he works there is the same as my last visit. She is so polite and has a warm smile. I will visit her every time I can. I asked her to tell the cook how great everything was! I very much appreciate the polite service and warm smiles. Adding a perfect compliment to the chef!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-WLvSFapPIgRZWKrvX2Na0w', 'Madison Andra', 5, 'Had a great first experience coming in for dinner tonight. I had been craving some aloo tikki chat and it was delicious! Garlic naan was also great! Would recommend and come again.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ-WLvSFapPIgRZWKrvX2Na0w', 'Harmony Angel', 5, 'Ms. Elsira was so kind and took amazing care of us today! As a party of two, we were immediately seated, and we spent around $38 (not including our tip) on veggie samosas, an order of naan, and two entrees (butter chicken and bagare baingan). While my partner had hoped for a few extra pieces of chicken, we were overall very satisfied with the meal and felt like the portions were definitely still substantial, and everything really tasted like was made with all high quality and fresh ingredients. My favorite part was how easy it was to figure out which menu items were dairy free as someone with chronic GI issues, and I ended up loving my order, which was the bagare baingan.', '7 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJaxIyOCKwPIgRS9iWJt1iHp4', 'Clayton Boesen', 5, 'As you enter, the first impression is that it is a rather snug restaurant with a great aroma.  The bartender directs you to your table.  Our dinners each had medium spice.  This allowed the flavor of the dish come through while still enjoying a little heat.  When trying both our dishes, I was impressed by the difference in flavors of spiciness even though they were both medium heat.  The Sherpa chai had a great balance of flavor between milkiness the the chai soices.  Overall, we were certainly impressed by our meals and prompt service.  Looking forward to returning.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJaxIyOCKwPIgRS9iWJt1iHp4', 'Tejas Dakve', 5, 'One of the best restaurants for Nepali/Himalayan food!
+I’ve been here a few times, and every visit the food has been consistently delicious.
+
+Their momos are a must-try, and the chow mein noodles are excellent as well.
+I also recommend the Chicken Polayko, it’s like an upgraded version of Indian Chicken Tandoori.
+
+The biryani is decent, but the other dishes truly stand out.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJaxIyOCKwPIgRS9iWJt1iHp4', 'Bryan Masino', 5, 'This place is an absolute gem of A2.
+The service is fast, kind, personable. The atmosphere is good for a date OR a group dinner. But the food is OUTSTANDING. The momos are unreal, the naan is on point, and the currys all hit just like they should. 10/10, will be back soon', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJaxIyOCKwPIgRS9iWJt1iHp4', 'Ray Havermahl (Testy1)', 5, 'I feel like I''m giving away a secret. Most weeks I stop next door at music go round but today I was intrigued by the aroma coming from the restaurant next door.
+
+Excellent fresh food unlike anything I ever had. Many unique  flavors exploded on my tongue. Service was excellent, great atmosphere and prices were reasonable.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJaxIyOCKwPIgRS9iWJt1iHp4', 'Bonnie Hartsuff', 5, 'The outside of Everest Sherpa does not do it justice. Inside is a cozy space that transports you to Nepal w the decorations and the aroma of the great food. I ordered an appetizer called momos having no idea what they were. These were amazing w/ pieces of dough covered veggies, rice and great spices w/ spicy dipping sauce. I ended up getting a rice and chicken dish as the main entree. The rice was fluffy and perfectly cooked. The chicken had tomato sauce which I had not expected. It was still good but I’ll get something else next time.', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', 'Denise McMurray', 5, 'This was my first visit to Taste of India and I got to enjoy the lunch buffet. I was greeted in a timely manner which is always nice. I was gently guided to the buffet area and invited to order additional beverages. The food was absolutely delicious. There were plenty of dishes to try and I tried as many as I could. I''m glad the naan was out for the buffet and the music was nice bonus. Clean presentation. Tasty meal for a quick lunch break. Pleasant decor and good service.', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', 'B C', 5, 'Legit Indian food! Just beware that on weekends the price of buffet is $19.99, which is different than what they say on their website. Other wise good
+At least for our palates. My family loves it. The tandoori chicken is some of the best. The buffet is reasonably priced and has a great selection.', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', 'Sara V.', 5, 'Amazing first time experience! Highly recommend the chicken chili, chicken tikka masala, and the coffee—one of the best I’ve ever had!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', '_t.ba_', 4, 'They have lunch buffet all week with weekdays being the cheapest at 14.99, then saturday 15.99 and then sunday special lunch buffet being the most expensive at 17.99. I went to the saturday buffet and it was delicious! Tikka masala and gobi 65 was very good and fresh. Would recommend for the price, but the atmosphere and restaurant is a little old, and has not as much variety as I would''ve liked.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJWRQCM9ivPIgR9eqQsqA1JQM', 'Evan Stocker', 5, 'Fantastic food and servers. The kitchen helped make dishes that fit my dietary restrictions. (Gluten free, dairy free). Would recommend! Also the space is very clean and peaceful.', '3 weeks ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ_dxwELqvPIgR_bl4rfuAIq4', 'Porter', 5, 'When you want an Indian restaurant you want this one. The food was so good I wish I had more stomachs for all of it. I recommend the chicken tikka masala. The food was out fast and warm. We did stop in on kind of a bad day because they were expanding and doing work in the other half of the restaurant, but it was looking good! The music was Taylor swift, but they changed it, thank goodness. The staff was attentive, and nice, and we go a very good lunch!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ_dxwELqvPIgR_bl4rfuAIq4', 'Nathan S', 5, 'The food is so hearty.  Everything tasted exquisite.  We loved the weekend buffet that allowed us to sample everything, many dishes for the first time.  I''m excited this was more southern Indian food, which I don''t normally have access to.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ_dxwELqvPIgR_bl4rfuAIq4', 'shreyas kulkarni', 5, 'Nice Indian restaurant. They have a lot of good food options. They recently underwent a renovation and expanded their seating space. I usually get take out and sometimes it could be a little bit slow but overall consistent taste. They also have lunch buffet on select days with good options. Overall the staff is welcoming and willing to help.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ_dxwELqvPIgR_bl4rfuAIq4', 'Lihua Shu', 1, 'Absolutely ridiculous food safety standards at this restaurant. I ordered a meal from this restaurant, and midway through I bite down on something hard only to find a SCREW in my food. This is absolutely horrifying. This place needs to be shut down pending a full food and safety review. Many people have prior left reviews citing concerns of food safety, and I totally understand why now. This is insane. Do NOT eat here.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ_dxwELqvPIgR_bl4rfuAIq4', 'Vivian Salsitz', 4, 'The food''s amazing (try the mirchi bajji!), but the interior is small and needs some love and care. We were sitting in a booth which was cramped and the back kept moving every time I (or the person behind me) moved. The same person was hosting and serving and sometimes that got in the way of great service, but he was lovely nonetheless.
+
+I highly recommend ordering takeout from here - the food''s wonderful! Keep in mind many of the meat dishes are bone-in.', '8 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRwd_mz6uPIgRgP6vCT_-ctw', 'Brandon M', 5, 'This place is truly engrained in the soul of Ann Arbor—that is before Ann Arbor became so corporate. If you are looking for soul, an experience with texture, and with philosophy and meaning, you will find good refuge here.
+
+Even more, the food and people are superb. We have been visit for years with our family. Our kids grew up knowing that with great passion and works often has great people.
+
+You can find great cuisine that is vegetarian or fully plant based. Enjoy a buffet style meal where you pay by the ounce. Enjoy a snack or a feast at this must stop in downtown Ann Arbor.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRwd_mz6uPIgRgP6vCT_-ctw', 'Katherine R', 3, 'I''ve been going here for years and it has been the same. It is a literal hole in the wall. buffet only sold by weight and best for takeout. It is a very very old building. Nothing wasted on aesthetics.
+Still the food is pretty good and you are not overwhelmed by choices. There are about about eight things on the buffet. You can get a few add-ons like none or Lassi.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRwd_mz6uPIgRgP6vCT_-ctw', 'Angel W', 5, 'Located in an old building with lots of charm and character. The owner is very nice. I was so excited to see all the vegan options. I really appreciate that the vegan options were labeled clearly and it''s eco-friendly. I love the collection of vegan desserts. I enjoyed the vegan mango lassi. The buffet is mostly vegan. From the buffet items, I recommend the sag dal and channa masala.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRwd_mz6uPIgRgP6vCT_-ctw', 'Lorenzo Robb', 5, 'Every single item on the menu is fantastic. The quality of the food by itself would merit Earthen Jar 5 stars, but the genuine kindness of the staff makes it a one of a kind establishment. Each meal is prepared with care, and are mostly vegan so it’s an all around great place. Highly recommend!', '4 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJRwd_mz6uPIgRgP6vCT_-ctw', 'Chloe F', 5, 'I’ve been coming here my entire life and I can’t say enough good things about Earthen Jar. They are always warm and welcoming here! Obviously the food is amazing. Pictured below is my delicious plate and a soy mango lassi on the right. They have my favorite Channa Masala of any restaurant and their Mattar Paneer is also amazing - two of my favorite items but you can’t go wrong with anything else. Love it :)', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxeTZUiasPIgRv7TJvB2b9aI', 'Mik', 4, 'Great take-out food! The Kati Rolls are a favorite at our office and our go-to lunch choice. The service could be improved, as there are occasional delays or issues with online orders due to staff shortages. I recommend taking advantage of the Happy Hour for the best value.', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxeTZUiasPIgRv7TJvB2b9aI', 'Matthew McRitchie', 5, 'Been going here for years, always very tasty food, nice people. Interior is a bit spartan, but that''s fine.
+
+Lately their website doesn''t take orders and their phone number seems disconnected. Very frustrating. Drove there today to order in person, sign on door they''re closed. Then update your hours online, your communication sucks.
+
+I just expect better out of businesses I choose to purchase from.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxeTZUiasPIgRv7TJvB2b9aI', 'Kristina Turner', 5, 'My sister and I used to live in Ypsilanti, and went there all the time. We now have been in Europe for a few years, and still talk about HOW AMAZING THE FOOD WAS!
+The butter chicken Kati roll was/is life! As well as the Chicken and rice. Gosh we miss you!', '5 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxeTZUiasPIgRv7TJvB2b9aI', 'Matthew Sikarskie', 5, 'It’s ridiculously good food and servings are enormous.
+
+The poutine is such a great idea and their sauces are freaking delicious (if very rich). An order weighs around 2 pounds, so plan on leftovers. Or don’t. They heat over well though, especially if you air fry them. If you get them spicy, get some raita. Actually just get some raita regardless. It’s very fresh tasting and not as salty as you’ll find at most places.
+
+The samosa chaat is worth the extra wait and maybe the best we’ve ever had. The samosa on their own have a bit too much caraway for my liking but mixed into the chickpeas, spices and sauces the balance is perfect. And too much caraway or no, at $2 each the samosa are a steal compared to most places these days. Which is true of all of their prices really.
+
+Yeah they sell out of stuff regularly, keep odd hours based on employee availability, and some of their menu items take a while to make, but seriously. It’s so good. We’ve been to most Indian restaurants in the state and this place wins in value for money hands down, and the deliciousness rivals places that cost three times as much.', '8 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJxeTZUiasPIgRv7TJvB2b9aI', 'Sukhada Sathaye', 3, 'We have been regulars at Curry on for a while now. We love the egg masala, chicken tikka and chole roll, but our experience hasn’t been great the last couple of months. The quality of egg masala roll has degraded. The roll does not have any stuffing in it. I cannot taste the boiled eggs / masala in the rolls.', 'a year ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJyYbquW2uPIgRrg_cAaDR9gs', 'Lindsey Johnson', 4, 'Overall the food is very delicious,  I got butter chicken medium spice and garlic naan. I will definitely come back for more ! It''s nothing fancy in terms of looks but the food quality and customer service makes up forit! I definitely recommend trying this place out!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJyYbquW2uPIgRrg_cAaDR9gs', 'Raza Music', 5, 'I am visiting Michigan and somehow food this small restaurant. I enjoy Inidian and Pakistani food. Just the right food, very tasty. I have been eating here for a few months. Thought I would give it a review before I go back to California. Today, I am having Channa Masala and Garlic Naan. Love it! Normally, I eat chicken masala and whole wheat roti. The owner cooks, so if you have any food sensitivity, just ask.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJyYbquW2uPIgRrg_cAaDR9gs', 'Ryan R', 4, 'At India Cafe your delicious grub will be prepared by a older slightly eccentric Indian dude.  He will take care of you and maybe tell you a story too.  Had the butter chicken and garlic naan bread.  Really good stop for some Indian food.  Recommend checking it out', '6 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJyYbquW2uPIgRrg_cAaDR9gs', 'Dave Ginbey', 5, 'I just had the pleasure of eating at India cafe this evening. Upon entering the establishment I was greeted by shah, he took a moment to welcome me to his restaurant and asked me how my day was going.
+I took a moment to look over the menu and chose to order the lamb korma with garlic nan.
+The meal arrived in a very timely manner and honestly was some of the best food I have eaten in a while.
+Hats off to shah. His food is amazing, I also got to sit and chat with him after my meal and really enjoyed his stories and take on the world!
+I will be going back again soon!', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJyYbquW2uPIgRrg_cAaDR9gs', 'C Owens', 5, 'People tend to fall into two main groups when choosing a restaurant: those who prioritize aesthetics and those who prioritize food. If you''re in the first group, this may not be the best place for you. If you''re in the second group, you''ll likely love it — the food and service are outstanding.
+
+It''s also worth noting that all restaurants in the area undergo at least one inspection per year — a reassurance for those who might equate a lack of décor with a lack of cleanliness', '8 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ2Z6s_wm3PIgRILR39DhMkx0', 'Neha Bhomia', 5, 'Good food, good service, and fairly priced. I loved everything about this place. Their back story is pretty cool too and the chef’s experience shows. Going to think about this food for a while and definitely coming back for the momos! We ate so quick I barely got pictures. Highly recommend ALL their apps. They have traditional Nepali dishes and that’s such a rarity in this area. We all left very happy and very full!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ2Z6s_wm3PIgRILR39DhMkx0', 'Michael Conser', 5, 'My wife and I had dinner this Friday last, and while it wasn''t our first visit a revue was overdue. The staff is always friendly and attentive, the atmosphere while simple is comfortable and inviting. Food... what can I say; AMAZING! I highly recommend the Saag & Makhani (pictured in this review), pick your protein (optional) as well as spice level, pair with a mango lassi to drink, and be prepared to enjoy. We always enjoy our experience here and will be back soon. Thank you Base camp!', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ2Z6s_wm3PIgRILR39DhMkx0', 'Michelle Gibbs', 5, 'Very unique restaurant!  We love trying different foods from different places around the world and this wasn’t a disappointment.
+
+We were there at 6 pm on a Friday night. It wasn’t busy but there was a steady stream of carry out orders. The restaurant isn’t fancy but was very clean and comfortable (meaning the AC wasn’t blasting so cold you needed a parka!).
+
+The menu isn’t huge but I would rather have a small selection of really good dishes than a huge menu of meh stuff. Our dinners were excellent!  We both had chicken dishes. We ordered mild spice level which truly was VERY mild. I could have easily stepped that up to medium.
+
+Overall - great food and service. We will go back!', '7 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ2Z6s_wm3PIgRILR39DhMkx0', 'Katie Leavell', 5, 'Food was AMAZING. One of my new favorite spots in Ann Arbor. Service was super fast and friendly. This was our first time trying Himalayan cuisine and we loved everything we tried.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ2Z6s_wm3PIgRILR39DhMkx0', 'Risen Runner', 5, 'After a full day of hiking 🥾⛰️, we wandered in absolutely starving… and left with happy bellies plus boxes of leftovers to enjoy later. Portions here are massive 🤩 — generous enough to feed the table and then some!
+
+We shared:
+🍛 2 chicken biryanis (aromatic and full of flavor)
+🥡 1 chicken lo mein (comfort food perfection)
+🥟 vegetable dumplings, 🫓 garlic naan, and warm Tibetan bread for starters
+🍹 Drinks all around — Arnold Palmer, refreshing ginger mint tea, and cozy Nepali chiya tea
+
+Every bite felt like it was made with love 💕. The service was lightning-fast ⚡ and so friendly, with a warm family connection to the Tibetan region that shines through in the food and hospitality.
+
+For three people, three entrées, appetizers, breads, and drinks, the bill (tip included) came to about $80 — incredible value for the feast we enjoyed.
+
+If you’re hungry, adventurous, or just want a place that makes you feel welcome the moment you walk in, this spot is a gem 💎. Can’t wait to come back! 🙌', '7 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'Rishita Ayachi', 5, 'We recently celebrated our sons second birthday at Basil Indian Bistro, and the entire experience was truly exceptional and everything from the food to the service was handled flawlessly.
+
+Hema, the owner, was incredibly helpful throughout the entire process. She guided us with planning, decor, and every little detail, always with a smile. The staff was extremely professional, the space was beautifully clean, and the atmosphere felt warm and welcoming.
+
+The food was absolutely delicious. The gajar ka halwa was honestly the best I have had in years, and the chole were full of authentic flavor. What touched us the most was how thoughtfully Hema went above and beyond for our sons birthday. She even made a beautiful Hot Wheels themed cake, even though they usually does not customize cakes. It turned out perfect and made the occasion extra special for us.
+
+We never felt rushed or restricted during the decor setup. Instead, Hema provided everything we needed and made sure we felt supported the whole time.
+
+Overall, Basil Indian Bistro is one of the cleanest, most well managed, and genuinely welcoming Indian restaurants we have visited. It truly delivers on the promise it makes when you walk in. Highly recommended for both dining and hosting special events!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'aishwarya raj', 1, 'Visited this place recently and the experience was quite disappointing. The glasses were not clean and even had lipstick marks on them, which was a big turn-off. The curry was too oily and the naan was unusually thick, making it heavy. The taste was just okay only if you add extra salt and ironically, there was no salt or pepper on the table, nor any napkins provided.
+
+The only positive was the ambiance, which was actually quite nice. But overall, based on the food quality and hygiene issues, I don’t think I’ll be going back again.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'Chintan Patel', 5, 'Absolutely delicious food. Probably the best Indian food my wife and I have had in Michigan. Especially their signature dishes were out of the world tasty. Also, the prices were fairly reasonable and portions were huge. Highly recommended.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'Rachel Devries', 5, 'We absolutely loved our experience at Basil Indian Bistro! The food was incredibly tasty and so filling—every bite was packed with flavor. The cocktails were just as impressive, especially with their fun and delicious sugar rims. The space itself is stunning—beautifully curated and full of light. But what truly made our visit unforgettable was the warmth and kindness of the staff. Hema, the owner, is the sweetest and most thoughtful hostess you could imagine. She made us feel so welcome, and we’re beyond excited to be having our wedding rehearsal dinner here this summer! Highly recommend!', '11 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJzQmtViG7JIgRd5nfTqwfn0s', 'Luisa Fernanda Gomez Forero', 5, 'Amazing experience at Basil Indian Bistro! We made our reservation through Fusion Table, and everything went super smoothly. The service was excellent — very attentive, friendly, and welcoming from the moment we arrived.
+
+The food was absolutely incredible, full of flavor and beautifully prepared. Everything tasted fresh and delicious, and you can really tell they care about quality. Overall, a wonderful dining experience. Highly recommend, and I’ll definitely be coming back!', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPZUQl__XJIgRswxnafplqNI', 'H&A limited', 5, 'This place is a great establishment the food is well priced and delicious. Only one time they accidentally gave me vegetarian Samosa instead of lamb and after I informed them on the phone not only did they give it to me for free the next time I ordered there, but gave me extra. I will definitely be coming back again.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPZUQl__XJIgRswxnafplqNI', 'Simon Nejem', 1, 'Service was friendly! Food is not tasty. The curry is mostly oil and has a foamy texture. I couldn’t eat it. I ordered and paid for a garlic naan and they gave me a plain naan. I don’t recommend this place and won’t come back.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPZUQl__XJIgRswxnafplqNI', 'Chris Budrow', 1, 'Food was clearly old.. chicken drier than anything I’ve ever had. Onion that would have been good fresh, and not hours old. Even the Nan was subpar.. the rice wasn’t even mixed..
+
+Staff didn’t even acknowledge me even after looking at me, had to grab my order myself. 8pm and all the tvs were off, even the menu.
+
+Saw a gentleman walk out without anything, should have been my sign. Waste of 30 dollars for 3 things..', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPZUQl__XJIgRswxnafplqNI', 'Renee', 1, 'What has happened to this place?????
+Over the past year the food quality and consistency has been on a rapid decline.
+The chicken has been so dry and tough that was inedible. Kept going back because this used to be a weekly go to for us but the visits have been more bad than good lately. Not many Indian restaurants nearby, but this was our favorite because they have some dishes that others do not. Very unfortunate and hope they turn it back around.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJPZUQl__XJIgRswxnafplqNI', 'Severin Vogt', 5, 'I stopped by here to try out some Indian food. I got some lamb jalfrezi, naan bread, and mango lassi. The lamb dish was spicy, tasty, and flavorful. The rice went well with it. The naan was really good and the yogurt was sweet and helped neutralize the spice. Will definitely go here again!', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ42x3VrSwJIgRkyLwApN75ow', 'Najmul Haque', 4, 'It''s a Pakistani takeout restaurant inside the grocery shop, no arrangement to dine. Limited items. Chicken Biriyani @$15 was very tasty. Spice level, meat and flavor were perfect and portion was good for two people.', '6 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ42x3VrSwJIgRkyLwApN75ow', 'Stu Shy', 5, 'Best biryani. The place is now called Asian grocers. The store is now renovated and clean. Tables add to dine as well . Will recommend take out.', '7 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ42x3VrSwJIgRkyLwApN75ow', 'Tuba Hasan', 4, 'Their biryani and grilled items are really yummy. You have to plan ahead with them - sometimes you’ll call for carry out and they’ll say you have to wait a couple hours because they have large catering order(s). Also, I wouldn’t recommend bringing anyone to dine in, they’re more appropriate for carry out and catering only.', '10 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ42x3VrSwJIgRkyLwApN75ow', 'Muhammad Fayez Aziz', 4, 'Karahi was indeed good. Biryani was also great, as always. Guests loved it and took two boxes with them. Good have this place with genuine Pakistani cuisine going strong still.', '3 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJ42x3VrSwJIgRkyLwApN75ow', 'Erum Mirza', 5, 'Best Pakistani catering & takeout in town!
+Food is super fresh & authentic & service is above par.', '12 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwWjT3N2-JIgRBU4IE7IuVs0', 'Chelsea Rager', 5, 'The food here was incredible!!!! We were very hungry so the photo idea came up halfway into the meal 😂 However, every single thing was excellent. Thank you to our server, Nate, as well - he was very present in terms of service and conversation. We couldn’t have asked for a better meal and experience.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwWjT3N2-JIgRBU4IE7IuVs0', 'Wannie W', 5, 'First time here and really enjoyed the peaceful atmosphere. They have a wide variety of rolls to choose from, which was great!
+
+The sushi didn’t take too long to come out, and the roll sizes were just right — not too big, easy to enjoy in one bite.
+
+Will definitely come back to try more!', '8 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwWjT3N2-JIgRBU4IE7IuVs0', 'John Delacruz', 5, 'Wonderful quality sushi at a reasonable price. Recommend any of the fatty tuna rolls and nigiri. Fish to rice ratio is exquisite! Would definitely come back.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwWjT3N2-JIgRBU4IE7IuVs0', 'T W', 5, 'I absolutely love Nippon sushi. I’ve been eating here for over a decade, and tonight the experience I had was above and beyond. I order about once a week, and this week for some reason, my order said it was delivered, and it was not. I called and they quickly got on the phone with the delivery, service people, And when we couldn’t find my order, they quickly remade it and had it at my door within 15 minutes. The service and quality is unmatched. I truly appreciate them and will continue to give them my business for years to come. Always delicious and consistent, as well as top notch service. What more could you  ask for!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJwWjT3N2-JIgRBU4IE7IuVs0', 'MichiganTodd', 3, 'This is truly a nice above average restaurant as far as decor, food, etc.
+
+Sushi I am not a fan, but a very special friend of mine this was a special occasion - so we went. As the stars I rated, the atmosphere is good. Service pretty good (not 5 star though), and even though I had no opinion on sushi, I graded based on what my friend thought. Food was absolutely 5 stars. Everything prepared perfectly. Tasty. And the food presentation is way above average.
+
+Now I will explain how they fell to only a three star rating: PRICES. I fully understand about prices have risen in restaurants. I also understand sushi restaurants charge more, not just because of fresh fish but probably the  pay extended to the amazing chefs that have such talent putting these dishes together. The art of it.
+
+Quite a few other reviews mentioned the prices but I took them lightly just figuring from people that don''t dine out regularly anymore, and the realization this restaurant is in a pretty high income area - but my review lost 2 stars; prices were 100% insane. You will love the food, bill not so much.
+
+2 people, I ate light, friend did order more, only ONE drink a piece. $130!!! (+ tip). WHEW!', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'Niha R', 5, 'A decent place for Indian eats with a very homely vibe. I loved the fact that everything felt comforting and familiar even the setup of the place adds to that feeling.
+The menu is huge and impressive, starting from Osmania biscuits to dosas, idlis, thalis, biryanis, puffs, pakodas, bajjis, punugulu, and so much more  honestly, something for everyone.
+I tried the mirchi bajji with onion stuffing and it was absolutely delicious. The punugulu with allam chutney were hands down the best. The chicken pakodas tasted exactly like the classic chicken starters from King & Cardinal, which used to be a very famous place in Hyderabad (now sadly shut down). Hyderabadis will totally understand what I mean pure nostalgia.
+The samosas were yum too. For dessert, I had the falooda ice with crunchy sabja (basil seeds) and chikoo ice cream it was a feast.
+Coming from Canada, it’s really hard to find food that matches our home flavors, but this place truly won my heart. Highly recommended for anyone craving authentic, homestyle Indian food.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'maham mateen', 1, 'my husband and I went to get some quality ice cream; For one was very excited as I thought it would be classical desi Flavors.. I was a little disappointed overall as when I asked to taste the flavors. The lady was very sweet, However, the scoop of tasting was ever so small couldn’t even tell that was supposed to be sample size.
+
+Overall, my husband and I both got two scoops of ice cream he got falooda And Dubai chocolate ice cream I have gotten the falooda And mango… I was really upset to see the ice cream did have freezer burn on it, which indicated it. It’s been there for not weeks but months yes you can store ice cream in the freezer for quite a while, but not months where it starts having freezer burn there was no flavor to the ice cream. We both were very disappointed and ended up throwing our full ice cream away after 4 to 5 bites of it and going to another ice cream shop… i thought i was crazy but my throat did hurt and to my surprise so did my husbands..
+
+If they want to improve, they need to work on their KWALITY.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'Mohit Balwwani', 5, 'If tea had a LinkedIn profile, Aahar Cafe & Kwality Ice Cream Troy’s - chai would be endorsed for excellence, consistency, and soul. This isn’t just tea—it’s a full-blown experience. Bold aroma, perfect kadak balance, zero shortcuts. Old-school method, modern execution. Respect.
+
+Yes, they also have a location in Farmington Hills, Michigan—solid spot, no complaints. But let’s call a spade a spade: the best tea is hands down at the Troy location. Different league. Different vibe. That cup hits deeper, warmer, and somehow feels more intentional.
+
+Bottom line:
+•	Tea cravings? Solved.
+•	Long day? Fixed.
+•	Standards? Raised.
+
+Aahar in Troy understands chai the way it’s always been meant to be made. No fluff. Just results. ☕🔥', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'somara divya', 4, 'I have visited Aahar Cafe of Farmington Hills for buffet couple of time and they have a very good spread with fresh food. Aahar Cafe at troy is relatively new and smaller with finger foods, ice creams, falooda''s and regular indian menu with limited seating.
+
+I usually go during weekends for their Non Veg and Veg Thali''s. They provide ample amount of jeera rice along with roti, chicken starters curries, veg curries, papad and one type of sweet. Last weekend I have visited and was surprised to see that they have started buffet as well. They had a good spread a bit less than Farmington hills branch, but good enough. The price was approx 18 dollars per person. Will visit again for buffet.', 'a year ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJI6ZYJIXDJIgR95UrvoRwR0s', 'ruthin rak', 4, 'After going for three times I’m writing here, tried bonda, punugulu, chicken fry, dosa, idli, vada, poori, tea. All the items tried were good.
+
+Gone for lunch buffet on weekday, most of the items were good. I’m biryani lover, so when i tried butter chicken for nan, i see chicken is coloured. It is quite common in most of the restaurants they color for eye catching.
+
+This is one of the safe place to try in troy for taste repeatedly', '5 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Marsha Naidoo', 5, 'We called in advance with questions on menu items- got a really patient and helpful response. Mutton Dum biryani, mutton karahi and rice pudding were delicious. Loved that the rice was seasoned with clove and cumin. We will definitely be back to try other items. There will be a dinner buffet during Ramadan starting Feb 18. Looking forward to trying it', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Abid Mahmood', 5, 'Here’s a polished 5-star review you can copy and paste:
+
+⭐️⭐️⭐️⭐️⭐️
+I had an absolutely amazing experience! The chicken karahi was rich, aromatic, and bursting with true Pakistani flavor. The Pakistani-style beef seekh kabab was perfectly seasoned and tender, and the warm kulcha naan instantly reminded me of classic Lahori naan — soft, fresh, and full of nostalgia.
+
+The mango lassi was smooth and refreshing, the perfect balance of sweetness and mango flavor. I finished with badam kheer and a cup of ilaichi (cardamom) chai, and both were outstanding.
+
+Every single item tasted authentically Pakistani, especially Lahori-style. Highly recommended!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Kiara Hope', 5, '✨️HIDDEN GEM ALERT✨️ WOW this was GOODDD! The food was authentic, delicious and filling. We had the tikka and butter chicken. Came with rice, and as we also bought the garlic naan. She also let us try something else and I cant wait to get it next time! Cant remember the name though. The woman inside was so sweet. This is def going to be our new local spot to stop ❤️', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Tanzeela Nusrat', 5, 'Tandoori Korner is a great restaurant with really good food. Everything tastes fresh and full of flavor. The tandoori dishes are cooked perfectly, and the spices are just right. The portions are big, and the prices are fair. If you want tasty Pakistani food, Tandoori korner
+is a great place to go.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJSYRpYnRTO4gRJxllqjNX8_o', 'Roosevelt Fernando-Rizzo', 5, 'Absolute hidden gem! Food is always excellent with generous portions. The house-made naan is worth the visit alone. Staff are so welcoming and always ready with a suggestion for those looking to try something new!', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa-73pwKxJIgRAEK-z5Z9PR8', 'Mehwish Khan', 5, 'We went there for breakfast. We had very good experience, food was hot fresh and tasty. Poris were light not heavy and chai was best, like our desi karak chai.
+Owner is welcoming and nice too', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa-73pwKxJIgRAEK-z5Z9PR8', 'Asifa Rathur', 5, 'This is a small store front restaurant with great potential. The food was on point and delicious. We ordered Nihari, Tandoori Chicken & Seekh Kababs everything came out hot n fresh and of course our taste buds were tantalized. Let’s not forget the Aloo samosas we ordered for apps. The only issue I had was on a 90 degree weather their AC wasn’t working and it made the sit down experience a bit uncomfortable.
+Over all we will be going to this place again and will be recommending it as well. Good job guys.', '2 years ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa-73pwKxJIgRAEK-z5Z9PR8', 'Ibrahim Abdus-Sabur', 5, 'I ordered mango lassi, chicken 65, potato Samosa, Bihari Kabob, and butter chicken. Everything was fantastic. The chicken 65 was very tasty, and the butter chicken was delicious. Initially, he forgot two things from my order, and when I came back, he gave me both items no charge! He was very nice, accommodating, and friendly. 10/10', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa-73pwKxJIgRAEK-z5Z9PR8', 'Dean', 5, 'The food was amazing. We came in as a group of 5 people and it was just the owner with no help, and 4 other customers were there. He still got us our meal in a very timely fashion. The food was extremely high quality. I would drive 30 mins again just to eat here 👏👏👏', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJa-73pwKxJIgRAEK-z5Z9PR8', 'appnawalla', 5, 'We go there almost once a week. The fresh naan that he brings to your table is the best in Michigan. Payai (joints) have been served on Saturday when it is a buffet also is delicious.', '4 months ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'Nicole McFaul', 3, 'Newer spot to check out for us.
+It''s in the back lot of Rochester House.
+
+It is dead in here by 6pm. Oh my.
+
+It''s cold in the dining area, not a big dining area. Nicely decorated, looks newer.
+
+Ordered dosa, samosa, Gobi Manchurian, chick pea salad, dal tadka and dal makhani, butter chicken, navratina korma, and Chana masala. $117.56
+
+The Samosa, butter chicken and chick pea salad are all good.
+
+The samosa is maybe a bit too heavy and doughy. The potato and peas are mashed inside. The cilantro chutney is good, spicy too.
+
+Butter chicken is tasty.
+
+The chick pea salad is just fresh and yummy.
+
+Dosa was okay, not loving the tomato or coconut chutneys so much. Sambar soup is good.
+
+The dal makhani and Chana was not for either of us. Makhani is super buttery and runny. The Chana has a very unexpected taste and look, the sauce it’s cooked in is quite brown here.
+
+The dal tadka, korma and Gobi were just okay.
+
+Both lentils are super runny.
+
+The korma isn’t too bad. Their version has tofu in it. Sauce is good. Not a lot of veggies to it.
+
+Gobi was crispy, but their chili sauce is not so good.
+
+My husband usually favors the Chana masala, but he wasn’t fond of their version so much. Would skip the Chana, Gobi and the dal makhani and maybe even the dal tadka next time.
+
+Service here is good.', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'Autumn Macey', 5, 'Authentic South Indian cuisine with clean and comfortable atmosphere. I really enjoyed the presentation of the dishes. The dosa was very good. I also really liked paneer biryani. We typically get takeout with Indian food because it’s not always nice to sit down but with this restaurant we both enjoy the food and being able to enjoy dining in. Looking forward to returning.', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'Sandip Datta', 5, 'In November 2025 Virasat catered for our son''s wedding, for lunch and dinner. Their food was excellent and the guests praised their food quality, taste and services. They were prompt, courteous and professional. A huge thank you to the management, chefs and the catering team. Abhishek of the catering team as outstanding.
+Definitely recommended', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'Katherina Virguez Rivero', 5, 'Amazing and delicious food! Also big portions. We went out satisified and veeeery full! Definitely will come back again - very authentic Indian food.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJw41YR7_BJIgR9aKLwIC6x5Y', 'sai prudhvi', 5, 'I recently visited Virasat in Michigan for our Birthday celebration, and it was an unforgettable experience! The vibrant ambiance and warm decor set the perfect mood for our special night. We keep coming back for their amazing special mango lassi and the delicious Curries .
+
+The service was exceptional, with our server  going above and beyond to ensure we had everything we needed. She was attentive, friendly, and made excellent recommendations that enhanced our dining experience.
+
+Overall, Virasat exceeded our expectations once again, and we would choose this restaurant time and again. It’s a perfect spot for special occasions or just a cozy dinner. Highly recommended!', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJpdoYnx5TO4gRIc_8qAp9WHM', 'Dev Mata', 5, 'Original Italian pastry.  I''ve been coming here since they''ve been open, never disappointed.  Everything here from cookies to cakes, in any flavor available, tastes great. Very knowledgeable and professional staff. They have plenty of help during busy hours.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJpdoYnx5TO4gRIc_8qAp9WHM', 'Sage Recaps', 5, 'My Go-To Bakery for Every Special Moment!
+
+Lucas Bakery has been my absolute favorite for years! I always come here for cakes whether it’s for birthdays, baby showers, gifts, or just because and they never disappoint.
+
+The cakes are not only beautifully made but also incredibly delicious every single time. You can taste the love and care that goes into their baking. It’s become a tradition in my family to celebrate with Lucas Bakery, and I wouldn’t go anywhere else.
+
+Highly recommend if you’re looking for something special that also tastes amazing. Always fresh, always perfect, always worth it.', '9 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJpdoYnx5TO4gRIc_8qAp9WHM', 'Ash Julien', 5, 'Been going to Luca''s for a couple years now.. I don''t think I''ve had anything that wasn''t delicious! A huge favorite is the raspberry lemon cake 😋
+Today we went for Paczki''s! They definitely aren''t traditional, but in the best way! We got five different ones to try, blueberry cheesecake, biscoff, Dubai chocolate, lemon and cannoli.. I''m telling you they all hit!', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJpdoYnx5TO4gRIc_8qAp9WHM', 'Penny Parker', 5, 'Had an assortment of pastries delivered for an office party - cannolis, eclairs, cupcakes, cake pops, mini cheesecakes, etc. Packaged so nicely.  Great presentation.  Everything was delicious! I couldn’t tell you what was the favorite because everyone raved about each item. I wish I had taken pictures.  Highly recommend! Looking forward to stopping in to the physical store.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJpdoYnx5TO4gRIc_8qAp9WHM', 'Grizz Bear', 5, 'We’ve gotten two cakes within a weeks span for my daughter and wife’s birthdays; the cakes are amazing. The frosting is just sweet enough and the cakes itself is moist! The strawberry frosting was spectacular!!! Will definitely be back for more! They have a sister bakery company that does custom cake orders, so we will be trying them out in the near future for some custom cakes!', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'Sterling Hicks', 5, 'We visited Noorjahan''s looking for a dine in type indian restaurant and had a fantastic time!
+The place has a warm and inviting atmosphere that’s perfect that''s great for a Valentines dinner.
+The menu features a vast selection of dishes from the ever popular Chicken Tikka Masala and Butter Chicken to texturally wonderful appetizers like Paneer Pakora to papads.
+
+As an appetizer we had the Paneer Pakor, a deep fried cottage cheese cut into triangles that has three different hot sauces that you can drizzle or dip them into.
+
+I tried the Chicken Mango Masala, and it was fantastic. It had a sweet  savory and tangy mix of flavors. The mango was not too strong and added a nice balance with the other spices with just enough heat were I''m not crying.
+
+The Gulab Jamon makes for a wonderful desert. You get four soft deep fried dough balls that are soaked in a sweet syrup.
+Perfect for end of meal.
+
+The staff was awesome!
+They''re Friendly, attentive, and just real chill guys.
+The portions were generous, and the onion naan was perfect for soaking up the sauce.
+
+Overall, if you’re looking for solid, flavorful Indian food in the Berkley area, this place is definitely worth a visit.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'C C', 5, 'I would gladly come here daily if I lived nearby. The place was clean and smelled amazing. The restroom was also very clean. The front door seemed to have trouble opening properly though and that was a bit frustrating. Outside of that I loved everything. The chicken korma (i added paneer yummmmm) was absolutely divine. Filling and delicious but not greasy or soupy. The rice was amazing and perfectly cooked. I got the roti (wanted to try something different and it was delicious but im betting the garlic naan is even more delicious) my server was kind and answered all my questions. I never had an empty drink or was waiting on someone to come get my order etc. The sauces provided were delicious and the proce point was fabulous. The parking was a little annoying (lots of snow and the driveway and back lot were not plowed) but there was plenty of spaces to park.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'Annie Penta', 5, 'The cutest cozy atmosphere and the BEST Indian food, I absolutely love this restaurant! It’s hands down my favorite every dish I’ve had is delicious. I live in Florida now an make a point to eat here every time I visit. Definitely recommend the paneer tika masala & peshwari naan!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'Garza G.', 5, 'Low-key restaurant... With the atmosphere and quality that out-competes fancy/expensive restaurants.
+
+Came at lunchtime, our waiter Kazi (if sp, my apologies!) helped us with such a good demeanor. Quickly took our order, even for us who read menus and are ready quickly.
+
+The garlic naan, yep, as everyone has already said, is amazing!
+
+The chicken tikki Marsala and chicken korma were delicious!
+
+If you want a good, low-key Indian restaurant that serves good food in a timely, friendly manner, this place is for you. Highly recommended.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'Charlotte Moellering', 5, 'I have to start by saying the place is beautiful is like a hidden jewel. The service is outstanding the personal is super friendly. They treat you fantastic.
+It was my first experience with Indian cuisine and it was to die for, the flavor were like an explosion of taste in the mouth, I even try a bit of my husband plate it was super spicy but flavorful.  I love it all. My only regret was to order dessert because it was so good and we were so full.
+Definitely a place we will be going back to everytime we are in the area.
+In my book you get ⭐⭐⭐⭐⭐⭐⭐', '2 years ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIanfdNq_JIgRw2f6j3ID2YU', 'Evan Buchholz', 5, 'My favorite Indian restaurant! So far I''ve loved everything I have tried here (I have tried many!) My favorites are all the lamb dishes, but chicken is always great too. They also have great prices, generous and delicious rice, and a very friendly staff. The only fault is I cannot dine in! But it''s perfect for quick takeout. Oh! Don''t miss out on the naan! Always so good. And especially the wraps!! Lamb wrap is my favorite, but chicken with the fresh squeezed lemon is exceptional! I highly recommend!! I look forward to returning often and continuing to enjoy my favorites and try other dishes!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIanfdNq_JIgRw2f6j3ID2YU', 'r e n', 5, 'Wonderful catering. Dehlicious !
+
+Ordered food for my birthday dinner, for myself and my family to enjoy. We were given two free desert puddings with out meal, sheer altruistic intention. Thoughtful!
+
+Thank you so much for everything. I will continually be a customer', '2 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIanfdNq_JIgRw2f6j3ID2YU', 'Em22y', 5, '⭐⭐⭐⭐⭐ Excellent Delivery Experience!
+
+I ordered delivery from Noorjahan Indian Cuisine, and everything was perfect. The food arrived on time, still hot and fresh. All the dishes were full of flavour — the curry was rich, the naan was soft, and the portions were generous.
+
+The packaging was clean and secure, and nothing spilled during delivery. Overall, I’m very happy with the service and the quality of the food.
+
+I will definitely order from Noorjahan again. Highly recommended!', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIanfdNq_JIgRw2f6j3ID2YU', 'Kay 999', 5, 'The place is for takeout specifically with no dining area. There is plenty of room to sit and wait until the food is prepared. The spice level and the portions were great and the staff members were very courteous and caring. Definitely a great place to try out.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJIanfdNq_JIgRw2f6j3ID2YU', 'Raven L.', 1, 'I am appalled at how this business is ran. As an employee in customer service, you should have a better attitude when interacting with customers! I am coming to patronize this restaurant, and in disbelief with how rude and unfriendly the staff was. Completely unexceptable to have someone with such a bad attitude taking orders! Will not be returning.
+If you’re looking for good Indian food and a staff that cares, try Main Street Kitchen. Much friendlier. And the food is *chefs kiss*', 'a month ago');
+
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'Sterling Hicks', 5, 'We visited Noorjahan''s looking for a dine in type indian restaurant and had a fantastic time!
+The place has a warm and inviting atmosphere that’s perfect that''s great for a Valentines dinner.
+The menu features a vast selection of dishes from the ever popular Chicken Tikka Masala and Butter Chicken to texturally wonderful appetizers like Paneer Pakora to papads.
+
+As an appetizer we had the Paneer Pakor, a deep fried cottage cheese cut into triangles that has three different hot sauces that you can drizzle or dip them into.
+
+I tried the Chicken Mango Masala, and it was fantastic. It had a sweet  savory and tangy mix of flavors. The mango was not too strong and added a nice balance with the other spices with just enough heat were I''m not crying.
+
+The Gulab Jamon makes for a wonderful desert. You get four soft deep fried dough balls that are soaked in a sweet syrup.
+Perfect for end of meal.
+
+The staff was awesome!
+They''re Friendly, attentive, and just real chill guys.
+The portions were generous, and the onion naan was perfect for soaking up the sauce.
+
+Overall, if you’re looking for solid, flavorful Indian food in the Berkley area, this place is definitely worth a visit.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'C C', 5, 'I would gladly come here daily if I lived nearby. The place was clean and smelled amazing. The restroom was also very clean. The front door seemed to have trouble opening properly though and that was a bit frustrating. Outside of that I loved everything. The chicken korma (i added paneer yummmmm) was absolutely divine. Filling and delicious but not greasy or soupy. The rice was amazing and perfectly cooked. I got the roti (wanted to try something different and it was delicious but im betting the garlic naan is even more delicious) my server was kind and answered all my questions. I never had an empty drink or was waiting on someone to come get my order etc. The sauces provided were delicious and the proce point was fabulous. The parking was a little annoying (lots of snow and the driveway and back lot were not plowed) but there was plenty of spaces to park.', 'a month ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'Annie Penta', 5, 'The cutest cozy atmosphere and the BEST Indian food, I absolutely love this restaurant! It’s hands down my favorite every dish I’ve had is delicious. I live in Florida now an make a point to eat here every time I visit. Definitely recommend the paneer tika masala & peshwari naan!', '4 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'Garza G.', 5, 'Low-key restaurant... With the atmosphere and quality that out-competes fancy/expensive restaurants.
+
+Came at lunchtime, our waiter Kazi (if sp, my apologies!) helped us with such a good demeanor. Quickly took our order, even for us who read menus and are ready quickly.
+
+The garlic naan, yep, as everyone has already said, is amazing!
+
+The chicken tikki Marsala and chicken korma were delicious!
+
+If you want a good, low-key Indian restaurant that serves good food in a timely, friendly manner, this place is for you. Highly recommended.', '3 months ago');
+INSERT INTO restaurant_reviews (restaurant_google_place_id, author_name, rating, review_text, review_time)
+VALUES ('ChIJfxTOXavJJIgRe8xiicRgIeY', 'Charlotte Moellering', 5, 'I have to start by saying the place is beautiful is like a hidden jewel. The service is outstanding the personal is super friendly. They treat you fantastic.
+It was my first experience with Indian cuisine and it was to die for, the flavor were like an explosion of taste in the mouth, I even try a bit of my husband plate it was super spicy but flavorful.  I love it all. My only regret was to order dessert because it was so good and we were so full.
+Definitely a place we will be going back to everytime we are in the area.
+In my book you get ⭐⭐⭐⭐⭐⭐⭐', '2 years ago');
+
+-- ── SUMMARY ──
+-- Restaurants upserted: 118
+-- Reviews inserted: 590
