@@ -321,7 +321,7 @@ export default function HomePage() {
             <h2 style={{ fontFamily: ff, fontSize: "28px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>For the Little Ones</h2>
             <TilakLine />
             <p style={{ fontSize: "16px", color: "#5A4A3F", maxWidth: "480px", margin: "16px auto 24px", lineHeight: 1.6 }}>
-              Free coloring books, alphabet worksheets, and festival activities for South Asian kids.
+              Coloring books, alphabet worksheets, and festival activities for South Asian kids.
             </p>
             <span style={{
               display: "inline-block", padding: "8px 22px", borderRadius: "999px",
