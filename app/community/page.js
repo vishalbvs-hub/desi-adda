@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Plus, User, MessageSquare, Search } from "lucide-react";
@@ -13,6 +13,10 @@ const fb = FONTS.body;
 const SAFFRON = "#E8A317";
 
 export default function CommunityPage() {
+  return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>}><CommunityPageInner /></Suspense>;
+}
+
+function CommunityPageInner() {
   const searchParams = useSearchParams();
   const initialCat = searchParams.get("cat") || "all";
   const [boardFilter, setBoardFilter] = useState(initialCat);

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -45,6 +45,10 @@ const CAT_TABS = [
 ];
 
 export default function BusinessesPage() {
+  return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>}><BusinessesPageInner /></Suspense>;
+}
+
+function BusinessesPageInner() {
   const searchParams = useSearchParams();
   const initialCat = searchParams.get("cat") || "all";
   const initialQ = searchParams.get("q") || "";

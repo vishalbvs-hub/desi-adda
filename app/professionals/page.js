@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MapPin, Phone, Globe, Languages, Search, UserCheck } from "lucide-react";
@@ -33,6 +33,10 @@ function getProfessionType(p) {
 }
 
 export default function ProfessionalsPage() {
+  return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>}><ProfessionalsPageInner /></Suspense>;
+}
+
+function ProfessionalsPageInner() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("q") || "";
   const initialType = searchParams.get("type") || "All";
