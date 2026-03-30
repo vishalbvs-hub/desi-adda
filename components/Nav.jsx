@@ -27,7 +27,7 @@ export default function Nav() {
         <Link
           href="/"
           style={{
-            fontFamily: FONTS.heading, fontSize: "28px", fontWeight: 700,
+            fontFamily: FONTS.heading, fontSize: "38px", fontWeight: 700,
             color: COLORS.primary, padding: "10px 0", textDecoration: "none", flexShrink: 0,
           }}
         >adda.</Link>

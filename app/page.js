@@ -13,15 +13,15 @@ const WARM_CLAY = "#E8D5C4";
 const SAFFRON = "#E8A317";
 
 const QUICK_CATS = [
-  { emoji: "\u{1F35B}", label: "Restaurants", href: "/category/food", bg: "#E8832A" },
-  { emoji: "\u{1F6D5}", label: "Temples", href: "/category/religious", bg: "#8B1A2B" },
-  { emoji: "\u{1F958}", label: "Groceries", href: "/category/grocery", bg: "#2E7D32" },
-  { emoji: "\u{1F490}", label: "Weddings", href: "/category/weddings", bg: "#C2185B" },
-  { emoji: "\u{1FA7A}", label: "Doctors", href: "/professionals", bg: "#1565C0" },
-  { emoji: "\u{1F3E0}", label: "Roommates", href: "/community", bg: "#00796B" },
-  { emoji: "\u{1F3AC}", label: "Movies", href: "/movies", bg: "#6A1B9A" },
-  { emoji: "\u{1F389}", label: "Events", href: "/events", bg: "#F57F17" },
-  { emoji: "\u{1F3A8}", label: "Kids", href: "/category/family", bg: "#E64A19" },
+  { emoji: "\u{1F35B}", label: "Restaurants", href: "/category/food" },
+  { emoji: "\u{1F6D5}", label: "Temples", href: "/category/religious" },
+  { emoji: "\u{1F958}", label: "Groceries", href: "/category/grocery" },
+  { emoji: "\u{1F490}", label: "Weddings", href: "/category/weddings" },
+  { emoji: "\u{1FA7A}", label: "Doctors", href: "/professionals" },
+  { emoji: "\u{1F3E0}", label: "Roommates", href: "/community" },
+  { emoji: "\u{1F3AC}", label: "Movies", href: "/movies" },
+  { emoji: "\u{1F389}", label: "Events", href: "/events" },
+  { emoji: "\u{1F3A8}", label: "Kids", href: "/category/family" },
 ];
 
 function Divider() {
@@ -229,8 +229,7 @@ export default function HomePage() {
             >
               <div style={{
                 width: 60, height: 60, borderRadius: "50%",
-                background: cat.bg, display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: `0 4px 12px ${cat.bg}40`,
+                background: "rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 <span style={{ fontSize: "28px", lineHeight: 1 }}>{cat.emoji}</span>
               </div>
