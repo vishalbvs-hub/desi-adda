@@ -114,10 +114,9 @@ export default function MusicPage() {
       {/* ═══ HERO ═══ */}
       <section style={{
         background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)",
-        padding: "48px 20px 40px",
-        textAlign: "center",
-        position: "relative",
-        overflow: "hidden",
+        minHeight: "320px", padding: "48px 20px 40px",
+        textAlign: "center", position: "relative", overflow: "hidden",
+        display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         {/* Decorative music icons scattered around */}
         <div style={{ position: "absolute", top: "6%", left: "5%", fontSize: "44px", opacity: 0.07, transform: "rotate(-15deg)" }}>{"\u{1F3B6}"}</div>

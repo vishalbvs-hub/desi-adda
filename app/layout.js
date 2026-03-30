@@ -4,6 +4,7 @@ import TopBar from "@/components/TopBar";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import NewsletterOverlay from "@/components/NewsletterOverlay";
+import AskAdda from "@/components/AskAdda";
 
 
 export const metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
           <Nav />
           {children}
           <Footer />
+          <AskAdda />
         </AppProvider>
       </body>
     </html>
