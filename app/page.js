@@ -334,7 +334,7 @@ export default function HomePage() {
                       padding: "10px 0 2px", maxWidth: "85%",
                     }}>
                       {msg.listings.map((l, j) => (
-                        <Link key={`${l._table}-${l.id}-${j}`} href={l._table === "professionals" ? "/professionals" : `/category/${l._table === "restaurants" ? "food" : l._table === "temples" ? "religious" : l._table === "groceries" ? "grocery" : l._table === "wedding_vendors" ? "weddings" : l._table === "event_halls" ? "event-halls" : l._table === "kids" ? "family" : l._table === "health_wellness" ? "wellness" : l._table === "beauty_brands" ? "beauty" : l._table === "community_networking" ? "community" : "food"}`}
+                        <Link key={`${l._table}-${l.id}-${j}`} href={`${l._table === "professionals" ? "/professionals" : `/category/${l._table === "restaurants" ? "food" : l._table === "temples" ? "religious" : l._table === "groceries" ? "grocery" : l._table === "wedding_vendors" ? "weddings" : l._table === "event_halls" ? "event-halls" : l._table === "kids" ? "family" : l._table === "health_wellness" ? "wellness" : l._table === "beauty_brands" ? "beauty" : l._table === "community_networking" ? "community" : "food"}`}?q=${encodeURIComponent(l.name)}`}
                           onClick={() => { setChatOpen(false); setChatMessages([]); }}
                           style={{
                             flexShrink: 0, width: "180px", padding: "10px 12px", borderRadius: "12px",

@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { MapPin, Phone, Globe, Languages, Search, UserCheck } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { fetchProfessionals } from "@/lib/data";
@@ -27,10 +28,20 @@ function getProfessionType(p) {
 }
 
 export default function ProfessionalsPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>}>
+      <ProfessionalsContent />
+    </Suspense>
+  );
+}
+
+function ProfessionalsContent() {
+  const searchParams = useSearchParams();
+  const initialQ = searchParams.get("q") || "";
   const [professionals, setProfessionals] = useState(null);
   const [typeFilter, setTypeFilter] = useState("All");
   const [cityFilter, setCityFilter] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialQ);
 
   useEffect(() => {
     fetchProfessionals().then(setProfessionals);
