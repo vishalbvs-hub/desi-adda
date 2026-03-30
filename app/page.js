@@ -117,6 +117,8 @@ export default function HomePage() {
   const [classifieds, setClassifieds] = useState([]);
   const [nlEmail, setNlEmail] = useState("");
   const [nlDone, setNlDone] = useState(false);
+  const [askLoading, setAskLoading] = useState(false);
+  const [askResult, setAskResult] = useState(null);
 
   useEffect(() => {
     supabase.from("events").select("*").eq("status", "approved").order("name").limit(5)
@@ -127,10 +129,23 @@ export default function HomePage() {
       .then(({ data }) => setClassifieds(data || []));
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
-    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+    setAskLoading(true);
+    setAskResult(null);
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+      const data = await res.json();
+      setAskResult(data);
+    } catch {
+      setAskResult({ response: "Something went wrong. Please try again.", listings: [] });
+    }
+    setAskLoading(false);
   };
 
   const catRef = useFadeIn();
@@ -207,6 +222,71 @@ export default function HomePage() {
           </button>
         </div>
       </section>
+
+      {/* ═══ ASK ADDA RESULTS ═══ */}
+      {(askLoading || askResult) && (
+        <section style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px 0" }}>
+          <div style={{
+            background: "white", borderRadius: "16px", padding: "24px 28px",
+            border: "1px solid #EDE6DE", boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "20px" }}>{"\u2728"}</span> Ask Adda
+              </h3>
+              {askResult && (
+                <button onClick={() => { setAskResult(null); setSearchQuery(""); }} style={{
+                  background: "none", border: "1px solid #E0D8CF", borderRadius: "8px",
+                  padding: "4px 12px", fontSize: "12px", fontFamily: fb, color: "#8A7968",
+                  cursor: "pointer",
+                }}>Clear</button>
+              )}
+            </div>
+            {askLoading ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 0" }}>
+                <style>{`@keyframes askPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }`}</style>
+                <div style={{ display: "flex", gap: "4px" }}>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} style={{
+                      width: "8px", height: "8px", borderRadius: "50%", background: SAFFRON,
+                      animation: `askPulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                    }} />
+                  ))}
+                </div>
+                <span style={{ fontSize: "14px", color: "#8A7968", fontFamily: fb }}>Ask Adda is searching...</span>
+              </div>
+            ) : askResult && (
+              <>
+                <div style={{ fontSize: "14px", color: "#2D2420", lineHeight: 1.6, marginBottom: "16px" }}
+                  dangerouslySetInnerHTML={{ __html: askResult.response.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") }}
+                />
+                {askResult.listings?.length > 0 && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "10px" }}>
+                    {askResult.listings.map((l, i) => (
+                      <Link key={`${l._table}-${l.id}-${i}`} href={l._table === "professionals" ? "/professionals" : `/category/${l._table === "restaurants" ? "food" : l._table === "temples" ? "religious" : l._table === "groceries" ? "grocery" : l._table === "wedding_vendors" ? "weddings" : l._table === "event_halls" ? "event-halls" : l._table === "kids" ? "family" : l._table === "health_wellness" ? "wellness" : l._table === "beauty_brands" ? "beauty" : l._table === "community_networking" ? "community" : "food"}`}
+                        style={{
+                          padding: "14px 16px", borderRadius: "12px", border: "1px solid #EDE6DE",
+                          borderLeft: `3px solid ${SAFFRON}`, background: "#FFFBF5",
+                          textDecoration: "none", color: "inherit", transition: "box-shadow 0.2s",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.boxShadow = "0 3px 12px rgba(0,0,0,0.06)"}
+                        onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+                      >
+                        <h4 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 600, margin: "0 0 3px" }}>{l.name}</h4>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "11px", color: "#8A7968" }}>
+                          <span style={{ padding: "1px 6px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${SAFFRON}15`, color: SAFFRON }}>{l._category}</span>
+                          {l.city && <span><MapPin size={10} style={{ display: "inline", verticalAlign: "middle" }} /> {l.city}</span>}
+                          {l.rating && <span><Star size={10} fill={SAFFRON} color={SAFFRON} style={{ display: "inline", verticalAlign: "middle" }} /> {l.rating}</span>}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ═══ CATEGORY ICONS ═══ */}
       <section id="categories" ref={catRef} style={{ background: "rgba(255,251,245,0.85)", padding: "36px 20px 32px" }}>
