@@ -8,9 +8,8 @@ import { supabase } from "@/lib/supabase";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
-const DARK = "#1A1412";
-const DARK_CARD = "#2A221C";
-const DARK_BORDER = "#3D322A";
+const WARM_SAND = "#F0E4D4";
+const WARM_CLAY = "#E8D5C4";
 const SAFFRON = "#E8A317";
 
 const QUICK_CATS = [
@@ -174,12 +173,12 @@ export default function HomePage() {
 
       <Divider />
 
-      {/* ═══ EVENTS — DARK ═══ */}
-      <section ref={eventsRef} style={{ background: DARK, padding: "56px 20px" }}>
+      {/* ═══ EVENTS — WARM SAND ═══ */}
+      <section ref={eventsRef} style={{ background: WARM_SAND, padding: "56px 20px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
-            <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "white" }}>What&apos;s Happening This Week</h2>
-            <Link href="/events" style={{ color: SAFFRON, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
+            <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>What&apos;s Happening This Week</h2>
+            <Link href="/events" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
               See All Events <ArrowRight size={14} />
             </Link>
           </div>
@@ -189,29 +188,29 @@ export default function HomePage() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
                 {events.map(ev => (
                   <div key={ev.id} style={{
-                    padding: "20px 22px", borderRadius: "16px", background: DARK_CARD,
-                    border: `1px solid ${DARK_BORDER}`, transition: "all 0.25s",
+                    padding: "20px 22px", borderRadius: "16px", background: "white",
+                    border: "1px solid #E0D8CF", borderLeft: `3px solid ${SAFFRON}`, transition: "all 0.25s",
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.3)`; }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; }}
                     onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
                   >
                     <div style={{ display: "flex", gap: "8px", marginBottom: "10px", alignItems: "center" }}>
-                      <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#7B1FA220", color: "#CE93D8" }}>{ev.type}</span>
-                      <span style={{ fontSize: "12px", color: "#A89888", display: "flex", alignItems: "center", gap: "3px" }}>
+                      <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#F3E5F5", color: "#7B1FA2" }}>{ev.type}</span>
+                      <span style={{ fontSize: "12px", color: "#8A7968", display: "flex", alignItems: "center", gap: "3px" }}>
                         <Clock size={11} /> {formatDate(ev.event_date)}
                       </span>
                     </div>
-                    <h4 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 600, margin: "0 0 6px", color: "white" }}>{ev.name}</h4>
-                    <p style={{ fontSize: "12px", color: "#A89888", margin: 0, display: "flex", alignItems: "center", gap: "3px" }}>
+                    <h4 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 600, margin: "0 0 6px", color: "#2D2420" }}>{ev.name}</h4>
+                    <p style={{ fontSize: "12px", color: "#8A7968", margin: 0, display: "flex", alignItems: "center", gap: "3px" }}>
                       <MapPin size={11} /> {ev.location}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ padding: "40px", textAlign: "center", background: DARK_CARD, borderRadius: "16px", border: `1px solid ${DARK_BORDER}` }}>
-                <p style={{ fontSize: "15px", color: "#A89888", margin: "0 0 12px" }}>No events this week — submit yours!</p>
-                <Link href="/events/submit" style={{ color: SAFFRON, fontWeight: 600, fontSize: "14px", fontFamily: fb, textDecoration: "none" }}>
+              <div style={{ padding: "40px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #E0D8CF" }}>
+                <p style={{ fontSize: "15px", color: "#8A7968", margin: "0 0 12px" }}>No events this week — submit yours!</p>
+                <Link href="/events/submit" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, textDecoration: "none" }}>
                   Submit an Event <ArrowRight size={14} style={{ display: "inline", verticalAlign: "middle" }} />
                 </Link>
               </div>
@@ -260,12 +259,12 @@ export default function HomePage() {
 
       <Divider />
 
-      {/* ═══ CLASSIFIEDS — DARK ═══ */}
-      <section ref={classifiedsRef} style={{ background: DARK, padding: "56px 20px" }}>
+      {/* ═══ CLASSIFIEDS — WARM CLAY ═══ */}
+      <section ref={classifiedsRef} style={{ background: WARM_CLAY, padding: "56px 20px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
-            <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "white" }}>Latest from the Community</h2>
-            <Link href="/community" style={{ color: SAFFRON, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
+            <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>Latest from the Community</h2>
+            <Link href="/community" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
               See All Posts <ArrowRight size={14} />
             </Link>
           </div>
@@ -277,19 +276,19 @@ export default function HomePage() {
                   const catInfo = CLASSIFIEDS_CATEGORIES.find(c => c.id === post.category);
                   return (
                     <Link key={post.id} href="/community" style={{
-                      padding: "18px 22px", borderRadius: "14px", border: `1px solid ${DARK_BORDER}`,
-                      background: DARK_CARD, display: "block", textDecoration: "none", color: "inherit",
-                      transition: "all 0.25s",
+                      padding: "18px 22px", borderRadius: "14px", border: "1px solid #E0D8CF",
+                      borderLeft: `3px solid ${SAFFRON}`, background: "white", display: "block",
+                      textDecoration: "none", color: "inherit", transition: "all 0.25s",
                     }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.3)"; }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.08)"; }}
                       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
                     >
                       <div style={{ display: "flex", gap: "8px", marginBottom: "6px", alignItems: "center" }}>
-                        <span style={{ padding: "2px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#3D322A", color: "#C5B8AA" }}>
+                        <span style={{ padding: "2px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>
                           {catInfo?.icon} {catInfo?.label}
                         </span>
                       </div>
-                      <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3, color: "white" }}>{post.title}</h4>
+                      <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3, color: "#2D2420" }}>{post.title}</h4>
                       <p style={{ fontSize: "12px", color: "#8A7968", margin: 0 }}>
                         {post.author} · <MessageSquare size={11} style={{ display: "inline", verticalAlign: "middle" }} /> {post.replies || 0} replies
                       </p>
@@ -298,9 +297,9 @@ export default function HomePage() {
                 })}
               </div>
             ) : (
-              <div style={{ padding: "40px", textAlign: "center", background: DARK_CARD, borderRadius: "16px", border: `1px solid ${DARK_BORDER}` }}>
-                <p style={{ fontSize: "15px", color: "#A89888", margin: "0 0 12px" }}>Be the first to post!</p>
-                <Link href="/community/post" style={{ color: SAFFRON, fontWeight: 600, fontSize: "14px", fontFamily: fb, textDecoration: "none" }}>
+              <div style={{ padding: "40px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #E0D8CF" }}>
+                <p style={{ fontSize: "15px", color: "#8A7968", margin: "0 0 12px" }}>Be the first to post!</p>
+                <Link href="/community/post" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, textDecoration: "none" }}>
                   Create a Post <ArrowRight size={14} style={{ display: "inline", verticalAlign: "middle" }} />
                 </Link>
               </div>
