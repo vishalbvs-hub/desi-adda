@@ -47,6 +47,7 @@ function useFadeIn() {
 export default function MusicPage() {
   const [lang, setLang] = useState("All");
   const [section, setSection] = useState("All");
+  const [platform, setPlatform] = useState("All");
   const [songs, setSongs] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [concerts, setConcerts] = useState([]);
@@ -184,13 +185,44 @@ export default function MusicPage() {
       {(section === "All" || section === "Songs") && (
       <section ref={trendingRef} style={{ padding: "48px 20px" }}>
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "24px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
             <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>
               {"\u{1F525}"} Trending This Week
             </h2>
             <span style={{ fontSize: "12px", color: COLORS.textMuted, fontFamily: fb }}>
               Updated weekly
             </span>
+          </div>
+
+          {/* Platform toggle */}
+          <div style={{ display: "flex", gap: "6px", marginBottom: "24px" }}>
+            {[
+              { id: "All", label: "All Platforms" },
+              { id: "Spotify", label: "Spotify", icon: SPOTIFY_ICON },
+              { id: "Apple Music", label: "Apple Music", icon: APPLE_ICON },
+            ].map(p => (
+              <button
+                key={p.id}
+                onClick={() => setPlatform(p.id)}
+                style={{
+                  padding: "6px 14px", borderRadius: "999px", fontSize: "12px",
+                  fontFamily: fb, fontWeight: 600, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: "5px",
+                  border: platform === p.id
+                    ? `2px solid ${p.id === "Spotify" ? "#1DB954" : p.id === "Apple Music" ? "#FC3C44" : SAFFRON}`
+                    : "2px solid #EDE6DE",
+                  background: platform === p.id
+                    ? (p.id === "Spotify" ? "#E8F5E9" : p.id === "Apple Music" ? "#FFF0F0" : `${SAFFRON}15`)
+                    : "white",
+                  color: platform === p.id
+                    ? (p.id === "Spotify" ? "#1DB954" : p.id === "Apple Music" ? "#FC3C44" : SAFFRON)
+                    : COLORS.textMuted,
+                  transition: "all 0.25s",
+                }}
+              >
+                {p.icon && p.icon} {p.label}
+              </button>
+            ))}
           </div>
 
           {lang === "All" ? (
@@ -208,11 +240,11 @@ export default function MusicPage() {
                     background: "#FDE8EF", color: COLORS.primary,
                   }}>Top 10</span>
                 </h3>
-                <SongList songs={langSongs} />
+                <SongList songs={langSongs} platform={platform} />
               </div>
             ))
           ) : (
-            <SongList songs={filteredSongs} />
+            <SongList songs={filteredSongs} platform={platform} />
           )}
         </div>
       </section>
@@ -348,10 +380,25 @@ export default function MusicPage() {
 }
 
 // ═══ SONG LIST COMPONENT ═══
-function SongList({ songs }) {
+
+// Apple Music fallback playlists by language (when individual track URLs aren't available)
+const APPLE_MUSIC_FALLBACKS = {
+  "Telugu": "https://music.apple.com/in/playlist/telugu-hits/pl.1be89625ddd94a80a1dff804b41efd63",
+  "Hindi": "https://music.apple.com/us/playlist/bollywood-hits/pl.d60caf02fcce4d7e9788fe01243b7c2c",
+  "Tamil": "https://music.apple.com/in/playlist/tamil-hits/pl.c8d5311e407f42c89d0fce075b5aaa43",
+  "Punjabi": "https://music.apple.com/us/playlist/punjabi-hits/pl.35b8520d9d6a486d9bf5c1b3331165b2",
+};
+
+function SongList({ songs, platform }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-      {songs.map((song, i) => (
+      {songs.map((song, i) => {
+        const spotifyUrl = song.spotify_url;
+        const appleUrl = song.apple_music_url || APPLE_MUSIC_FALLBACKS[song.language];
+        const showSpotify = platform === "All" || platform === "Spotify";
+        const showApple = platform === "All" || platform === "Apple Music";
+
+        return (
         <div
           key={song.id || i}
           style={{
@@ -383,7 +430,7 @@ function SongList({ songs }) {
             </div>
           </div>
 
-          {/* Album */}
+          {/* Album - visible on wider screens */}
           <div style={{
             fontSize: "11px", color: COLORS.textFaint, fontFamily: fb,
             maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
@@ -396,29 +443,50 @@ function SongList({ songs }) {
 
           {/* Streaming links */}
           <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
-            {song.spotify_url && (
-              <a href={song.spotify_url} target="_blank" rel="noopener noreferrer"
-                style={{ display: "flex", alignItems: "center", opacity: 0.7, transition: "opacity 0.2s" }}
+            {showSpotify && spotifyUrl && (
+              <a href={spotifyUrl} target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  padding: platform === "Spotify" ? "4px 10px" : "4px",
+                  borderRadius: "999px",
+                  background: platform === "Spotify" ? "#E8F5E9" : "transparent",
+                  opacity: 0.8, transition: "all 0.2s", textDecoration: "none",
+                }}
                 onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                onMouseLeave={e => e.currentTarget.style.opacity = 0.7}
+                onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
                 title="Play on Spotify"
               >
                 {SPOTIFY_ICON}
+                {platform === "Spotify" && (
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "#1DB954", fontFamily: fb }}>Play</span>
+                )}
               </a>
             )}
-            {song.apple_music_url && (
-              <a href={song.apple_music_url} target="_blank" rel="noopener noreferrer"
-                style={{ display: "flex", alignItems: "center", opacity: 0.7, transition: "opacity 0.2s" }}
+            {showApple && appleUrl && (
+              <a href={appleUrl} target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  padding: platform === "Apple Music" ? "4px 10px" : "4px",
+                  borderRadius: "999px",
+                  background: platform === "Apple Music" ? "#FFF0F0" : "transparent",
+                  opacity: 0.8, transition: "all 0.2s", textDecoration: "none",
+                }}
                 onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                onMouseLeave={e => e.currentTarget.style.opacity = 0.7}
-                title="Play on Apple Music"
+                onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
+                title={song.apple_music_url ? "Play on Apple Music" : "Open Apple Music Playlist"}
               >
                 {APPLE_ICON}
+                {platform === "Apple Music" && (
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "#FC3C44", fontFamily: fb }}>
+                    {song.apple_music_url ? "Play" : "Playlist"}
+                  </span>
+                )}
               </a>
             )}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
