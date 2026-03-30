@@ -221,9 +221,9 @@ export default function HomePage() {
             <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
             <input
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search restaurants, temples, doctors..."
+              placeholder="Ask me anything... best biryani? Telugu dentist?"
               style={{
-                width: "100%", padding: "14px 120px 14px 44px", borderRadius: "14px",
+                width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px",
                 border: "none", fontSize: "15px", fontFamily: fb,
                 background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)",
                 boxSizing: "border-box", outline: "none",
@@ -233,9 +233,29 @@ export default function HomePage() {
               position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)",
               background: COLORS.primary, color: "white", border: "none", borderRadius: "10px",
               padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer",
-            }}>Search</button>
+            }}>Ask Adda {"\u2728"}</button>
           </form>
-          <p style={{ marginTop: "16px", fontSize: "13px", color: "rgba(255,255,255,0.55)", fontFamily: fb, fontWeight: 500, letterSpacing: "0.3px" }}>
+          <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", marginTop: "14px" }}>
+            {[
+              { emoji: "\u{1F35B}", text: "best biryani in Troy" },
+              { emoji: "\u{1FA7A}", text: "Telugu doctor near me" },
+              { emoji: "\u{1F6D5}", text: "temples in Novi" },
+            ].map(chip => (
+              <button key={chip.text} onClick={() => { setSearchQuery(`${chip.emoji} ${chip.text}`); setChatOpen(true); sendChat(`${chip.emoji} ${chip.text}`); }} style={{
+                padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontFamily: fb,
+                fontWeight: 500, color: "white", cursor: "pointer",
+                background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)",
+                transition: "background 0.2s",
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.25)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+              >{chip.emoji} {chip.text}</button>
+            ))}
+          </div>
+          <p style={{ marginTop: "10px", fontSize: "11px", color: "rgba(255,255,255,0.5)", fontFamily: fb }}>
+            Powered by AI — ask in plain English
+          </p>
+          <p style={{ marginTop: "8px", fontSize: "13px", color: "rgba(255,255,255,0.55)", fontFamily: fb, fontWeight: 500, letterSpacing: "0.3px" }}>
             455+ Businesses &middot; 18 Cities &middot; 100% Community-Driven
           </p>
           {/* Scroll indicator */}
