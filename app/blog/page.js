@@ -1,11 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
 import { FONTS, COLORS, SPONSORED_HOME } from "@/lib/constants";
 import { fetchBlogArticles } from "@/lib/data";
 import SponsoredCard from "@/components/SponsoredCard";
-import ScrollingChips from "@/components/ScrollingChips";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
@@ -36,29 +34,9 @@ export default function BlogPage() {
           <h1 style={{ fontFamily: ff, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
             Desi <span style={{ color: SAFFRON, fontStyle: "italic" }}>News</span>
           </h1>
-          <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 24px", fontStyle: "italic" }}>
+          <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 8px", fontStyle: "italic" }}>
             Guides, rankings & stories for the South Asian American experience
           </p>
-          <form onSubmit={e => { e.preventDefault(); const v = document.getElementById("news-search").value; if (v.trim()) { window.dispatchEvent(new CustomEvent("askadda", { detail: v })); document.getElementById("news-search").value = ""; } }} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
-            <input id="news-search" placeholder="Search news and articles..."
-              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
-            <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
-          </form>
-          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
-            <ScrollingChips chips={[
-              { emoji: "\u{1F35B}", text: "best biryani spots in Troy" },
-              { emoji: "\u{1F3E0}", text: "buying a home as NRI" },
-              { emoji: "\u{1FA7A}", text: "finding an Indian doctor" },
-              { emoji: "\u{1F4BC}", text: "H1B visa latest updates" },
-              { emoji: "\u{1F3AC}", text: "Bollywood box office this week" },
-              { emoji: "\u{1F4B0}", text: "NRI tax filing guide" },
-              { emoji: "\u{1F6D5}", text: "temple guide Metro Detroit" },
-              { emoji: "\u{1F958}", text: "best Indian groceries ranked" },
-              { emoji: "\u{1F490}", text: "desi wedding planning tips" },
-              { emoji: "\u{1F4F0}", text: "desi community news Detroit" },
-            ]} onChipClick={(chip) => window.dispatchEvent(new CustomEvent("askadda", { detail: `${chip.emoji} ${chip.text}` }))} variant="light" />
-          </div>
         </div>
       </section>
 

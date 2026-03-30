@@ -35,7 +35,7 @@ const QUICK_CATS = [
   { emoji: "\u{1F465}", label: "Community", href: "/community" },
   { emoji: "\u{1F3AC}", label: "Movies", href: "/entertainment?tab=movies" },
   { emoji: "\u{1F3B5}", label: "Music", href: "/entertainment?tab=music" },
-  { emoji: "\u{1F389}", label: "Events", href: "/events" },
+  { emoji: "\u{1F389}", label: "Events", href: "/community?tab=events" },
   { emoji: "\u{1F3A8}", label: "Kids", href: "/category/family" },
   { emoji: "\u{1F4F0}", label: "News", href: "/blog" },
 ];

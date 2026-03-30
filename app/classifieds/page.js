@@ -2,28 +2,14 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, User, MessageSquare } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { FONTS, COLORS, CLASSIFIEDS_CATEGORIES, SPONSORED_HOME } from "@/lib/constants";
 import { fetchClassifieds } from "@/lib/data";
 import SponsoredCard from "@/components/SponsoredCard";
-import ScrollingChips from "@/components/ScrollingChips";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
 const SAFFRON = "#E8A317";
-
-const CHIPS = [
-  { emoji: "\u{1F3E0}", text: "roommate in Farmington Hills" },
-  { emoji: "\u{1F4BC}", text: "IT jobs Metro Detroit" },
-  { emoji: "\u{1F697}", text: "used Honda for sale" },
-  { emoji: "\u{1F37D}\uFE0F", text: "tiffin service near Troy" },
-  { emoji: "\u{1F476}", text: "babysitter near Novi" },
-  { emoji: "\u{1F3E0}", text: "apartment sublease Ann Arbor" },
-  { emoji: "\u{1F527}", text: "handyman services" },
-  { emoji: "\u{1F4BC}", text: "desi consulting firms hiring" },
-  { emoji: "\u{1F697}", text: "Indian mechanic near me" },
-  { emoji: "\u{1F3E0}", text: "2 BHK share Canton" },
-];
 
 export default function ClassifiedsPage() {
   return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>}><ClassifiedsInner /></Suspense>;
@@ -36,8 +22,6 @@ function ClassifiedsInner() {
   const [_data, _setData] = useState(null);
 
   useEffect(() => { fetchClassifieds().then(_setData); }, []);
-
-  const triggerChat = (q) => { window.dispatchEvent(new CustomEvent("askadda", { detail: q })); };
 
   if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading...</p></div>;
 
@@ -61,19 +45,9 @@ function ClassifiedsInner() {
           <h1 style={{ fontFamily: ff, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
             Desi <span style={{ color: SAFFRON, fontStyle: "italic" }}>Classifieds</span>
           </h1>
-          <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 24px", fontStyle: "italic" }}>
+          <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 8px", fontStyle: "italic" }}>
             Roommates, jobs, services & more from the Detroit desi community
           </p>
-
-          <form onSubmit={e => { e.preventDefault(); const v = document.getElementById("class-search").value; if (v.trim()) { triggerChat(v); document.getElementById("class-search").value = ""; } }} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
-            <input id="class-search" placeholder="Find roommates, jobs, services..."
-              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
-            <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
-          </form>
-          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
-            <ScrollingChips chips={CHIPS} onChipClick={(chip) => triggerChat(`${chip.emoji} ${chip.text}`)} variant="light" />
-          </div>
         </div>
       </section>
 

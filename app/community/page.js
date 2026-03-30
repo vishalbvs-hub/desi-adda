@@ -1,6 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Search, ExternalLink, Users, MessageCircle, Globe, MapPin } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { Search, ExternalLink, Users, MessageCircle, Globe, MapPin, ChevronLeft, ChevronRight, Plus, Calendar, List, Clock } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 import ScrollingChips from "@/components/ScrollingChips";
@@ -12,40 +15,77 @@ const SAFFRON = "#E8A317";
 const TABS = [
   { id: "orgs", label: "Organizations", icon: "\u{1F465}" },
   { id: "whatsapp", label: "WhatsApp Groups", icon: "\u{1F4AC}" },
+  { id: "events", label: "Local Events", icon: "\u{1F389}" },
 ];
 
 const CHIPS = [
   { emoji: "\u{1F465}", text: "Telugu associations Detroit" },
+  { emoji: "\u{1F389}", text: "desi events this weekend" },
   { emoji: "\u{1F4AC}", text: "WhatsApp groups for new arrivals" },
   { emoji: "\u{1F6D5}", text: "Tamil Sangam Michigan" },
-  { emoji: "\u{1F465}", text: "Gujarati community groups" },
-  { emoji: "\u{1F4AC}", text: "desi parents WhatsApp group" },
+  { emoji: "\u{1F483}", text: "garba night Metro Detroit" },
   { emoji: "\u{1F465}", text: "Indian American organizations" },
-  { emoji: "\u{1F4AC}", text: "H1B community group" },
+  { emoji: "\u{1F386}", text: "Diwali celebrations 2026" },
+  { emoji: "\u{1F4AC}", text: "desi parents WhatsApp group" },
+  { emoji: "\u{1F3A4}", text: "comedy shows near me" },
   { emoji: "\u{1F465}", text: "Bengali association Metro Detroit" },
-  { emoji: "\u{1F4AC}", text: "desi women's networking group" },
-  { emoji: "\u{1F465}", text: "Sikh community center" },
 ];
 
+const TYPE_COLORS = { Cultural: "#E8832A", Festival: "#E8832A", Religious: "#8B1A2B", Concert: "#6A1B9A", Comedy: "#6A1B9A", Entertainment: "#6A1B9A", Sports: "#2E7D32", Food: "#795548", Music: "#1565C0", Family: "#C2185B", Garba: "#E8832A" };
+
+function tryParseDate(d) { if (!d) return null; const iso = new Date(d + "T00:00:00"); return isNaN(iso.getTime()) ? null : iso; }
+function formatDateLong(d) { const p = tryParseDate(d); return p ? p.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : d || ""; }
+function getDaysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+function getFirstDayOfMonth(y, m) { return new Date(y, m, 1).getDay(); }
+
 export default function CommunityPage() {
-  const [tab, setTab] = useState("orgs");
+  return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading...</p></div>}><CommunityInner /></Suspense>;
+}
+
+function CommunityInner() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") || "orgs";
+  const [tab, setTab] = useState(initialTab);
   const [orgs, setOrgs] = useState(null);
+  const [events, setEvents] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState("calendar");
+  const [selectedDay, setSelectedDay] = useState(null);
+  const now = new Date();
+  const [calMonth, setCalMonth] = useState(now.getMonth());
+  const [calYear, setCalYear] = useState(now.getFullYear());
 
   useEffect(() => {
-    supabase.from("community_networking").select("*").order("name")
-      .then(({ data }) => setOrgs(data || []));
+    Promise.all([
+      supabase.from("community_networking").select("*").order("name"),
+      supabase.from("events").select("*").eq("status", "approved").order("event_date"),
+    ]).then(([o, e]) => { setOrgs(o.data || []); setEvents(e.data || []); });
   }, []);
 
   const triggerChat = (q) => { window.dispatchEvent(new CustomEvent("askadda", { detail: q })); };
 
-  if (!orgs) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading...</p></div>;
+  if (!orgs || !events) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading...</p></div>;
 
-  const filtered = orgs.filter(o => {
+  const filteredOrgs = orgs.filter(o => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return o.name?.toLowerCase().includes(q) || o.description?.toLowerCase().includes(q) || o.city?.toLowerCase().includes(q) || o.subcategories?.some(s => s.toLowerCase().includes(q));
   });
+
+  // Calendar logic
+  const eventsByDate = {};
+  for (const ev of events) { const p = tryParseDate(ev.event_date); if (p) { const k = `${p.getFullYear()}-${p.getMonth()}-${p.getDate()}`; if (!eventsByDate[k]) eventsByDate[k] = []; eventsByDate[k].push(ev); } }
+  const prevMonth = () => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); setSelectedDay(null); };
+  const nextMonth = () => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); setSelectedDay(null); };
+  const daysInMonth = getDaysInMonth(calYear, calMonth);
+  const firstDay = getFirstDayOfMonth(calYear, calMonth);
+  const today = now.getDate(); const isCurrentMonth = calMonth === now.getMonth() && calYear === now.getFullYear();
+  const monthName = new Date(calYear, calMonth).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const selectedEvents = selectedDay ? (eventsByDate[`${calYear}-${calMonth}-${selectedDay}`] || []) : [];
+  const groupedByMonth = {};
+  for (const ev of events) { const p = tryParseDate(ev.event_date); const k = p ? p.toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "Upcoming"; if (!groupedByMonth[k]) groupedByMonth[k] = []; groupedByMonth[k].push(ev); }
+
+  const toggleStyle = (active) => ({ padding: "6px 14px", borderRadius: "8px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer", border: "none", background: active ? SAFFRON : "transparent", color: active ? "white" : "#5A4A3F", display: "flex", alignItems: "center", gap: "5px", transition: "all 0.2s" });
 
   return (
     <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
@@ -57,16 +97,17 @@ export default function CommunityPage() {
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         <div style={{ position: "absolute", top: "10%", left: "6%", fontSize: "40px", opacity: 0.06 }}>{"\u{1F465}"}</div>
-        <div style={{ position: "absolute", top: "20%", right: "8%", fontSize: "50px", opacity: 0.05 }}>{"\u{1F91D}"}</div>
+        <div style={{ position: "absolute", top: "20%", right: "8%", fontSize: "50px", opacity: 0.05 }}>{"\u{1F389}"}</div>
         <div style={{ position: "absolute", bottom: "15%", left: "12%", fontSize: "44px", opacity: 0.05 }}>{"\u{1F4AC}"}</div>
-        <div style={{ position: "absolute", bottom: "8%", right: "20%", fontSize: "36px", opacity: 0.04 }}>{"\u{1F30D}"}</div>
+        <div style={{ position: "absolute", bottom: "8%", right: "20%", fontSize: "36px", opacity: 0.04 }}>{"\u{1F91D}"}</div>
+        <div style={{ position: "absolute", top: "55%", left: "3%", fontSize: "38px", opacity: 0.04 }}>{"\u{1F3AD}"}</div>
 
         <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
           {/* Tab Toggle */}
-          <div style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "20px" }}>
+          <div style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "20px", flexWrap: "wrap" }}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
-                padding: "10px 24px", borderRadius: "999px", fontSize: "14px", fontFamily: ff, fontWeight: 700, cursor: "pointer",
+                padding: "10px 22px", borderRadius: "999px", fontSize: "14px", fontFamily: ff, fontWeight: 700, cursor: "pointer",
                 background: tab === t.id ? SAFFRON : "rgba(255,255,255,0.1)",
                 color: tab === t.id ? "#1B3A26" : "rgba(255,255,255,0.6)",
                 border: tab === t.id ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.2)",
@@ -76,15 +117,16 @@ export default function CommunityPage() {
           </div>
 
           <h1 style={{ fontFamily: ff, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
-            Desi <span style={{ color: SAFFRON, fontStyle: "italic" }}>Community</span>
+            Community <span style={{ color: SAFFRON, fontStyle: "italic" }}>& Events</span>
           </h1>
           <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 24px", fontStyle: "italic" }}>
-            {tab === "orgs" ? "Cultural associations, professional networks & organizations" : "Connect with your community on WhatsApp"}
+            {tab === "orgs" ? "Cultural associations & organizations in Metro Detroit" : tab === "whatsapp" ? "Connect with your community on WhatsApp" : "Everything happening in Detroit's desi community"}
           </p>
 
+          {/* Search bar — chatbot for orgs, plain search for events */}
           <form onSubmit={e => { e.preventDefault(); if (searchQuery.trim()) triggerChat(searchQuery); }} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
             <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={tab === "orgs" ? "Find a community organization..." : "Find a WhatsApp group to join..."}
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={tab === "events" ? "Search events..." : tab === "whatsapp" ? "Find a WhatsApp group..." : "Find a community organization..."}
               style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
             <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
           </form>
@@ -96,37 +138,136 @@ export default function CommunityPage() {
 
       {/* CONTENT */}
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
-        {tab === "orgs" ? (
+
+        {/* ═══ ORGANIZATIONS TAB ═══ */}
+        {tab === "orgs" && (
           <>
-            <p style={{ fontSize: "13px", color: COLORS.textFaint, marginBottom: "16px" }}>{filtered.length} organizations</p>
+            <p style={{ fontSize: "13px", color: COLORS.textFaint, marginBottom: "16px" }}>{filteredOrgs.length} organizations</p>
             <div style={{ display: "grid", gap: "14px" }}>
-              {filtered.map(org => (
+              {filteredOrgs.map(org => (
                 <div key={org.id} style={{ background: "white", borderRadius: "14px", padding: "20px 24px", border: "1px solid #EDE6DE", transition: "box-shadow 0.2s" }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
                   <h3 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 700, margin: "0 0 6px", color: "#2D2420" }}>{org.name}</h3>
-                  {org.subcategories?.length > 0 && (
-                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
-                      {org.subcategories.map(s => <span key={s} style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#E8F5E9", color: "#2E7D32" }}>{s}</span>)}
-                    </div>
-                  )}
+                  {org.subcategories?.length > 0 && <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>{org.subcategories.map(s => <span key={s} style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#E8F5E9", color: "#2E7D32" }}>{s}</span>)}</div>}
                   {org.city && <p style={{ fontSize: "12px", color: COLORS.textMuted, margin: "0 0 4px", display: "flex", alignItems: "center", gap: "4px" }}><MapPin size={11} /> {org.city}</p>}
                   {org.description && <p style={{ fontSize: "13px", color: "#6B5B4F", margin: "6px 0 0", lineHeight: 1.5 }}>{org.description}</p>}
                   {org.website && <a href={org.website.startsWith("http") ? org.website : `https://${org.website}`} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "12px", color: COLORS.primary, fontWeight: 600, marginTop: "8px", textDecoration: "none" }}><Globe size={11} /> Visit Website <ExternalLink size={10} /></a>}
                 </div>
               ))}
+              {filteredOrgs.length === 0 && <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}><p style={{ fontFamily: ff, fontSize: "18px" }}>No organizations found</p></div>}
             </div>
-            {filtered.length === 0 && <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}><p style={{ fontFamily: ff, fontSize: "18px" }}>No organizations found</p></div>}
           </>
-        ) : (
+        )}
+
+        {/* ═══ WHATSAPP TAB ═══ */}
+        {tab === "whatsapp" && (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div style={{ fontSize: "56px", marginBottom: "16px" }}>{"\u{1F4AC}"}</div>
             <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>WhatsApp Groups — Coming Soon</h2>
             <p style={{ fontSize: "14px", color: COLORS.textMuted, maxWidth: "400px", margin: "0 auto", lineHeight: 1.6 }}>
-              We&apos;re compiling the best desi WhatsApp groups in Metro Detroit — new arrivals, parents, professionals, language-specific, and more. Check back soon!
+              We&apos;re compiling the best desi WhatsApp groups in Metro Detroit — new arrivals, parents, professionals, language-specific, and more.
             </p>
           </div>
         )}
+
+        {/* ═══ LOCAL EVENTS TAB ═══ */}
+        {tab === "events" && (
+          <>
+            {/* View toggle + Submit */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+              <div style={{ display: "flex", gap: "4px", background: "white", padding: "4px", borderRadius: "12px", border: "1px solid #EDE6DE" }}>
+                <button onClick={() => setViewMode("calendar")} style={toggleStyle(viewMode === "calendar")}><Calendar size={14} /> Calendar</button>
+                <button onClick={() => setViewMode("list")} style={toggleStyle(viewMode === "list")}><List size={14} /> List</button>
+              </div>
+              <Link href="/events/submit" style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "8px 16px", borderRadius: "10px", background: COLORS.primary, color: "white", fontFamily: fb, fontWeight: 600, fontSize: "13px", textDecoration: "none" }}><Plus size={14} /> Submit Event</Link>
+            </div>
+
+            {viewMode === "calendar" ? (
+              <>
+                {/* Calendar */}
+                <div style={{ background: "white", borderRadius: "16px", border: "1px solid #EDE6DE", overflow: "hidden" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #EDE6DE" }}>
+                    <button onClick={prevMonth} style={{ background: "none", border: "none", cursor: "pointer", padding: "6px" }}><ChevronLeft size={20} color="#5A4A3F" /></button>
+                    <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: 0 }}>{monthName}</h3>
+                    <button onClick={nextMonth} style={{ background: "none", border: "none", cursor: "pointer", padding: "6px" }}><ChevronRight size={20} color="#5A4A3F" /></button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center" }}>
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => <div key={d} style={{ padding: "10px 0", fontSize: "11px", fontWeight: 700, color: "#8A7968", fontFamily: fb }}>{d}</div>)}
+                    {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const day = i + 1;
+                      const key = `${calYear}-${calMonth}-${day}`;
+                      const hasEvents = !!eventsByDate[key];
+                      const isToday = isCurrentMonth && day === today;
+                      const isSelected = selectedDay === day;
+                      return (
+                        <button key={day} onClick={() => setSelectedDay(isSelected ? null : day)} style={{
+                          padding: "8px 0", fontSize: "14px", fontFamily: fb, fontWeight: isToday ? 700 : 500,
+                          background: isSelected ? SAFFRON : isToday ? "#FFF3E0" : "transparent",
+                          color: isSelected ? "white" : isToday ? SAFFRON : "#2D2420",
+                          border: "none", cursor: "pointer", borderRadius: "8px", margin: "2px",
+                          position: "relative",
+                        }}>
+                          {day}
+                          {hasEvents && <div style={{ position: "absolute", bottom: "4px", left: "50%", transform: "translateX(-50%)", width: "5px", height: "5px", borderRadius: "50%", background: isSelected ? "white" : SAFFRON }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Selected day events */}
+                {selectedDay && (
+                  <div style={{ marginTop: "20px" }}>
+                    <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, marginBottom: "12px" }}>
+                      {new Date(calYear, calMonth, selectedDay).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                    </h3>
+                    {selectedEvents.length > 0 ? selectedEvents.map(ev => <EventCard key={ev.id} ev={ev} />) : <p style={{ fontSize: "14px", color: "#8A7968" }}>No events on this day.</p>}
+                  </div>
+                )}
+              </>
+            ) : (
+              /* List view */
+              <div>
+                {Object.entries(groupedByMonth).map(([month, evts]) => (
+                  <div key={month} style={{ marginBottom: "32px" }}>
+                    <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, marginBottom: "12px", color: "#2D2420" }}>{month}</h3>
+                    <div style={{ display: "grid", gap: "12px" }}>
+                      {evts.map(ev => <EventCard key={ev.id} ev={ev} />)}
+                    </div>
+                  </div>
+                ))}
+                {events.length === 0 && <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}><p style={{ fontFamily: ff, fontSize: "18px" }}>No upcoming events</p></div>}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EventCard({ ev }) {
+  const d = tryParseDate(ev.event_date);
+  const dateStr = d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+  const typeColor = TYPE_COLORS[ev.event_type] || "#8A7968";
+  return (
+    <div style={{ background: "white", borderRadius: "14px", padding: "18px 22px", border: "1px solid #EDE6DE", borderLeft: `4px solid ${typeColor}`, transition: "box-shadow 0.2s" }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+      <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
+        {dateStr && <div style={{ padding: "8px 12px", borderRadius: "10px", background: "#FFF3E0", fontFamily: FONTS.heading, fontSize: "13px", fontWeight: 700, color: "#E8A317", textAlign: "center", lineHeight: 1.2, flexShrink: 0 }}>{dateStr}</div>}
+        <div style={{ flex: 1 }}>
+          <h4 style={{ fontFamily: FONTS.heading, fontSize: "16px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>{ev.name}</h4>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", fontSize: "12px", color: "#8A7968", marginBottom: "4px" }}>
+            {ev.event_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${typeColor}15`, color: typeColor }}>{ev.event_type}</span>}
+            {ev.venue && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {ev.venue}</span>}
+            {ev.time && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><Clock size={11} /> {ev.time}</span>}
+          </div>
+          {ev.description && <p style={{ fontSize: "13px", color: "#6B5B4F", margin: "4px 0 0", lineHeight: 1.5 }}>{ev.description?.substring(0, 150)}{ev.description?.length > 150 ? "..." : ""}</p>}
+          {ev.url && <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "12px", color: COLORS.primary, fontWeight: 600, marginTop: "6px", textDecoration: "none" }}>More Info <ExternalLink size={10} /></a>}
+        </div>
       </div>
     </div>
   );

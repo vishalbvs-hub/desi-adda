@@ -9,9 +9,8 @@ const NAV_ITEMS = [
   { label: "Professionals", href: "/professionals" },
   { label: "Event\nPlanning", href: "/event-planning" },
   { label: "Entertainment", href: "/entertainment" },
-  { label: "Community", href: "/community" },
+  { label: "Community\n& Events", href: "/community" },
   { label: "Classifieds", href: "/classifieds" },
-  { label: "Local\nEvents", href: "/events" },
   { label: "News", href: "/blog" },
 ];
 
