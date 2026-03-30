@@ -223,7 +223,13 @@ function BusinessesPageInner() {
           <>
             {listings.length > 0 ? (
               <div style={{ display: "grid", gap: "14px" }}>
-                {listings.map((item, i) => <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} />)}
+                {listings.map((item, i) => {
+                  const card = <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} />;
+                  if (item._catId === "food" && item.slug) {
+                    return <Link key={`${item._catId}-${item.id || i}`} href={`/restaurants/${item.slug}`} style={{ textDecoration: "none", color: "inherit" }}>{card}</Link>;
+                  }
+                  return card;
+                })}
               </div>
             ) : (
               <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}>
