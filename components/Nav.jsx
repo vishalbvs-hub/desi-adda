@@ -4,14 +4,14 @@ import { usePathname } from "next/navigation";
 import { FONTS, COLORS } from "@/lib/constants";
 
 const NAV_ITEMS = [
-  { label: "Local Businesses", href: "/businesses" },
+  { label: "Local\nBusinesses", href: "/businesses" },
   { label: "Temples", href: "/temples" },
   { label: "Professionals", href: "/professionals" },
-  { label: "Event Planning", href: "/event-planning" },
-  { label: "Community", href: "/community" },
+  { label: "Event\nPlanning", href: "/event-planning" },
   { label: "Entertainment", href: "/entertainment" },
+  { label: "Community", href: "/community" },
   { label: "Classifieds", href: "/classifieds" },
-  { label: "Events", href: "/events" },
+  { label: "Local\nEvents", href: "/events" },
   { label: "News", href: "/blog" },
 ];
 
@@ -30,17 +30,24 @@ export default function Nav() {
           fontFamily: FONTS.heading, fontSize: "38px", fontWeight: 700,
           color: COLORS.primary, padding: "10px 0", textDecoration: "none", flexShrink: 0,
         }}>adda.</Link>
-        <div style={{ display: "flex", gap: "2px", overflowX: "auto", scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", gap: "2px", overflowX: "auto", scrollbarWidth: "none", alignItems: "center" }}>
           {NAV_ITEMS.map(item => {
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            const isStacked = item.label.includes("\n");
+            const lines = item.label.split("\n");
             return (
               <Link key={item.label} href={item.href} style={{
-                background: "none", padding: "12px 12px", fontSize: "13px",
+                background: "none", padding: "8px 12px", fontSize: "12px",
                 fontWeight: 600, color: isActive ? COLORS.primary : "#5A4A3F",
-                fontFamily: FONTS.body, whiteSpace: "nowrap", textDecoration: "none",
+                fontFamily: FONTS.body, textDecoration: "none",
                 borderBottom: `2px solid ${isActive ? COLORS.primary : "transparent"}`,
-                transition: "all 0.2s",
-              }}>{item.label}</Link>
+                transition: "all 0.2s", textAlign: "center",
+                lineHeight: isStacked ? 1.2 : 1.4,
+                display: "flex", flexDirection: "column", alignItems: "center",
+                whiteSpace: "nowrap",
+              }}>
+                {isStacked ? lines.map((line, i) => <span key={i}>{line}</span>) : item.label}
+              </Link>
             );
           })}
         </div>
