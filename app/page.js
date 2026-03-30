@@ -15,16 +15,29 @@ const WARM_CLAY = "#E8D5C4";
 const SAFFRON = "#E8A317";
 
 const QUICK_CATS = [
-  { emoji: "\u{1F35B}", label: "Restaurants", href: "/category/food" },
-  { emoji: "\u{1F6D5}", label: "Temples", href: "/category/religious" },
-  { emoji: "\u{1F958}", label: "Groceries", href: "/category/grocery" },
-  { emoji: "\u{1F490}", label: "Weddings", href: "/category/weddings" },
-  { emoji: "\u{1FA7A}", label: "Doctors", href: "/professionals" },
-  { emoji: "\u{1F3E0}", label: "Roommates", href: "/community" },
+  { emoji: "\u{1F35B}", label: "Restaurants", href: "/businesses?cat=food" },
+  { emoji: "\u{1F6D5}", label: "Temples", href: "/businesses?cat=religious" },
+  { emoji: "\u{1F958}", label: "Groceries", href: "/businesses?cat=grocery" },
+  { emoji: "\u{1F490}", label: "Weddings", href: "/businesses?cat=weddings" },
+  { emoji: "\u{1FA7A}", label: "Doctors", href: "/professionals?type=Doctor" },
+  { emoji: "\u{2696}\uFE0F", label: "Lawyers", href: "/professionals?type=Attorney" },
+  { emoji: "\u{1F4CB}", label: "Tax / CPA", href: "/professionals?type=CPA" },
+  { emoji: "\u{1F3E1}", label: "Real Estate", href: "/professionals?type=Realtor" },
+  { emoji: "\u{1F6E1}\uFE0F", label: "Insurance", href: "/professionals?type=Insurance" },
+  { emoji: "\u{1F4B0}", label: "Financial", href: "/professionals?type=Financial" },
+  { emoji: "\u{1F485}", label: "Beauty", href: "/businesses?cat=beauty" },
+  { emoji: "\u{1F3E0}", label: "Roommates", href: "/community?cat=roommates" },
+  { emoji: "\u{1F4BC}", label: "Jobs", href: "/community?cat=jobs" },
+  { emoji: "\u{1F37D}\uFE0F", label: "Catering", href: "/businesses?cat=food&q=catering" },
+  { emoji: "\u{1F4B8}", label: "Money Transfer", href: "/businesses?cat=travel" },
+  { emoji: "\u{1F697}", label: "Auto", href: "/community?cat=for-sale" },
+  { emoji: "\u{1F9D8}", label: "Wellness", href: "/businesses?cat=wellness" },
+  { emoji: "\u{1F465}", label: "Community", href: "/businesses?cat=community" },
   { emoji: "\u{1F3AC}", label: "Movies", href: "/movies" },
-  { emoji: "\u{1F389}", label: "Events", href: "/events" },
   { emoji: "\u{1F3B5}", label: "Music", href: "/music" },
+  { emoji: "\u{1F389}", label: "Events", href: "/events" },
   { emoji: "\u{1F3A8}", label: "Kids", href: "/category/family" },
+  { emoji: "\u{1F4F0}", label: "News", href: "/blog" },
 ];
 
 function Divider() {

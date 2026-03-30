@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, MapPin, Calendar, Ticket } from "lucide-react";
+import { ArrowLeft, ExternalLink, MapPin, Calendar, Ticket, Search } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
-import InlineAskBar from "@/components/InlineAskBar";
+import ScrollingChips from "@/components/ScrollingChips";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
@@ -168,25 +168,32 @@ export default function MusicPage() {
               </button>
             ))}
           </div>
+
+          {/* Search bar inside hero */}
+          <form onSubmit={e => { e.preventDefault(); if (true) { window.dispatchEvent(new CustomEvent("askadda", { detail: document.getElementById("music-search").value })); document.getElementById("music-search").value = ""; } }} style={{ maxWidth: "560px", margin: "24px auto 0", position: "relative" }}>
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+            <input id="music-search" placeholder="Ask about music... new Telugu songs? best playlist?"
+              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
+            <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
+          </form>
+          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
+            <ScrollingChips chips={[
+              { emoji: "\u{1F3B5}", text: "trending Telugu songs this week" },
+              { emoji: "\u{1F3A4}", text: "Anirudh concerts near Detroit" },
+              { emoji: "\u{1F3A7}", text: "best Tamil playlist on Spotify" },
+              { emoji: "\u{1F525}", text: "new Punjabi songs this week" },
+              { emoji: "\u{1F3B6}", text: "Arijit Singh latest hits" },
+              { emoji: "\u{1F3B8}", text: "Malayalam indie music" },
+              { emoji: "\u{1F3B9}", text: "Bollywood road trip playlist" },
+              { emoji: "\u{1F399}\uFE0F", text: "desi concerts in Michigan" },
+              { emoji: "\u{1F4FA}", text: "best Kannada songs 2026" },
+              { emoji: "\u{1F3A4}", text: "Diljit Dosanjh tour dates" },
+            ]} onChipClick={(chip) => window.dispatchEvent(new CustomEvent("askadda", { detail: `${chip.emoji} ${chip.text}` }))} variant="light" />
+          </div>
         </div>
       </section>
 
-      {/* ═══ SEARCH BAR + FILTERS ═══ */}
-      <InlineAskBar
-        placeholder="Ask about music... new Telugu songs? best Bollywood playlist?"
-        chips={[
-          { emoji: "\u{1F3B5}", text: "trending Telugu songs this week" },
-          { emoji: "\u{1F3A4}", text: "Anirudh concerts near Detroit" },
-          { emoji: "\u{1F3A7}", text: "best Tamil playlist on Spotify" },
-          { emoji: "\u{1F525}", text: "new Punjabi songs this week" },
-          { emoji: "\u{1F3B6}", text: "Arijit Singh latest hits" },
-          { emoji: "\u{1F3B8}", text: "Malayalam indie music" },
-          { emoji: "\u{1F3B9}", text: "Bollywood road trip playlist" },
-          { emoji: "\u{1F399}\uFE0F", text: "desi concerts in Michigan" },
-          { emoji: "\u{1F4FA}", text: "best Kannada songs 2026" },
-          { emoji: "\u{1F3A4}", text: "Diljit Dosanjh tour dates" },
-        ]}
-      />
+      {/* ═══ FILTERS ═══ */}
       <div style={{
         background: "white", borderBottom: "1px solid #EDE6DE",
         padding: "12px 20px", display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap", alignItems: "center",

@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Clock, Star, Play, Ticket } from "lucide-react";
+import { ArrowLeft, ExternalLink, Clock, Star, Play, Ticket, Search } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
-import InlineAskBar from "@/components/InlineAskBar";
+import ScrollingChips from "@/components/ScrollingChips";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
@@ -98,14 +98,38 @@ export default function MoviesPage() {
           <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
             {LANGUAGES.map(l => (<button key={l} onClick={() => setLang(l)} style={{ padding: "8px 20px", borderRadius: "999px", fontSize: "13px", fontFamily: fb, fontWeight: 600, cursor: "pointer", border: lang === l ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)", background: lang === l ? SAFFRON : "rgba(255,255,255,0.08)", color: lang === l ? "#1a0a0a" : "rgba(255,255,255,0.7)", transition: "all 0.25s" }}>{l}</button>))}
           </div>
-          <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap", marginTop: "14px" }}>
-            {SECTIONS.map(s => (<button key={s.id} onClick={() => setSection(s.id)} style={{ padding: "6px 16px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer", border: section === s.id ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)", background: section === s.id ? SAFFRON : "rgba(255,255,255,0.08)", color: section === s.id ? "#1a0a0a" : "rgba(255,255,255,0.6)", transition: "all 0.25s" }}>{s.icon} {s.label}</button>))}
+
+          {/* Search bar inside hero */}
+          <form onSubmit={e => { e.preventDefault(); const v = document.getElementById("movie-search").value; if (v.trim()) { window.dispatchEvent(new CustomEvent("askadda", { detail: v })); document.getElementById("movie-search").value = ""; } }} style={{ maxWidth: "560px", margin: "24px auto 0", position: "relative" }}>
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+            <input id="movie-search" placeholder="Ask about movies... new Telugu films on Netflix? Dhurandhar review?"
+              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
+            <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
+          </form>
+          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
+            <ScrollingChips chips={[
+              { emoji: "\u{1F3AC}", text: "Telugu movies on Netflix" },
+              { emoji: "\u{1F37F}", text: "best Bollywood movie 2026" },
+              { emoji: "\u{1F4FA}", text: "new Malayalam movies on OTT" },
+              { emoji: "\u{1F3AC}", text: "Dhurandhar review" },
+              { emoji: "\u{2B50}", text: "highest rated Tamil movies" },
+              { emoji: "\u{1F39F}\uFE0F", text: "Indian movies in theaters Michigan" },
+              { emoji: "\u{1F4C5}", text: "upcoming Punjabi movies" },
+              { emoji: "\u{1F3A5}", text: "Coolie trailer Rajinikanth" },
+              { emoji: "\u{1F4DA}", text: "best Telugu movies all time" },
+              { emoji: "\u{1F525}", text: "Kannada movies 2026" },
+            ]} onChipClick={(chip) => window.dispatchEvent(new CustomEvent("askadda", { detail: `${chip.emoji} ${chip.text}` }))} variant="light" />
           </div>
         </div>
       </section>
 
-      {/* SEARCH BAR + FILTERS */}
-      <InlineAskBar placeholder="Ask about movies... new Telugu films on Netflix? Dhurandhar review?" chips={[{emoji:"\u{1F3AC}",text:"Telugu movies on Netflix"},{emoji:"\u{1F37F}",text:"best Bollywood movie 2026"},{emoji:"\u{1F4FA}",text:"new Malayalam movies on OTT"},{emoji:"\u{1F3AC}",text:"Dhurandhar review"},{emoji:"\u{2B50}",text:"highest rated Tamil movies"},{emoji:"\u{1F39F}\uFE0F",text:"Indian movies in theaters Michigan"},{emoji:"\u{1F4C5}",text:"upcoming Punjabi movies"},{emoji:"\u{1F3A5}",text:"Coolie trailer Rajinikanth"},{emoji:"\u{1F4DA}",text:"best Telugu movies all time"},{emoji:"\u{1F525}",text:"Kannada movies 2026"}]} />
+      {/* SECTION FILTERS */}
+      <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+        <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
+          {SECTIONS.map(s => (<button key={s.id} onClick={() => setSection(s.id)} style={{ padding: "7px 16px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer", border: section === s.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE", background: section === s.id ? SAFFRON : "white", color: section === s.id ? "#2D2420" : COLORS.textMuted, transition: "all 0.25s" }}>{s.icon} {s.label}</button>))}
+        </div>
+      </div>
+
       {/* CONTENT + SIDEBAR */}
       <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 20px", display: "flex", gap: "32px", alignItems: "flex-start" }}>
         <div ref={moviesRef} style={{ flex: 1, minWidth: 0, padding: "48px 0" }}>

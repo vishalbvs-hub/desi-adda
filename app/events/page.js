@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, MapPin, Plus, Calendar, List, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Plus, Calendar, List, ExternalLink, Search } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
+import ScrollingChips from "@/components/ScrollingChips";
 
 const SAFFRON = "#E8A317";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -122,32 +123,53 @@ export default function EventsPage() {
 
   return (
     <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
-      {/* Header */}
+      {/* HERO */}
+      <section style={{
+        background: "linear-gradient(135deg, #2D1B4E 0%, #4A2574 40%, #6B35A0 100%)",
+        minHeight: "280px", padding: "40px 20px 36px", textAlign: "center",
+        position: "relative", overflow: "hidden",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <div style={{ position: "absolute", top: "10%", left: "6%", fontSize: "40px", opacity: 0.06 }}>{"\u{1F389}"}</div>
+        <div style={{ position: "absolute", top: "20%", right: "8%", fontSize: "50px", opacity: 0.05 }}>{"\u{1F3B6}"}</div>
+        <div style={{ position: "absolute", bottom: "15%", left: "12%", fontSize: "44px", opacity: 0.05 }}>{"\u{1F3AD}"}</div>
+        <div style={{ position: "absolute", bottom: "8%", right: "20%", fontSize: "36px", opacity: 0.04 }}>{"\u{1F3AA}"}</div>
+        <div style={{ position: "absolute", top: "50%", left: "3%", fontSize: "38px", opacity: 0.04 }}>{"\u{1F3A4}"}</div>
+
+        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
+          <h1 style={{ fontFamily: ff, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
+            Desi <span style={{ color: "#E8A317", fontStyle: "italic" }}>Events</span>
+          </h1>
+          <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 24px", fontStyle: "italic" }}>
+            Everything happening in Detroit&apos;s desi community
+          </p>
+          <form onSubmit={e => { e.preventDefault(); const v = document.getElementById("events-search").value; if (v.trim()) { window.dispatchEvent(new CustomEvent("askadda", { detail: v })); document.getElementById("events-search").value = ""; } }} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+            <input id="events-search" placeholder="Find events... garba night? Diwali mela? comedy show?"
+              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
+            <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: "#E8A317", color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
+          </form>
+          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
+            <ScrollingChips chips={[
+              { emoji: "\u{1F389}", text: "desi events this weekend" },
+              { emoji: "\u{1F483}", text: "garba night Metro Detroit" },
+              { emoji: "\u{1F386}", text: "Diwali celebrations 2026" },
+              { emoji: "\u{1F3A4}", text: "comedy shows near me" },
+              { emoji: "\u{1F3B6}", text: "Bollywood concerts Michigan" },
+              { emoji: "\u{1F54C}", text: "Eid events Detroit" },
+              { emoji: "\u{1F6D5}", text: "temple festivals this month" },
+              { emoji: "\u{1F37D}\uFE0F", text: "desi food festivals" },
+              { emoji: "\u{1F3AD}", text: "cultural programs for kids" },
+              { emoji: "\u{1F389}", text: "Holi celebrations nearby" },
+            ]} onChipClick={(chip) => window.dispatchEvent(new CustomEvent("askadda", { detail: `${chip.emoji} ${chip.text}` }))} variant="light" />
+          </div>
+        </div>
+      </section>
+
+      {/* VIEW TOGGLE + SUBMIT */}
       <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
         <div style={{ maxWidth: "960px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "6px", color: COLORS.primary, fontFamily: fb, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
-            <ChevronLeft size={18} /> Back
-          </Link>
-          <Link href="/events/submit" style={{
-            display: "inline-flex", alignItems: "center", gap: "5px",
-            padding: "8px 16px", borderRadius: "10px", background: COLORS.primary,
-            color: "white", fontFamily: fb, fontWeight: 600, fontSize: "13px", textDecoration: "none",
-          }}>
-            <Plus size={14} /> Submit Event
-          </Link>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px" }}>
-        {/* Title + Toggle */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
-          <div>
-            <h1 style={{ fontFamily: ff, fontSize: "28px", fontWeight: 700, margin: "0 0 4px" }}>Events</h1>
-            <p style={{ fontSize: "14px", color: "#8A7968", margin: 0 }}>
-              Everything happening in Detroit&apos;s desi community.
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: "4px", background: "white", padding: "4px", borderRadius: "12px", border: "1px solid #EDE6DE" }}>
+          <div style={{ display: "flex", gap: "4px", background: "#FFFBF5", padding: "4px", borderRadius: "12px", border: "1px solid #EDE6DE" }}>
             <button onClick={() => setViewMode("calendar")} style={toggleStyle(viewMode === "calendar")}>
               <Calendar size={14} /> Calendar
             </button>
@@ -155,7 +177,13 @@ export default function EventsPage() {
               <List size={14} /> List
             </button>
           </div>
+          <Link href="/events/submit" style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "8px 16px", borderRadius: "10px", background: COLORS.primary, color: "white", fontFamily: fb, fontWeight: 600, fontSize: "13px", textDecoration: "none" }}>
+            <Plus size={14} /> Submit Event
+          </Link>
         </div>
+      </div>
+
+      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px" }}>
 
         {viewMode === "calendar" ? (
           <>
