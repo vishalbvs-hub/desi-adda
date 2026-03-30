@@ -16,7 +16,7 @@ const SAFFRON = "#E8A317";
 
 const QUICK_CATS = [
   { emoji: "\u{1F35B}", label: "Restaurants", href: "/businesses?cat=food" },
-  { emoji: "\u{1F6D5}", label: "Temples", href: "/businesses?cat=religious" },
+  { emoji: "\u{1F6D5}", label: "Temples", href: "/temples" },
   { emoji: "\u{1F958}", label: "Groceries", href: "/businesses?cat=grocery" },
   { emoji: "\u{1F490}", label: "Weddings", href: "/businesses?cat=weddings" },
   { emoji: "\u{1FA7A}", label: "Doctors", href: "/professionals?type=Doctor" },
