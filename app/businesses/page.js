@@ -233,90 +233,35 @@ function BusinessesPageInner() {
         </div>
       </div>
 
-      {/* SUBCATEGORY PILLS + VIEW TOGGLE */}
-      {(subs.length > 0 || true) && (
-        <div style={{ background: "#FFFBF5", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
-          <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", flex: 1 }}>
-              {subs.map(s => (
-                <button key={s} onClick={() => toggleSub(s)} style={{
-                  padding: "5px 14px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 500, cursor: "pointer",
-                  border: activeSubs.includes(s) ? `2px solid ${COLORS.primary}` : "2px solid #E8E0D8",
-                  background: activeSubs.includes(s) ? "#FDE8EF" : "white",
-                  color: activeSubs.includes(s) ? COLORS.primary : "#5A4A3F", transition: "all 0.2s", whiteSpace: "nowrap",
-                }}>{s}</button>
-              ))}
-              {activeSubs.length > 0 && (
-                <button onClick={() => setActiveSubs([])} style={{
-                  padding: "5px 14px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 500,
-                  border: `2px solid ${COLORS.primary}`, background: "white", color: COLORS.primary, cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: "4px",
-                }}><X size={10} /> Clear</button>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: "6px" }}>
-              <button onClick={() => setViewMode("list")} style={{
-                padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 500, cursor: "pointer",
-                border: viewMode === "list" ? `2px solid ${SAFFRON}` : "2px solid #E8E0D8",
-                background: viewMode === "list" ? `${SAFFRON}18` : "white", color: viewMode === "list" ? SAFFRON : "#5A4A3F",
-                display: "flex", alignItems: "center", gap: "4px",
-              }}><List size={13} /> List</button>
-              <button onClick={() => setViewMode("map")} style={{
-                padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 500, cursor: "pointer",
-                border: viewMode === "map" ? `2px solid ${SAFFRON}` : "2px solid #E8E0D8",
-                background: viewMode === "map" ? `${SAFFRON}18` : "white", color: viewMode === "map" ? SAFFRON : "#5A4A3F",
-                display: "flex", alignItems: "center", gap: "4px",
-              }}><Map size={13} /> Map</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* RESTAURANT FILTERS */}
+      {/* RESTAURANT FILTERS — dropdowns only */}
       {isRestaurants && (
-        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "14px 20px" }}>
-          <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-            {/* Cuisine type pills */}
-            <div style={{ display: "flex", gap: "6px", overflowX: "auto", scrollbarWidth: "none", marginBottom: "10px", paddingBottom: "2px" }}>
-              {CUISINE_FILTERS.map(c => (
-                <button key={c} onClick={() => setCuisineFilter(c)} style={{
-                  padding: "5px 14px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
-                  border: cuisineFilter === c ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
-                  background: cuisineFilter === c ? `${SAFFRON}15` : "white",
-                  color: cuisineFilter === c ? SAFFRON : "#5A4A3F", transition: "all 0.2s",
-                }}>{c}</button>
-              ))}
-            </div>
-            {/* Dropdowns row */}
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-              <select value={vegFilter} onChange={e => setVegFilter(e.target.value)} style={{
-                padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
-              }}>
-                {VEG_FILTERS.map(v => <option key={v} value={v}>{v === "All" ? "Veg/Non-Veg" : v === "Veg" ? "🌿 Veg Only" : v === "Both" ? "🍽️ Veg & Non-Veg" : v}</option>)}
-              </select>
-              <select value={priceFilter} onChange={e => setPriceFilter(e.target.value)} style={{
-                padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
-              }}>
-                {PRICE_FILTERS.map(p => <option key={p} value={p}>{p === "All" ? "Any Price" : p}</option>)}
-              </select>
-              <select value={cityFilter} onChange={e => setCityFilter(e.target.value)} style={{
-                padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
-              }}>
-                {restaurantCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
-              </select>
-              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
-                padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
-              }}>
-                {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-              </select>
-              {(cuisineFilter !== "All Cuisines" || vegFilter !== "All" || priceFilter !== "All" || cityFilter !== "All") && (
-                <button onClick={() => { setCuisineFilter("All Cuisines"); setVegFilter("All"); setPriceFilter("All"); setCityFilter("All"); }} style={{
-                  padding: "5px 12px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 600,
-                  border: `1px solid ${COLORS.primary}`, background: "white", color: COLORS.primary, cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: "4px",
-                }}><X size={10} /> Clear Filters</button>
-              )}
-            </div>
+        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+          <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <select value={cuisineFilter} onChange={e => setCuisineFilter(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {CUISINE_FILTERS.map(c => <option key={c} value={c}>{c === "All Cuisines" ? "All Cuisines" : c}</option>)}
+            </select>
+            <select value={vegFilter} onChange={e => setVegFilter(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {VEG_FILTERS.map(v => <option key={v} value={v}>{v === "All" ? "Veg / Non-Veg" : v === "Veg" ? "Veg Only" : v === "Both" ? "Veg & Non-Veg" : v}</option>)}
+            </select>
+            <select value={priceFilter} onChange={e => setPriceFilter(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {PRICE_FILTERS.map(p => <option key={p} value={p}>{p === "All" ? "Any Price" : p}</option>)}
+            </select>
+            <select value={cityFilter} onChange={e => setCityFilter(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {restaurantCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
+            </select>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
           </div>
         </div>
       )}
