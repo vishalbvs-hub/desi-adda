@@ -52,6 +52,10 @@ const CUISINE_FILTERS = [
 
 const VEG_FILTERS = ["All", "Veg", "Both", "Non-Veg"];
 const PRICE_FILTERS = ["All", "$", "$$", "$$$"];
+const STORE_TYPE_FILTERS = [
+  "All Types", "Full Grocery", "South Indian Specialty", "Bengali Specialty",
+  "Kerala Specialty", "Halal Meat Shop", "Sweets & Grocery", "Fresh Produce", "Spice Shop",
+];
 const SORT_OPTIONS = [
   { id: "rating", label: "Top Rated" },
   { id: "reviews", label: "Most Reviewed" },
@@ -75,6 +79,10 @@ function BusinessesPageInner() {
   const [priceFilter, setPriceFilter] = useState("All");
   const [cityFilter, setCityFilter] = useState("All");
   const [sortBy, setSortBy] = useState("rating");
+  // Grocery-specific filters
+  const [storeTypeFilter, setStoreTypeFilter] = useState("All Types");
+  const [groceryCityFilter, setGroceryCityFilter] = useState("All");
+  const [grocerySortBy, setGrocerySortBy] = useState("rating");
 
   useEffect(() => { fetchAllData().then(_setData); }, []);
 
@@ -86,6 +94,9 @@ function BusinessesPageInner() {
     setPriceFilter("All");
     setCityFilter("All");
     setSortBy("rating");
+    setStoreTypeFilter("All Types");
+    setGroceryCityFilter("All");
+    setGrocerySortBy("rating");
   }, [activeCat]);
 
   if (!_data) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>);
@@ -167,6 +178,32 @@ function BusinessesPageInner() {
   if (activeCat === "sweets") {
     listings.sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
   }
+
+  // Grocery-specific filters
+  const isGrocery = activeCat === "grocery";
+  if (isGrocery) {
+    if (storeTypeFilter !== "All Types") {
+      listings = listings.filter(i =>
+        (i.store_type || i.description || "").toLowerCase().includes(storeTypeFilter.toLowerCase()) ||
+        (i.subcategories || []).some(s => s.toLowerCase().includes(storeTypeFilter.toLowerCase()))
+      );
+    }
+    if (groceryCityFilter !== "All") {
+      listings = listings.filter(i => i.city === groceryCityFilter);
+    }
+    if (grocerySortBy === "rating") {
+      listings.sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
+    } else if (grocerySortBy === "reviews") {
+      listings.sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
+    } else if (grocerySortBy === "name") {
+      listings.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    }
+  }
+
+  // Get unique cities for grocery filter
+  const groceryCities = isGrocery
+    ? ["All", ...new Set((_data.CATEGORIES.find(c => c.id === "grocery")?.data || []).map(g => g.city).filter(Boolean).sort())]
+    : [];
 
   // Get unique cities for restaurant city filter
   const restaurantCities = isRestaurants
@@ -258,6 +295,29 @@ function BusinessesPageInner() {
               {restaurantCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
             </select>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* GROCERY FILTERS */}
+      {isGrocery && (
+        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+          <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <select value={storeTypeFilter} onChange={e => setStoreTypeFilter(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {STORE_TYPE_FILTERS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <select value={groceryCityFilter} onChange={e => setGroceryCityFilter(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {groceryCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
+            </select>
+            <select value={grocerySortBy} onChange={e => setGrocerySortBy(e.target.value)} style={{
               padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
             }}>
               {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
