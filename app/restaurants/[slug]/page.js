@@ -83,13 +83,29 @@ export default async function RestaurantPage({ params }) {
 
         {/* Photo Gallery */}
         {photos.length > 0 && (
-          <div style={{ display: "flex", gap: "4px", overflowX: "auto", scrollbarWidth: "none", background: "#2D2420" }}>
-            {photos.slice(0, 3).map((url, i) => (
-              <div key={i} style={{ flexShrink: 0, width: photos.length === 1 ? "100%" : "50%", minWidth: "280px", height: "280px" }}>
+          <div style={{
+            display: "flex", gap: "4px", overflowX: "auto", background: "#2D2420",
+            scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none", msOverflowStyle: "none",
+          }}>
+            {photos.map((url, i) => (
+              <div key={i} style={{
+                flexShrink: 0,
+                width: photos.length === 1 ? "100%" : photos.length === 2 ? "50%" : "clamp(280px, 40vw, 400px)",
+                height: "320px",
+                scrollSnapAlign: "start",
+              }}>
                 <img src={url} alt={`${r.name} photo ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
             ))}
           </div>
+          {photos.length > 1 && (
+            <div style={{ background: "#2D2420", padding: "6px 0", textAlign: "center" }}>
+              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", fontFamily: fb }}>
+                {photos.length} photos — scroll to see more →
+              </span>
+            </div>
+          )}
         )}
 
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "28px 20px" }}>

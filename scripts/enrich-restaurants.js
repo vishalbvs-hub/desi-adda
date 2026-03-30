@@ -48,7 +48,7 @@ async function getPlaceDetails(placeId) {
   return null;
 }
 
-function extractPhotoRefs(photos, max = 3) {
+function extractPhotoRefs(photos, max = 10) {
   if (!photos || photos.length === 0) return [];
   return photos.slice(0, max).map(p => p.photo_reference);
 }
