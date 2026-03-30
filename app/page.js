@@ -90,21 +90,28 @@ export default function HomePage() {
       {/* ─── HERO ─── */}
       <section style={{
         minHeight: "85vh", display: "flex", alignItems: "center", justifyContent: "center",
-        background: "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1730816243891-e4e28e56fa7f?w=1920&q=80') center/cover no-repeat",
+        backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1730816243891-e4e28e56fa7f?w=1920&q=80')",
+        backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
         padding: "60px 20px", textAlign: "center", position: "relative",
       }}>
         <div style={{ maxWidth: "720px", margin: "0 auto" }}>
           <h1 style={{
-            fontFamily: ff, fontSize: "clamp(36px, 7vw, 64px)", fontWeight: 700,
-            color: "white", lineHeight: 1.1, margin: "0 0 16px",
+            fontFamily: fb, fontSize: "clamp(30px, 5.5vw, 48px)", fontWeight: 700,
+            color: "white", lineHeight: 1.2, margin: "0 0 6px",
           }}>
-            Everything Desi.<br />One Place.
+            Your desi life in <span style={{ fontFamily: ff, fontStyle: "italic", color: COLORS.primary }}> Detroit</span>
           </h1>
           <p style={{
-            fontSize: "clamp(15px, 2.5vw, 18px)", color: "rgba(255,255,255,0.85)",
+            fontFamily: ff, fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 300,
+            color: "rgba(255,255,255,0.8)", margin: "0 0 24px", fontStyle: "italic",
+          }}>
+            the gathering place for desi life in America.
+          </p>
+          <p style={{
+            fontSize: "clamp(14px, 2.2vw, 16px)", color: "rgba(255,255,255,0.75)",
             lineHeight: 1.6, margin: "0 auto 32px", maxWidth: "560px",
           }}>
-            The easiest way to find restaurants, temples, doctors, roommates, and more for the South Asian community in Metro Detroit.
+            Restaurants, wedding vendors, temples, roommates, movies, and more — curated by the community, for the community.
           </p>
 
           <form onSubmit={handleSearch} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
