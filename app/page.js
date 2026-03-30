@@ -257,7 +257,7 @@ export default function HomePage() {
               </div>
             ) : askResult && (
               <>
-                <div style={{ fontSize: "14px", color: "#2D2420", lineHeight: 1.6, marginBottom: "16px" }}
+                <div style={{ fontSize: "14px", color: "#2D2420", lineHeight: 1.7, marginBottom: "16px", whiteSpace: "pre-line" }}
                   dangerouslySetInnerHTML={{ __html: askResult.response.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") }}
                 />
                 {askResult.listings?.length > 0 && (
