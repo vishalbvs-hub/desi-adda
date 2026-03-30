@@ -124,6 +124,60 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ═══ UPCOMING EVENTS ═══ */}
+        {events.length > 0 && (
+          <section ref={eventsRef} style={{ padding: "24px 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Upcoming Events</h2>
+              <Link href="/community?tab=events" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>All events <ArrowRight size={14} /></Link>
+            </div>
+            <div style={{ display: "grid", gap: "12px" }}>
+              {events.map(ev => (
+                <div key={ev.id} style={{ display: "flex", gap: "14px", background: "white", borderRadius: "14px", padding: "16px 20px", border: "1px solid #EDE6DE", alignItems: "center", transition: "box-shadow 0.2s" }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                  <div style={{ padding: "10px 14px", borderRadius: "10px", background: "#FFF3E0", fontFamily: ff, fontSize: "14px", fontWeight: 700, color: SAFFRON, textAlign: "center", lineHeight: 1.2, flexShrink: 0 }}>{formatDate(ev.event_date)}</div>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: "0 0 3px", color: "#2D2420" }}>{ev.name}</h4>
+                    <div style={{ fontSize: "12px", color: "#8A7968", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {ev.event_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `rgba(232,163,23,0.1)`, color: SAFFRON }}>{ev.event_type}</span>}
+                      {ev.venue && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {ev.venue}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ═══ LATEST CLASSIFIEDS ═══ */}
+        {classifieds.length > 0 && (
+          <section ref={classifiedsRef} style={{ padding: "24px 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Latest Classifieds</h2>
+              <Link href="/classifieds" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>View all <ArrowRight size={14} /></Link>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
+              {classifieds.map(post => {
+                const catInfo = CLASSIFIEDS_CATEGORIES.find(c => c.id === post.cat);
+                return (
+                  <Link key={post.id} href="/classifieds" style={{ background: "white", borderRadius: "14px", padding: "16px 20px", border: "1px solid #EDE6DE", textDecoration: "none", color: "inherit", transition: "box-shadow 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
+                    onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                      <span style={{ padding: "3px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>{catInfo ? `${catInfo.emoji} ${catInfo.label}` : post.cat}</span>
+                      {post.city && <span style={{ fontSize: "10px", color: "#A89888" }}>{post.city}</span>}
+                    </div>
+                    <h4 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>{post.title}</h4>
+                    <p style={{ fontSize: "12px", color: "#6B5B4F", margin: 0, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{post.body?.substring(0, 120)}</p>
+                    {post.budget && <p style={{ fontSize: "12px", fontWeight: 600, color: COLORS.primary, margin: "6px 0 0" }}>{post.budget}</p>}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* ═══ NOW IN THEATERS ═══ */}
         {nowPlaying.length > 0 && (
           <section ref={nowPlayingRef} style={{ padding: "24px 0" }}>
@@ -153,9 +207,9 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* ═══ NEW ON OTT ═══ */}
+        {/* ═══ NEW ON STREAMING ═══ */}
         {ottMovies.length > 0 && (
-          <section ref={ottRef} style={{ padding: "24px 0" }}>
+          <section ref={ottRef} style={{ padding: "24px 0 36px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>New on Streaming</h2>
               <Link href="/entertainment?tab=movies" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>All OTT <ArrowRight size={14} /></Link>
@@ -180,60 +234,6 @@ export default function HomePage() {
                       {m.watch_url && <a href={m.watch_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "11px", fontWeight: 600, color: plat.color, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "3px" }}><Play size={10} /> Watch Now</a>}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ═══ UPCOMING EVENTS ═══ */}
-        {events.length > 0 && (
-          <section ref={eventsRef} style={{ padding: "24px 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Upcoming Events</h2>
-              <Link href="/community?tab=events" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>All events <ArrowRight size={14} /></Link>
-            </div>
-            <div style={{ display: "grid", gap: "12px" }}>
-              {events.map(ev => (
-                <div key={ev.id} style={{ display: "flex", gap: "14px", background: "white", borderRadius: "14px", padding: "16px 20px", border: "1px solid #EDE6DE", alignItems: "center", transition: "box-shadow 0.2s" }}
-                  onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-                  <div style={{ padding: "10px 14px", borderRadius: "10px", background: "#FFF3E0", fontFamily: ff, fontSize: "14px", fontWeight: 700, color: SAFFRON, textAlign: "center", lineHeight: 1.2, flexShrink: 0 }}>{formatDate(ev.event_date)}</div>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: "0 0 3px", color: "#2D2420" }}>{ev.name}</h4>
-                    <div style={{ fontSize: "12px", color: "#8A7968", display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      {ev.event_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `rgba(232,163,23,0.1)`, color: SAFFRON }}>{ev.event_type}</span>}
-                      {ev.venue && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {ev.venue}</span>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ═══ LATEST CLASSIFIEDS ═══ */}
-        {classifieds.length > 0 && (
-          <section ref={classifiedsRef} style={{ padding: "24px 0 36px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Latest Classifieds</h2>
-              <Link href="/classifieds" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>View all <ArrowRight size={14} /></Link>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
-              {classifieds.map(post => {
-                const catInfo = CLASSIFIEDS_CATEGORIES.find(c => c.id === post.cat);
-                return (
-                  <Link key={post.id} href="/classifieds" style={{ background: "white", borderRadius: "14px", padding: "16px 20px", border: "1px solid #EDE6DE", textDecoration: "none", color: "inherit", transition: "box-shadow 0.2s" }}
-                    onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
-                    onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                      <span style={{ padding: "3px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>{catInfo ? `${catInfo.emoji} ${catInfo.label}` : post.cat}</span>
-                      {post.city && <span style={{ fontSize: "10px", color: "#A89888" }}>{post.city}</span>}
-                    </div>
-                    <h4 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>{post.title}</h4>
-                    <p style={{ fontSize: "12px", color: "#6B5B4F", margin: 0, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{post.body?.substring(0, 120)}</p>
-                    {post.budget && <p style={{ fontSize: "12px", fontWeight: 600, color: COLORS.primary, margin: "6px 0 0" }}>{post.budget}</p>}
-                  </Link>
                 );
               })}
             </div>
