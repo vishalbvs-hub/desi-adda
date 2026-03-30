@@ -127,6 +127,16 @@ export default function HomePage() {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, chatLoading]);
 
+  // Lock body scroll when chat is open
+  useEffect(() => {
+    if (chatOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [chatOpen]);
+
   useEffect(() => {
     supabase.from("events").select("*").eq("status", "approved").order("name").limit(5)
       .then(({ data }) => setEvents(data || []));
@@ -144,10 +154,9 @@ export default function HomePage() {
     setChatLoading(true);
     setChatInput("");
     try {
-      const history = chatMessages.filter(m => m.role === "user" || m.role === "assistant").map(m => ({
-        userQuery: m.role === "user" ? m.content : undefined,
-        response: m.role === "assistant" ? m.content : undefined,
-      })).filter(h => h.userQuery || h.response);
+      // Send full conversation history as { role, content } pairs
+      const allMsgs = [...chatMessages, userMsg];
+      const history = allMsgs.map(m => ({ role: m.role, content: m.content }));
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
