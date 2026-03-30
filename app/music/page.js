@@ -114,10 +114,19 @@ export default function MusicPage() {
         position: "relative",
         overflow: "hidden",
       }}>
-        {/* Decorative music notes */}
-        <div style={{ position: "absolute", top: "10%", left: "8%", fontSize: "40px", opacity: 0.08, transform: "rotate(-15deg)" }}>{"\u{1F3B6}"}</div>
-        <div style={{ position: "absolute", top: "20%", right: "10%", fontSize: "60px", opacity: 0.06, transform: "rotate(10deg)" }}>{"\u{1F3B5}"}</div>
-        <div style={{ position: "absolute", bottom: "15%", left: "15%", fontSize: "50px", opacity: 0.05, transform: "rotate(20deg)" }}>{"\u{1F3A7}"}</div>
+        {/* Decorative music icons scattered around */}
+        <div style={{ position: "absolute", top: "6%", left: "5%", fontSize: "44px", opacity: 0.07, transform: "rotate(-15deg)" }}>{"\u{1F3B6}"}</div>
+        <div style={{ position: "absolute", top: "12%", right: "8%", fontSize: "56px", opacity: 0.06, transform: "rotate(12deg)" }}>{"\u{1F3B5}"}</div>
+        <div style={{ position: "absolute", bottom: "18%", left: "12%", fontSize: "50px", opacity: 0.06, transform: "rotate(20deg)" }}>{"\u{1F3A7}"}</div>
+        <div style={{ position: "absolute", top: "35%", left: "2%", fontSize: "38px", opacity: 0.05, transform: "rotate(-25deg)" }}>{"\u{1F3A4}"}</div>
+        <div style={{ position: "absolute", top: "55%", right: "4%", fontSize: "46px", opacity: 0.06, transform: "rotate(18deg)" }}>{"\u{1F3B8}"}</div>
+        <div style={{ position: "absolute", bottom: "8%", right: "15%", fontSize: "42px", opacity: 0.05, transform: "rotate(-10deg)" }}>{"\u{1F3B9}"}</div>
+        <div style={{ position: "absolute", top: "8%", left: "40%", fontSize: "34px", opacity: 0.04, transform: "rotate(30deg)" }}>{"\u{1F941}"}</div>
+        <div style={{ position: "absolute", bottom: "25%", left: "3%", fontSize: "36px", opacity: 0.05, transform: "rotate(15deg)" }}>{"\u{1F4FB}"}</div>
+        <div style={{ position: "absolute", top: "45%", right: "12%", fontSize: "40px", opacity: 0.04, transform: "rotate(-20deg)" }}>{"\u{1F3BA}"}</div>
+        <div style={{ position: "absolute", bottom: "5%", left: "30%", fontSize: "32px", opacity: 0.05, transform: "rotate(8deg)" }}>{"\u{1F3B6}"}</div>
+        <div style={{ position: "absolute", top: "70%", left: "8%", fontSize: "48px", opacity: 0.04, transform: "rotate(-12deg)" }}>{"\u{1F3B5}"}</div>
+        <div style={{ position: "absolute", bottom: "12%", right: "30%", fontSize: "38px", opacity: 0.05, transform: "rotate(22deg)" }}>{"\u{1F50A}"}</div>
 
         <div style={{ position: "relative", zIndex: 1 }}>
           <h1 style={{
@@ -171,10 +180,10 @@ export default function MusicPage() {
                 onClick={() => setSection(s.id)}
                 style={{
                   padding: "6px 16px", borderRadius: "999px", fontSize: "12px",
-                  fontFamily: fb, fontWeight: 500, cursor: "pointer",
-                  border: section === s.id ? "2px solid rgba(255,255,255,0.5)" : "2px solid rgba(255,255,255,0.08)",
-                  background: section === s.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.03)",
-                  color: section === s.id ? "white" : "rgba(255,255,255,0.45)",
+                  fontFamily: fb, fontWeight: 600, cursor: "pointer",
+                  border: section === s.id ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)",
+                  background: section === s.id ? SAFFRON : "rgba(255,255,255,0.08)",
+                  color: section === s.id ? "#1a1a2e" : "rgba(255,255,255,0.6)",
                   transition: "all 0.25s",
                 }}
               >
@@ -198,17 +207,11 @@ export default function MusicPage() {
                 onClick={() => setPlatform(p.id)}
                 style={{
                   padding: "5px 14px", borderRadius: "999px", fontSize: "11px",
-                  fontFamily: fb, fontWeight: 500, cursor: "pointer",
+                  fontFamily: fb, fontWeight: 600, cursor: "pointer",
                   display: "flex", alignItems: "center", gap: "5px",
-                  border: platform === p.id
-                    ? `2px solid ${p.id === "Spotify" ? "#1DB954" : p.id === "Apple Music" ? "#FC3C44" : "rgba(255,255,255,0.5)"}`
-                    : "2px solid rgba(255,255,255,0.08)",
-                  background: platform === p.id
-                    ? (p.id === "Spotify" ? "rgba(29,185,84,0.2)" : p.id === "Apple Music" ? "rgba(252,60,68,0.2)" : "rgba(255,255,255,0.15)")
-                    : "rgba(255,255,255,0.03)",
-                  color: platform === p.id
-                    ? (p.id === "Spotify" ? "#1DB954" : p.id === "Apple Music" ? "#FC3C44" : "white")
-                    : "rgba(255,255,255,0.4)",
+                  border: platform === p.id ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)",
+                  background: platform === p.id ? SAFFRON : "rgba(255,255,255,0.08)",
+                  color: platform === p.id ? "#1a1a2e" : "rgba(255,255,255,0.6)",
                   transition: "all 0.25s",
                 }}
               >
