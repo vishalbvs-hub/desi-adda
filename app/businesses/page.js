@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, ArrowLeft, X, MapPin, Map, List } from "lucide-react";
+import { Search, ArrowLeft, X, MapPin, Map, List, Star, ChevronDown } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { fetchAllData } from "@/lib/data";
 import { useApp } from "@/lib/context";
@@ -48,6 +48,20 @@ export default function BusinessesPage() {
   return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>}><BusinessesPageInner /></Suspense>;
 }
 
+const CUISINE_FILTERS = [
+  "All Cuisines", "South Indian", "North Indian", "Hyderabadi/Biryani", "Pakistani",
+  "Bangladeshi", "Gujarati", "Chaat/Street Food", "Pan-Indian", "Nepali",
+  "Indo-Chinese", "Mughlai", "Punjabi", "Tamil", "Bengali", "Fusion",
+];
+
+const VEG_FILTERS = ["All", "Veg", "Both", "Non-Veg"];
+const PRICE_FILTERS = ["All", "$", "$$", "$$$"];
+const SORT_OPTIONS = [
+  { id: "rating", label: "Top Rated" },
+  { id: "reviews", label: "Most Reviewed" },
+  { id: "name", label: "A-Z" },
+];
+
 function BusinessesPageInner() {
   const searchParams = useSearchParams();
   const initialCat = searchParams.get("cat") || "all";
@@ -59,11 +73,24 @@ function BusinessesPageInner() {
   const [activeSubs, setActiveSubs] = useState([]);
   const [searchQuery, setSearchQuery] = useState(initialQ);
   const [viewMode, setViewMode] = useState("list");
+  // Restaurant-specific filters
+  const [cuisineFilter, setCuisineFilter] = useState("All Cuisines");
+  const [vegFilter, setVegFilter] = useState("All");
+  const [priceFilter, setPriceFilter] = useState("All");
+  const [cityFilter, setCityFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("rating");
 
   useEffect(() => { fetchAllData().then(_setData); }, []);
 
-  // Reset subs when category changes
-  useEffect(() => { setActiveSubs([]); }, [activeCat]);
+  // Reset filters when category changes
+  useEffect(() => {
+    setActiveSubs([]);
+    setCuisineFilter("All Cuisines");
+    setVegFilter("All");
+    setPriceFilter("All");
+    setCityFilter("All");
+    setSortBy("rating");
+  }, [activeCat]);
 
   if (!_data) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>);
 
@@ -106,6 +133,36 @@ function BusinessesPageInner() {
     );
     if (sp.length > 0) listings = [...sp, ...listings.filter(i => !sp.includes(i))];
   }
+
+  // Restaurant-specific filters
+  const isRestaurants = activeCat === "food";
+  if (isRestaurants) {
+    if (cuisineFilter !== "All Cuisines") {
+      listings = listings.filter(i => i.cuisine_type?.toLowerCase().includes(cuisineFilter.toLowerCase()));
+    }
+    if (vegFilter !== "All") {
+      listings = listings.filter(i => i.veg_status === vegFilter);
+    }
+    if (priceFilter !== "All") {
+      listings = listings.filter(i => i.price_range === priceFilter);
+    }
+    if (cityFilter !== "All") {
+      listings = listings.filter(i => i.city === cityFilter);
+    }
+    // Sort
+    if (sortBy === "rating") {
+      listings.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (sortBy === "reviews") {
+      listings.sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
+    } else if (sortBy === "name") {
+      listings.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    }
+  }
+
+  // Get unique cities for restaurant city filter
+  const restaurantCities = isRestaurants
+    ? ["All", ...new Set((_data.CATEGORIES.find(c => c.id === "food")?.data || []).map(r => r.city).filter(Boolean).sort())]
+    : [];
 
   const subs = currentCat?.subs || [];
   const toggleSub = (s) => setActiveSubs(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -206,6 +263,55 @@ function BusinessesPageInner() {
         </div>
       )}
 
+      {/* RESTAURANT FILTERS */}
+      {isRestaurants && (
+        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "14px 20px" }}>
+          <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+            {/* Cuisine type pills */}
+            <div style={{ display: "flex", gap: "6px", overflowX: "auto", scrollbarWidth: "none", marginBottom: "10px", paddingBottom: "2px" }}>
+              {CUISINE_FILTERS.map(c => (
+                <button key={c} onClick={() => setCuisineFilter(c)} style={{
+                  padding: "5px 14px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                  border: cuisineFilter === c ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+                  background: cuisineFilter === c ? `${SAFFRON}15` : "white",
+                  color: cuisineFilter === c ? SAFFRON : "#5A4A3F", transition: "all 0.2s",
+                }}>{c}</button>
+              ))}
+            </div>
+            {/* Dropdowns row */}
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+              <select value={vegFilter} onChange={e => setVegFilter(e.target.value)} style={{
+                padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              }}>
+                {VEG_FILTERS.map(v => <option key={v} value={v}>{v === "All" ? "Veg/Non-Veg" : v === "Veg" ? "🌿 Veg Only" : v === "Both" ? "🍽️ Veg & Non-Veg" : v}</option>)}
+              </select>
+              <select value={priceFilter} onChange={e => setPriceFilter(e.target.value)} style={{
+                padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              }}>
+                {PRICE_FILTERS.map(p => <option key={p} value={p}>{p === "All" ? "Any Price" : p}</option>)}
+              </select>
+              <select value={cityFilter} onChange={e => setCityFilter(e.target.value)} style={{
+                padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              }}>
+                {restaurantCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
+              </select>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
+                padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              }}>
+                {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+              {(cuisineFilter !== "All Cuisines" || vegFilter !== "All" || priceFilter !== "All" || cityFilter !== "All") && (
+                <button onClick={() => { setCuisineFilter("All Cuisines"); setVegFilter("All"); setPriceFilter("All"); setCityFilter("All"); }} style={{
+                  padding: "5px 12px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 600,
+                  border: `1px solid ${COLORS.primary}`, background: "white", color: COLORS.primary, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: "4px",
+                }}><X size={10} /> Clear Filters</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* LISTINGS */}
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "30px 20px" }}>
         {activeCat !== "all" && currentCat && (
@@ -224,11 +330,58 @@ function BusinessesPageInner() {
             {listings.length > 0 ? (
               <div style={{ display: "grid", gap: "14px" }}>
                 {listings.map((item, i) => {
-                  const card = <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} />;
-                  if (item._catId === "food" && item.slug) {
-                    return <Link key={`${item._catId}-${item.id || i}`} href={`/restaurants/${item.slug}`} style={{ textDecoration: "none", color: "inherit" }}>{card}</Link>;
+                  // Enhanced card for restaurants
+                  if (item._catId === "food") {
+                    const card = (
+                      <div key={`food-${item.id || i}`} style={{
+                        background: "white", borderRadius: "16px", padding: "20px 24px",
+                        border: "1px solid #EDE6DE", transition: "all 0.2s", cursor: item.slug ? "pointer" : "default",
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)"; e.currentTarget.style.borderColor = `${SAFFRON}40`; }}
+                        onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#EDE6DE"; }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px" }}>
+                          <div style={{ flex: 1, minWidth: "200px" }}>
+                            <div style={{ display: "flex", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
+                              {item.cuisine_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${SAFFRON}12`, color: SAFFRON }}>{item.cuisine_type}</span>}
+                              {item.veg_status && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: item.veg_status === "Veg" ? "#E8F5E9" : "#FFF3E0", color: item.veg_status === "Veg" ? "#2E7D32" : "#E65100" }}>{item.veg_status === "Veg" ? "🌿 Veg" : "🍽️ Veg & Non-Veg"}</span>}
+                              {item.price_range && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>{item.price_range}</span>}
+                            </div>
+                            <h3 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 600, margin: "0 0 4px" }}>{item.name}</h3>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#8A7968", marginBottom: "6px", flexWrap: "wrap" }}>
+                              {item.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={12} /> {item.city}</span>}
+                              {item.phone && <span>{item.phone}</span>}
+                            </div>
+                            {item.rating && (
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                                <div style={{ display: "flex", gap: "1px" }}>
+                                  {[1,2,3,4,5].map(s => <Star key={s} size={14} fill={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} color={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} />)}
+                                </div>
+                                <span style={{ fontSize: "14px", fontWeight: 700, color: "#2D2420" }}>{item.rating}</span>
+                                {item.reviews && <span style={{ fontSize: "12px", color: "#A89888" }}>({item.reviews.toLocaleString()})</span>}
+                              </div>
+                            )}
+                            {item.notable_dishes && (
+                              <p style={{ fontSize: "13px", color: "#5A4A3F", margin: "0", lineHeight: 1.4, maxWidth: "420px" }}>
+                                🍛 {item.notable_dishes}
+                              </p>
+                            )}
+                          </div>
+                          {item.slug && (
+                            <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", borderRadius: "10px", background: `${SAFFRON}10`, color: SAFFRON, fontSize: "12px", fontWeight: 600, fontFamily: fb, flexShrink: 0 }}>
+                              View Details →
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                    if (item.slug) {
+                      return <Link key={`food-link-${item.id || i}`} href={`/restaurants/${item.slug}`} style={{ textDecoration: "none", color: "inherit" }}>{card}</Link>;
+                    }
+                    return card;
                   }
-                  return card;
+                  // Default card for other categories
+                  return <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} />;
                 })}
               </div>
             ) : (
