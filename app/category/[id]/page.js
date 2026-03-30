@@ -68,7 +68,7 @@ export default function CategoryPage() {
       f = f.filter(i =>
         i.name.toLowerCase().includes(q) ||
         i.city?.toLowerCase().includes(q) ||
-        i.desc.toLowerCase().includes(q) ||
+        (i.description || i.desc || "").toLowerCase().includes(q) ||
         i.sub?.some(s => s.toLowerCase().includes(q))
       );
     }

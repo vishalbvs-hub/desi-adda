@@ -130,7 +130,7 @@ export default function HomePage() {
   const handleSearch = (e) => {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
-    router.push(`/category/food?q=${encodeURIComponent(searchQuery)}`);
+    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
   };
 
   const catRef = useFadeIn();
