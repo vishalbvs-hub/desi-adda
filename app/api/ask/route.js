@@ -39,36 +39,78 @@ export async function POST(request) {
 
   const isFollowUp = history && history.length > 0;
 
-  // Always search Supabase for every message
-  const words = query.trim().toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  // Stop words to filter out
+  const STOP_WORDS = new Set([
+    "best", "good", "great", "top", "find", "show", "looking", "need", "want",
+    "near", "around", "nearby", "close", "area", "the", "for", "and", "but",
+    "not", "with", "from", "that", "this", "what", "where", "which", "who",
+    "how", "can", "does", "should", "would", "could", "any", "some", "all",
+    "most", "very", "really", "just", "also", "please", "help", "recommend",
+    "suggestion", "suggestions", "recommended",
+  ]);
+
+  // Basic stemming — strip trailing plurals
+  function stem(w) {
+    if (w.endsWith("ies") && w.length > 4) return w.slice(0, -3) + "y";
+    if (w.endsWith("es") && w.length > 4 && !w.endsWith("ss")) return w.slice(0, -2);
+    if (w.endsWith("s") && w.length > 3 && !w.endsWith("ss")) return w.slice(0, -1);
+    return w;
+  }
+
+  // Build search terms: filter stop words, add stemmed variants
+  const rawWords = query.trim().toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const searchTerms = [...new Set(
+    rawWords.filter(w => !STOP_WORDS.has(w)).flatMap(w => [w, stem(w)])
+  )];
   const queryLower = query.toLowerCase();
 
+  // Determine relevant tables from category keywords
   const relevantTables = TABLES.filter(table =>
     table.keywords.some(kw => queryLower.includes(kw))
   );
   const tablesToSearch = relevantTables.length > 0 ? relevantTables : TABLES;
 
+  // Search Supabase with keyword matching
   const scored = [];
-  for (const table of tablesToSearch) {
-    const searchCols = ["name", "city", "description"];
-    if (table.name === "professionals") searchCols.push("specialty", "bio", "practice_name");
+  if (searchTerms.length > 0) {
+    for (const table of tablesToSearch) {
+      const searchCols = ["name", "city", "description"];
+      if (table.name === "professionals") searchCols.push("specialty", "bio", "practice_name");
 
-    for (const word of words) {
-      const orFilter = searchCols.map(col => `${col}.ilike.%${word}%`).join(",");
+      for (const word of searchTerms) {
+        const orFilter = searchCols.map(col => `${col}.ilike.%${word}%`).join(",");
+        const { data } = await supabase
+          .from(table.name)
+          .select(table.fields)
+          .or(orFilter)
+          .limit(10);
+
+        if (data) {
+          for (const row of data) {
+            const existing = scored.find(r => r._table === table.name && r.id === row.id);
+            if (existing) {
+              existing._score++;
+            } else {
+              scored.push({ ...row, _table: table.name, _category: table.label, _score: 1 });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback: if category keywords matched but word search found nothing, pull top results
+  if (scored.length === 0 && relevantTables.length > 0) {
+    for (const table of relevantTables) {
       const { data } = await supabase
         .from(table.name)
         .select(table.fields)
-        .or(orFilter)
-        .limit(10);
+        .order("rating", { ascending: false, nullsFirst: false })
+        .limit(8);
 
       if (data) {
         for (const row of data) {
-          const existing = scored.find(r => r._table === table.name && r.id === row.id);
-          if (existing) {
-            existing._score++;
-          } else {
-            scored.push({ ...row, _table: table.name, _category: table.label, _score: 1 });
-          }
+          scored.push({ ...row, _table: table.name, _category: table.label, _score: 0 });
         }
       }
     }
