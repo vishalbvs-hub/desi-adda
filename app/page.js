@@ -201,7 +201,7 @@ export default function HomePage() {
       <Divider />
 
       {/* ═══ EVENTS — WARM SAND ═══ */}
-      <section ref={eventsRef} style={{ background: WARM_SAND, padding: "56px 20px" }}>
+      <section ref={eventsRef} style={{ background: "#FFFBF5", padding: "56px 20px", ...RANGOLI_BG }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
             <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>What&apos;s Happening This Week</h2>
@@ -287,7 +287,7 @@ export default function HomePage() {
       <Divider />
 
       {/* ═══ CLASSIFIEDS — WARM CLAY ═══ */}
-      <section ref={classifiedsRef} style={{ background: WARM_CLAY, padding: "56px 20px" }}>
+      <section ref={classifiedsRef} style={{ background: "#FFFBF5", padding: "56px 20px", ...RANGOLI_BG }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
             <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>Latest from the Community</h2>
