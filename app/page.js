@@ -26,17 +26,20 @@ const QUICK_CATS = [
 
 function Divider() {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", padding: "0" }}>
-      <div style={{ width: "60px", height: "1px", background: `linear-gradient(to right, transparent, ${SAFFRON}40)` }} />
-      <span style={{ color: SAFFRON, fontSize: "14px", opacity: 0.7 }}>{"\u2726"}</span>
-      <div style={{ width: "60px", height: "1px", background: `linear-gradient(to left, transparent, ${SAFFRON}40)` }} />
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: "-14px", marginBottom: "-14px", position: "relative", zIndex: 2 }}>
+      <span style={{ color: SAFFRON, fontSize: "16px", opacity: 0.6, lineHeight: 1 }}>{"\u2726"}</span>
     </div>
   );
 }
 
-function TilakLine() {
-  return <div style={{ width: "40px", height: "3px", borderRadius: "2px", background: SAFFRON, margin: "8px auto 0" }} />;
-}
+const RANGOLI_BG = {
+  backgroundImage: `
+    radial-gradient(circle at 50% 50%, rgba(200,160,100,0.04) 0%, rgba(200,160,100,0.04) 12%, transparent 12.5%, transparent 25%, rgba(200,160,100,0.03) 25%, rgba(200,160,100,0.03) 37%, transparent 37.5%, transparent 50%, rgba(200,160,100,0.02) 50%, rgba(200,160,100,0.02) 62%, transparent 62.5%),
+    radial-gradient(circle at 0% 0%, rgba(200,160,100,0.03) 0%, rgba(200,160,100,0.03) 12%, transparent 12.5%),
+    radial-gradient(circle at 100% 100%, rgba(200,160,100,0.03) 0%, rgba(200,160,100,0.03) 12%, transparent 12.5%)
+  `,
+  backgroundSize: "120px 120px",
+};
 
 function useFadeIn() {
   const ref = useRef(null);
@@ -141,7 +144,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══ CATEGORY ICONS ═══ */}
-      <section ref={catRef} style={{ background: "#FFFBF5", padding: "44px 20px 40px" }}>
+      <section ref={catRef} style={{ background: "#FFFBF5", padding: "44px 20px 40px", ...RANGOLI_BG }}>
         <div style={{
           maxWidth: "1100px", margin: "0 auto",
           display: "flex", gap: "16px", overflowX: "auto",
@@ -182,7 +185,7 @@ export default function HomePage() {
               See All Events <ArrowRight size={14} />
             </Link>
           </div>
-          <TilakLine />
+
           <div style={{ marginTop: "24px" }}>
             {events.length > 0 ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
@@ -222,7 +225,7 @@ export default function HomePage() {
       <Divider />
 
       {/* ═══ NEW ON DESI ADDA — LIGHT ═══ */}
-      <section ref={recentRef} style={{ background: "#FFFBF5", padding: "56px 20px" }}>
+      <section ref={recentRef} style={{ background: "#FFFBF5", padding: "56px 20px", ...RANGOLI_BG }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
             <h2 style={{ fontFamily: ff, fontSize: "clamp(26px, 4vw, 34px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>New on Desi Adda</h2>
@@ -230,7 +233,7 @@ export default function HomePage() {
               Explore the Full Directory <ArrowRight size={14} />
             </Link>
           </div>
-          <TilakLine />
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "14px", marginTop: "24px" }}>
             {recent.map(biz => (
               <div key={biz.id} style={{
@@ -268,7 +271,7 @@ export default function HomePage() {
               See All Posts <ArrowRight size={14} />
             </Link>
           </div>
-          <TilakLine />
+
           <div style={{ marginTop: "24px" }}>
             {classifieds.length > 0 ? (
               <div style={{ display: "grid", gap: "12px" }}>
@@ -309,7 +312,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══ FOR THE KIDS ═══ */}
-      <section ref={kidsRef} style={{ padding: "56px 20px", background: "#FFFBF5" }}>
+      <section ref={kidsRef} style={{ padding: "56px 20px", background: "#FFFBF5", ...RANGOLI_BG }}>
         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
           <div style={{
             borderRadius: "24px", padding: "48px 36px", textAlign: "center",
@@ -318,7 +321,7 @@ export default function HomePage() {
           }}>
             <div style={{ fontSize: "36px", marginBottom: "12px" }}>{"\u{1F3A8}"}</div>
             <h2 style={{ fontFamily: ff, fontSize: "28px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>For the Little Ones</h2>
-            <TilakLine />
+  
             <p style={{ fontSize: "16px", color: "#5A4A3F", maxWidth: "480px", margin: "16px auto 24px", lineHeight: 1.6 }}>
               Coloring books, alphabet worksheets, and festival activities for South Asian kids.
             </p>
@@ -335,7 +338,7 @@ export default function HomePage() {
       <section ref={nlRef} style={{ background: COLORS.primary, padding: "60px 20px", textAlign: "center" }}>
         <div style={{ maxWidth: "500px", margin: "0 auto" }}>
           <h2 style={{ fontFamily: ff, fontSize: "28px", fontWeight: 700, color: "white", marginBottom: "4px" }}>Stay Connected</h2>
-          <TilakLine />
+
           <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "15px", marginTop: "12px", marginBottom: "28px" }}>
             Your city. Your people. One email a week.
           </p>
