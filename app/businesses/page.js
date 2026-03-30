@@ -153,9 +153,9 @@ function BusinessesPageInner() {
     if (cityFilter !== "All") {
       listings = listings.filter(i => i.city === cityFilter);
     }
-    // Sort
+    // Sort — weighted rating: rating * log(reviews + 1) so high-review places rank higher
     if (sortBy === "rating") {
-      listings.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      listings.sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
     } else if (sortBy === "reviews") {
       listings.sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
     } else if (sortBy === "name") {
@@ -163,9 +163,9 @@ function BusinessesPageInner() {
     }
   }
 
-  // Sort sweets by rating
+  // Sort sweets by weighted rating
   if (activeCat === "sweets") {
-    listings.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    listings.sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
   }
 
   // Get unique cities for restaurant city filter
@@ -286,45 +286,46 @@ function BusinessesPageInner() {
                 {listings.map((item, i) => {
                   // Enhanced card for restaurants
                   if (item._catId === "food" || item._catId === "sweets") {
+                    const thumb = item.photos?.[0] || null;
                     const card = (
                       <div key={`food-${item.id || i}`} style={{
-                        background: "white", borderRadius: "16px", padding: "20px 24px",
+                        background: "white", borderRadius: "16px", overflow: "hidden",
                         border: "1px solid #EDE6DE", transition: "all 0.2s", cursor: item.slug ? "pointer" : "default",
+                        display: "flex", flexDirection: "row",
                       }}
-                        onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)"; e.currentTarget.style.borderColor = `${SAFFRON}40`; }}
+                        onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08)"; e.currentTarget.style.borderColor = `${SAFFRON}40`; }}
                         onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#EDE6DE"; }}
                       >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px" }}>
-                          <div style={{ flex: 1, minWidth: "200px" }}>
-                            <div style={{ display: "flex", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
-                              {item.cuisine_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${SAFFRON}12`, color: SAFFRON }}>{item.cuisine_type}</span>}
-                              {item.veg_status && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: item.veg_status === "Veg" ? "#E8F5E9" : "#FFF3E0", color: item.veg_status === "Veg" ? "#2E7D32" : "#E65100" }}>{item.veg_status === "Veg" ? "🌿 Veg" : "🍽️ Veg & Non-Veg"}</span>}
-                              {item.price_range && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>{item.price_range}</span>}
-                            </div>
-                            <h3 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 600, margin: "0 0 4px" }}>{item.name}</h3>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#8A7968", marginBottom: "6px", flexWrap: "wrap" }}>
-                              {item.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={12} /> {item.city}</span>}
-                              {item.phone && <span>{item.phone}</span>}
-                            </div>
-                            {item.rating && (
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                                <div style={{ display: "flex", gap: "1px" }}>
-                                  {[1,2,3,4,5].map(s => <Star key={s} size={14} fill={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} color={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} />)}
-                                </div>
-                                <span style={{ fontSize: "14px", fontWeight: 700, color: "#2D2420" }}>{item.rating}</span>
-                                {item.reviews && <span style={{ fontSize: "12px", color: "#A89888" }}>({item.reviews.toLocaleString()})</span>}
-                              </div>
-                            )}
-                            {item.notable_dishes && (
-                              <p style={{ fontSize: "13px", color: "#5A4A3F", margin: "0", lineHeight: 1.4, maxWidth: "420px" }}>
-                                🍛 {item.notable_dishes}
-                              </p>
-                            )}
+                        {/* Thumbnail */}
+                        {thumb && (
+                          <div style={{ width: "140px", minHeight: "140px", flexShrink: 0, overflow: "hidden" }}>
+                            <img src={thumb} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
-                          {item.slug && (
-                            <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", borderRadius: "10px", background: `${SAFFRON}10`, color: SAFFRON, fontSize: "12px", fontWeight: 600, fontFamily: fb, flexShrink: 0 }}>
-                              View Details →
+                        )}
+                        {/* Content */}
+                        <div style={{ flex: 1, padding: "16px 20px", minWidth: 0 }}>
+                          <div style={{ display: "flex", gap: "5px", marginBottom: "6px", flexWrap: "wrap" }}>
+                            {item.cuisine_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${SAFFRON}12`, color: SAFFRON }}>{item.cuisine_type}</span>}
+                            {item.veg_status === "Veg" && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#E8F5E9", color: "#2E7D32" }}>🌿 Veg</span>}
+                            {item.price_range && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>{item.price_range}</span>}
+                          </div>
+                          <h3 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 600, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</h3>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#8A7968", marginBottom: "6px" }}>
+                            {item.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {item.city}</span>}
+                          </div>
+                          {item.rating && (
+                            <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "6px" }}>
+                              <div style={{ display: "flex", gap: "1px" }}>
+                                {[1,2,3,4,5].map(s => <Star key={s} size={13} fill={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} color={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} />)}
+                              </div>
+                              <span style={{ fontSize: "13px", fontWeight: 700, color: "#2D2420" }}>{item.rating}</span>
+                              {item.reviews && <span style={{ fontSize: "11px", color: "#A89888" }}>({item.reviews.toLocaleString()})</span>}
                             </div>
+                          )}
+                          {item.notable_dishes && (
+                            <p style={{ fontSize: "12px", color: "#5A4A3F", margin: 0, lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              🍛 {item.notable_dishes}
+                            </p>
                           )}
                         </div>
                       </div>
