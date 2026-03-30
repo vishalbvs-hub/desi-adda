@@ -90,7 +90,7 @@ export default function HomePage() {
       {/* ─── HERO ─── */}
       <section style={{
         minHeight: "85vh", display: "flex", alignItems: "center", justifyContent: "center",
-        backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1730816243891-e4e28e56fa7f?w=1920&q=80')",
+        backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.7)), url('/hero.jpg')",
         backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
         padding: "60px 20px", textAlign: "center", position: "relative",
       }}>
