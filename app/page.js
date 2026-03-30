@@ -55,8 +55,7 @@ export default function HomePage() {
   const [nlDone, setNlDone] = useState(false);
 
   useEffect(() => {
-    const today = new Date().toISOString().split("T")[0];
-    supabase.from("events").select("*").eq("status", "approved").gte("event_date", today).order("event_date").limit(5)
+    supabase.from("events").select("*").eq("status", "approved").order("name").limit(5)
       .then(({ data }) => setEvents(data || []));
 
     supabase.from("restaurants").select("id, name, city, rating, reviews, description, created_at").order("created_at", { ascending: false }).limit(6)
@@ -81,8 +80,13 @@ export default function HomePage() {
 
   const formatDate = (d) => {
     if (!d) return "";
+    // Try parsing as ISO date first (e.g. "2026-04-12")
     const date = new Date(d + "T00:00:00");
-    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    }
+    // Otherwise return the raw text (e.g. "March 2026")
+    return d;
   };
 
   return (
