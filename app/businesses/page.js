@@ -32,16 +32,12 @@ const CHIPS = [
 const CAT_TABS = [
   { id: "all", label: "All", emoji: "\u{2728}" },
   { id: "food", label: "Restaurants", emoji: "\u{1F35B}" },
-  { id: "religious", label: "Temples", emoji: "\u{1F6D5}" },
   { id: "grocery", label: "Groceries", emoji: "\u{1F958}" },
-  { id: "weddings", label: "Weddings", emoji: "\u{1F490}" },
+  { id: "sweets", label: "Sweets & Bakery", emoji: "\u{1F370}" },
   { id: "beauty", label: "Beauty", emoji: "\u{1F485}" },
-  { id: "event-halls", label: "Event Halls", emoji: "\u{1F3DB}\uFE0F" },
   { id: "wellness", label: "Wellness", emoji: "\u{1F9D8}" },
   { id: "family", label: "Kids & Education", emoji: "\u{1F3A8}" },
-  { id: "community", label: "Community", emoji: "\u{1F465}" },
   { id: "services", label: "Services", emoji: "\u{1F4BC}" },
-  { id: "travel", label: "Travel", emoji: "\u{2708}\uFE0F" },
 ];
 
 export default function BusinessesPage() {
@@ -95,11 +91,19 @@ function BusinessesPageInner() {
   if (!_data) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>);
 
   const { CATEGORIES } = _data;
-  // Filter out movies, events, professionals, dating (they have their own pages)
-  const dirCats = CATEGORIES.filter(c => !["movies", "events", "professionals", "dating"].includes(c.id));
+  // Filter out categories that have dedicated pages
+  const excludedCats = ["movies", "events", "professionals", "dating", "religious", "weddings", "event-halls", "community", "travel"];
+  const dirCats = CATEGORIES.filter(c => !excludedCats.includes(c.id));
+
+  // Build "Sweets & Bakery" virtual category from restaurants
+  const foodCat = CATEGORIES.find(c => c.id === "food");
+  const sweetsData = (foodCat?.data || []).filter(r =>
+    (r.cuisine_type || "").toLowerCase().match(/sweet|bakery|chai|cafe|mithai|dessert/)
+  );
+  const sweetsCat = { id: "sweets", name: "Sweets & Bakery", data: sweetsData, color: "#E65100", subs: [], desc: "Indian sweet shops, bakeries, chai cafes, and dessert spots." };
 
   // Get current category data
-  const currentCat = activeCat === "all" ? null : dirCats.find(c => c.id === activeCat);
+  const currentCat = activeCat === "all" ? null : activeCat === "sweets" ? sweetsCat : dirCats.find(c => c.id === activeCat);
 
   // Build listings
   let listings = [];
@@ -157,6 +161,11 @@ function BusinessesPageInner() {
     } else if (sortBy === "name") {
       listings.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     }
+  }
+
+  // Sort sweets by rating
+  if (activeCat === "sweets") {
+    listings.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   }
 
   // Get unique cities for restaurant city filter
@@ -331,7 +340,7 @@ function BusinessesPageInner() {
               <div style={{ display: "grid", gap: "14px" }}>
                 {listings.map((item, i) => {
                   // Enhanced card for restaurants
-                  if (item._catId === "food") {
+                  if (item._catId === "food" || item._catId === "sweets") {
                     const card = (
                       <div key={`food-${item.id || i}`} style={{
                         background: "white", borderRadius: "16px", padding: "20px 24px",
