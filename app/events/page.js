@@ -1,88 +1,339 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Calendar, MapPin, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Plus, Calendar, List, ExternalLink } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
-import { fetchEvents } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
+
+const SAFFRON = "#E8A317";
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const TYPE_COLORS = {
+  Cultural: "#E8832A", Festival: "#E8832A",
+  Religious: "#8B1A2B",
+  Concert: "#6A1B9A", Comedy: "#6A1B9A", Entertainment: "#6A1B9A",
+  Sports: "#2E7D32",
+  Food: "#795548",
+  Music: "#1565C0",
+  Family: "#C2185B",
+  Garba: "#E8832A",
+};
+
+function getTypeColor(type) {
+  return TYPE_COLORS[type] || "#8A7968";
+}
+
+function tryParseDate(d) {
+  if (!d) return null;
+  const iso = new Date(d + "T00:00:00");
+  if (!isNaN(iso.getTime())) return iso;
+  return null;
+}
+
+function formatDateLong(d) {
+  if (!d) return "";
+  const parsed = tryParseDate(d);
+  if (parsed) return parsed.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  return d;
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function getFirstDayOfMonth(year, month) {
+  return new Date(year, month, 1).getDay();
+}
 
 export default function EventsPage() {
-  const [_data, _setData] = useState(null);
-  useEffect(() => { fetchEvents().then(_setData); }, []);
+  const [events, setEvents] = useState(null);
+  const [viewMode, setViewMode] = useState("calendar");
+  const [selectedDay, setSelectedDay] = useState(null);
+  const now = new Date();
+  const [calMonth, setCalMonth] = useState(now.getMonth());
+  const [calYear, setCalYear] = useState(now.getFullYear());
 
+  useEffect(() => {
+    supabase.from("events").select("*").eq("status", "approved").order("name")
+      .then(({ data }) => setEvents(data || []));
+  }, []);
 
-  if (!_data) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
-  const EVENTS = _data;
+  // Detect mobile for default view
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      setViewMode("list");
+    }
+  }, []);
+
+  if (!events) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;
+
+  // Map events to calendar dates
+  const eventsByDate = {};
+  for (const ev of events) {
+    const parsed = tryParseDate(ev.event_date);
+    if (parsed) {
+      const key = `${parsed.getFullYear()}-${parsed.getMonth()}-${parsed.getDate()}`;
+      if (!eventsByDate[key]) eventsByDate[key] = [];
+      eventsByDate[key].push(ev);
+    }
+  }
+
+  const prevMonth = () => {
+    if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
+    else setCalMonth(calMonth - 1);
+    setSelectedDay(null);
+  };
+  const nextMonth = () => {
+    if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); }
+    else setCalMonth(calMonth + 1);
+    setSelectedDay(null);
+  };
+
+  const daysInMonth = getDaysInMonth(calYear, calMonth);
+  const firstDay = getFirstDayOfMonth(calYear, calMonth);
+  const today = now.getDate();
+  const isCurrentMonth = calMonth === now.getMonth() && calYear === now.getFullYear();
+  const monthName = new Date(calYear, calMonth).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  const selectedEvents = selectedDay ? (eventsByDate[`${calYear}-${calMonth}-${selectedDay}`] || []) : [];
+
+  // Group events by month for list view
+  const groupedByMonth = {};
+  for (const ev of events) {
+    const parsed = tryParseDate(ev.event_date);
+    const key = parsed
+      ? parsed.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+      : "Other Dates";
+    if (!groupedByMonth[key]) groupedByMonth[key] = [];
+    groupedByMonth[key].push(ev);
+  }
+
+  const ff = FONTS.heading;
+  const fb = FONTS.body;
+
+  const toggleStyle = (active) => ({
+    padding: "8px 20px", fontSize: "13px", fontFamily: fb, fontWeight: 600,
+    cursor: "pointer", border: "none", display: "flex", alignItems: "center", gap: "5px",
+    borderRadius: active ? "10px" : "10px",
+    background: active ? SAFFRON : "transparent",
+    color: active ? "white" : "#5A4A3F",
+    transition: "all 0.2s",
+  });
 
   return (
-    <>
-      <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "6px", color: COLORS.primary, fontFamily: FONTS.body, fontWeight: 600, fontSize: "14px" }}>
-          <ArrowLeft size={18} /> Back
-        </Link>
-      </div>
-
-      <div style={{
-        background: `linear-gradient(135deg, #7B1FA212, #7B1FA206)`,
-        padding: "40px 20px 30px", borderBottom: "1px solid #EDE6DE",
-      }}>
-        <div style={{ maxWidth: "960px", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: "14px", background: "#7B1FA2",
-              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            }}>
-              <Calendar size={24} color="white" />
-            </div>
-            <div>
-              <h1 style={{ fontFamily: FONTS.heading, fontSize: "28px", fontWeight: 700, margin: "0 0 4px" }}>
-                Events
-              </h1>
-              <p style={{ fontSize: "14px", color: "#6B5B4F", margin: 0, maxWidth: "600px" }}>
-                Garba, Diwali melas, comedy shows, concerts — everything happening in Detroit&apos;s desi community.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
+    <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+      {/* Header */}
+      <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+        <div style={{ maxWidth: "960px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "6px", color: COLORS.primary, fontFamily: fb, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
+            <ChevronLeft size={18} /> Back
+          </Link>
           <Link href="/events/submit" style={{
-            display: "inline-flex", alignItems: "center", gap: "6px",
-            padding: "10px 20px", borderRadius: "12px", background: COLORS.primary,
-            color: "white", fontFamily: FONTS.body, fontWeight: 600,
-            fontSize: "14px", textDecoration: "none",
+            display: "inline-flex", alignItems: "center", gap: "5px",
+            padding: "8px 16px", borderRadius: "10px", background: COLORS.primary,
+            color: "white", fontFamily: fb, fontWeight: 600, fontSize: "13px", textDecoration: "none",
           }}>
-            <Plus size={16} /> Submit Event
+            <Plus size={14} /> Submit Event
           </Link>
         </div>
-        <div style={{ display: "grid", gap: "14px" }}>
-          {EVENTS.map((ev, i) => (
-            <div key={i} style={{
-              background: "white", borderRadius: "16px", padding: "20px 24px",
-              border: "1px solid #EDE6DE", display: "flex", alignItems: "flex-start", gap: "16px",
-            }}>
-              <span style={{ fontSize: "32px", flexShrink: 0 }}>{ev.icon}</span>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ fontFamily: FONTS.heading, fontSize: "18px", fontWeight: 600, margin: "0 0 4px" }}>
-                  {ev.name}
-                </h3>
-                <p style={{ fontSize: "13px", color: "#5A4A3F", margin: "0 0 8px", lineHeight: 1.5 }}>
-                  {ev.desc}
-                </p>
-                <div style={{ display: "flex", gap: "12px", fontSize: "13px", color: "#8A7968" }}>
-                  <span>
-                    <Calendar size={13} style={{ display: "inline", verticalAlign: "middle" }} /> {ev.date}
-                  </span>
-                  <span>
-                    <MapPin size={13} style={{ display: "inline", verticalAlign: "middle" }} /> {ev.where}
-                  </span>
-                </div>
+      </div>
+
+      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px" }}>
+        {/* Title + Toggle */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+          <div>
+            <h1 style={{ fontFamily: ff, fontSize: "28px", fontWeight: 700, margin: "0 0 4px" }}>Events</h1>
+            <p style={{ fontSize: "14px", color: "#8A7968", margin: 0 }}>
+              Everything happening in Detroit&apos;s desi community.
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: "4px", background: "white", padding: "4px", borderRadius: "12px", border: "1px solid #EDE6DE" }}>
+            <button onClick={() => setViewMode("calendar")} style={toggleStyle(viewMode === "calendar")}>
+              <Calendar size={14} /> Calendar
+            </button>
+            <button onClick={() => setViewMode("list")} style={toggleStyle(viewMode === "list")}>
+              <List size={14} /> List
+            </button>
+          </div>
+        </div>
+
+        {viewMode === "calendar" ? (
+          <>
+            {/* Calendar */}
+            <div style={{ background: "white", borderRadius: "16px", border: "1px solid #EDE6DE", overflow: "hidden" }}>
+              {/* Month nav */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #EDE6DE" }}>
+                <button onClick={prevMonth} style={{ background: "none", border: "none", cursor: "pointer", padding: "6px" }}>
+                  <ChevronLeft size={20} color="#5A4A3F" />
+                </button>
+                <h2 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: 0 }}>{monthName}</h2>
+                <button onClick={nextMonth} style={{ background: "none", border: "none", cursor: "pointer", padding: "6px" }}>
+                  <ChevronRight size={20} color="#5A4A3F" />
+                </button>
+              </div>
+
+              {/* Day labels */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid #EDE6DE" }}>
+                {DAY_LABELS.map(d => (
+                  <div key={d} style={{ padding: "10px 0", textAlign: "center", fontSize: "12px", fontWeight: 600, color: "#8A7968", fontFamily: fb }}>
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Day cells */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
+                {/* Empty cells for days before month start */}
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <div key={`empty-${i}`} style={{ padding: "12px 4px", minHeight: "64px", borderBottom: "1px solid #F5EDE4", borderRight: "1px solid #F5EDE4" }} />
+                ))}
+                {/* Actual days */}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const dateKey = `${calYear}-${calMonth}-${day}`;
+                  const dayEvents = eventsByDate[dateKey] || [];
+                  const isToday = isCurrentMonth && day === today;
+                  const isSelected = selectedDay === day;
+                  return (
+                    <div
+                      key={day}
+                      onClick={() => dayEvents.length > 0 && setSelectedDay(isSelected ? null : day)}
+                      style={{
+                        padding: "8px 6px", minHeight: "64px", cursor: dayEvents.length > 0 ? "pointer" : "default",
+                        borderBottom: "1px solid #F5EDE4", borderRight: "1px solid #F5EDE4",
+                        background: isSelected ? `${SAFFRON}15` : isToday ? `${SAFFRON}08` : "transparent",
+                        transition: "background 0.15s",
+                      }}
+                    >
+                      <span style={{
+                        display: "inline-flex", width: "28px", height: "28px", alignItems: "center", justifyContent: "center",
+                        borderRadius: "50%", fontSize: "13px", fontWeight: isToday ? 700 : 500, fontFamily: fb,
+                        color: isToday ? "white" : "#2D2420",
+                        background: isToday ? SAFFRON : "transparent",
+                      }}>{day}</span>
+                      {dayEvents.length > 0 && (
+                        <div style={{ display: "flex", gap: "3px", marginTop: "4px", flexWrap: "wrap" }}>
+                          {dayEvents.slice(0, 3).map((ev, j) => (
+                            <div key={j} style={{ width: "6px", height: "6px", borderRadius: "50%", background: getTypeColor(ev.type) }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          ))}
+
+            {/* Selected day events */}
+            {selectedDay && (
+              <div style={{ marginTop: "20px" }}>
+                <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: "0 0 12px" }}>
+                  {new Date(calYear, calMonth, selectedDay).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                </h3>
+                <div style={{ display: "grid", gap: "10px" }}>
+                  {selectedEvents.map(ev => <EventCard key={ev.id} ev={ev} />)}
+                </div>
+              </div>
+            )}
+
+            {/* Legend */}
+            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "16px", fontSize: "11px", color: "#8A7968" }}>
+              {Object.entries({ Cultural: "#E8832A", Religious: "#8B1A2B", Entertainment: "#6A1B9A", Sports: "#2E7D32", Other: "#8A7968" }).map(([label, color]) => (
+                <span key={label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: color, display: "inline-block" }} /> {label}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : (
+          /* List View */
+          <div>
+            {Object.entries(groupedByMonth).map(([month, evts]) => (
+              <div key={month} style={{ marginBottom: "28px" }}>
+                <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: "0 0 12px", color: "#2D2420", borderBottom: `2px solid ${SAFFRON}30`, paddingBottom: "6px" }}>
+                  {month}
+                </h3>
+                <div style={{ display: "grid", gap: "10px" }}>
+                  {evts.map(ev => <EventCard key={ev.id} ev={ev} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {events.length === 0 && (
+          <div style={{ padding: "60px 20px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #EDE6DE" }}>
+            <p style={{ fontFamily: ff, fontSize: "20px", fontWeight: 600, margin: "0 0 8px" }}>No events yet</p>
+            <p style={{ fontSize: "14px", color: "#8A7968", margin: "0 0 16px" }}>Be the first to add one!</p>
+            <Link href="/events/submit" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", fontFamily: fb, textDecoration: "none" }}>
+              Submit an Event →
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EventCard({ ev }) {
+  const ff = FONTS.heading;
+  const fb = FONTS.body;
+  const typeColor = getTypeColor(ev.type);
+  const shareText = encodeURIComponent(`${ev.name} — ${ev.event_date} at ${ev.location}. Check it out on Desi Adda!`);
+
+  return (
+    <div style={{
+      background: "white", borderRadius: "14px", padding: "18px 22px",
+      border: "1px solid #EDE6DE", borderLeft: `3px solid ${typeColor}`,
+      transition: "box-shadow 0.2s",
+    }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)"}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "6px", flexWrap: "wrap" }}>
+            <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: typeColor + "15", color: typeColor }}>{ev.type}</span>
+            <span style={{ fontSize: "12px", color: "#8A7968" }}>{formatDateLong(ev.event_date)}</span>
+          </div>
+          <h4 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 600, margin: "0 0 4px" }}>
+            {ev.icon && <span style={{ marginRight: "6px" }}>{ev.icon}</span>}
+            {ev.name}
+          </h4>
+          {ev.location && (
+            <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 4px", display: "flex", alignItems: "center", gap: "4px" }}>
+              <MapPin size={12} /> {ev.location}
+            </p>
+          )}
+          {ev.description && (
+            <p style={{ fontSize: "13px", color: "#5A4A3F", margin: "4px 0 0", lineHeight: 1.4 }}>{ev.description}</p>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: "8px", flexShrink: 0, alignItems: "center" }}>
+          {ev.url && (
+            <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{
+              fontSize: "12px", color: COLORS.primary, fontWeight: 600, fontFamily: fb,
+              textDecoration: "none", display: "flex", alignItems: "center", gap: "3px",
+            }}>
+              More Info <ExternalLink size={11} />
+            </a>
+          )}
+          <a
+            href={`https://wa.me/?text=${shareText}`}
+            target="_blank" rel="noopener noreferrer"
+            style={{
+              width: "32px", height: "32px", borderRadius: "8px", background: "#25D366",
+              display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none",
+            }}
+            title="Share on WhatsApp"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.555 4.122 1.524 5.857L0 24l6.335-1.652A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75c-1.875 0-3.636-.519-5.142-1.416l-.369-.218-3.823.998 1.023-3.734-.24-.381A9.698 9.698 0 012.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75z"/>
+            </svg>
+          </a>
         </div>
       </div>
-    </>
+    </div>
   );
 }
