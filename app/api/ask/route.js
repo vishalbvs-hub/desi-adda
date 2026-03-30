@@ -14,7 +14,7 @@ const supabase = createClient(
 const TABLES = [
   {
     name: "restaurants",
-    fields: "id, name, city, rating, reviews, phone, description, subcategories, address",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Restaurant",
     keywords: ["restaurant", "food", "eat", "eating", "dining", "dine", "lunch", "dinner", "breakfast", "brunch",
@@ -27,7 +27,7 @@ const TABLES = [
   },
   {
     name: "groceries",
-    fields: "id, name, city, rating, reviews, phone, description, subcategories, address",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Grocery Store",
     keywords: ["grocery", "groceries", "store", "market", "supermarket", "spice", "spices",
@@ -36,7 +36,7 @@ const TABLES = [
   },
   {
     name: "temples",
-    fields: "id, name, city, rating, reviews, phone, description, subcategories, address",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Temple / Religious",
     keywords: ["temple", "temples", "mandir", "gurudwara", "gurdwara", "mosque", "masjid",
@@ -47,8 +47,8 @@ const TABLES = [
   },
   {
     name: "professionals",
-    fields: "id, name, title, city, specialty, phone, bio, languages, practice_name, subcategories",
-    searchCols: ["name", "city", "specialty", "bio", "practice_name", "languages", "title", "subcategories"],
+    fields: "*",
+    searchCols: ["name", "city", "specialty", "bio", "practice_name", "languages", "title"],
     label: "Professional",
     keywords: ["doctor", "doc", "physician", "dentist", "dental", "lawyer", "attorney", "legal",
       "cpa", "accountant", "accounting", "tax", "taxes",
@@ -67,7 +67,7 @@ const TABLES = [
   },
   {
     name: "professional_services",
-    fields: "id, name, city, description, subcategories, phone",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Professional Service",
     keywords: ["immigration", "h1b", "h-1b", "visa", "green card", "oci",
@@ -78,7 +78,7 @@ const TABLES = [
   },
   {
     name: "wedding_vendors",
-    fields: "id, name, city, rating, reviews, phone, description, subcategories",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Wedding Vendor",
     keywords: ["wedding", "weddings", "mehndi", "mehendi", "henna", "photographer", "photography",
@@ -89,7 +89,7 @@ const TABLES = [
   },
   {
     name: "event_halls",
-    fields: "id, name, city, rating, reviews, phone, description, subcategories",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Event Hall / Venue",
     keywords: ["venue", "hall", "banquet", "event hall", "reception", "party", "ballroom",
@@ -97,7 +97,7 @@ const TABLES = [
   },
   {
     name: "kids",
-    fields: "id, name, city, rating, reviews, phone, description, subcategories",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Kids & Education",
     keywords: ["kids", "kid", "children", "child", "baby", "toddler",
@@ -109,7 +109,7 @@ const TABLES = [
   },
   {
     name: "beauty_brands",
-    fields: "id, name, city, description, subcategories",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Beauty",
     keywords: ["beauty", "threading", "salon", "spa", "henna", "skincare", "makeup",
@@ -118,7 +118,7 @@ const TABLES = [
   },
   {
     name: "health_wellness",
-    fields: "id, name, city, description, subcategories",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Health & Wellness",
     keywords: ["ayurveda", "ayurvedic", "yoga", "meditation", "homeopathy",
@@ -128,7 +128,7 @@ const TABLES = [
   },
   {
     name: "community_networking",
-    fields: "id, name, city, description, subcategories",
+    fields: "*",
     searchCols: ["name", "city", "description", "subcategories"],
     label: "Community Organization",
     keywords: ["community", "association", "organization", "networking", "cultural",
@@ -137,7 +137,7 @@ const TABLES = [
   },
   {
     name: "events",
-    fields: "id, name, location, event_date, type, description, status",
+    fields: "*",
     searchCols: ["name", "location", "description", "type"],
     label: "Event",
     keywords: ["event", "events", "show", "concert", "festival", "mela", "garba",
@@ -148,7 +148,7 @@ const TABLES = [
   },
   {
     name: "classifieds",
-    fields: "id, title, description, category, author, city, status",
+    fields: "*",
     searchCols: ["title", "description", "category", "city"],
     label: "Classified Post",
     keywords: ["roommate", "roommates", "room", "housing", "apartment", "rent", "rental",
@@ -294,7 +294,8 @@ export async function POST(request) {
     if (scored.length === 0 && keywordMatched) {
       for (const table of relevantTables) {
         try {
-          const hasRating = table.fields.includes("rating");
+          const RATED_TABLES = new Set(["restaurants", "groceries", "temples", "wedding_vendors", "event_halls", "kids"]);
+          const hasRating = RATED_TABLES.has(table.name);
           let q = supabase.from(table.name).select(table.fields);
           if (table.filter) q = q.eq(table.filter.column, table.filter.value);
           if (hasRating) {
