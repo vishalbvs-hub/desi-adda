@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import { FONTS, COLORS } from "@/lib/constants";
+import CommunityClient from "./CommunityClient";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const ff = FONTS.heading;
@@ -30,6 +31,14 @@ export default async function CommunityOrgPage({ params }) {
       </div>
     );
   }
+
+  // Fetch events for this org
+  const { data: communityEvents } = await supabase
+    .from("community_events")
+    .select("*")
+    .eq("org_id", org.id)
+    .gte("event_date", new Date().toISOString().split("T")[0])
+    .order("event_date");
 
   const o = org;
   const socialLinks = [
@@ -120,15 +129,11 @@ export default async function CommunityOrgPage({ params }) {
                 </div>
               )}
 
-              {/* Upcoming Events */}
-              {o.upcoming_events && (
-                <div style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #EDE6DE", borderLeft: "4px solid " + SAFFRON, marginBottom: "20px" }}>
-                  <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: "8px" }}>🎉 Upcoming Events</h3>
-                  <p style={{ fontSize: "14px", color: "#5A4A3F", margin: 0, lineHeight: 1.6, whiteSpace: "pre-line" }}>
-                    {typeof o.upcoming_events === "string" ? o.upcoming_events : JSON.stringify(o.upcoming_events)}
-                  </p>
-                </div>
-              )}
+              {/* Events + Email signup — client component */}
+              <CommunityClient
+                org={{ id: o.id, name: o.name, address: o.address || o.city || "" }}
+                events={communityEvents || []}
+              />
 
               {/* CTA */}
               {ctaUrl && (
