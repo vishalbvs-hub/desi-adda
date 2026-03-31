@@ -228,3 +228,4 @@ async function main() {
 }
 
 main().catch(e => { console.error("Fatal:", e); process.exit(1); });
+# Event data cleaned: 52 clean events remaining
