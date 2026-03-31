@@ -1,16 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, MapPin, Globe, Phone, Calendar, Clock, ExternalLink } from "lucide-react";
+import { Search, MapPin, Globe, Phone, Calendar, Clock, ExternalLink, ChevronDown } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
+import ListingCard from "@/components/ListingCard";
 import ScrollingChips from "@/components/ScrollingChips";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
 const SAFFRON = "#E8A317";
 
-const DENOMINATIONS = ["All", "Hindu", "Telugu", "Tamil", "Bengali", "Gujarati", "Swaminarayan", "ISKCON", "Sikh", "Muslim", "Jain"];
+const DENOMINATIONS = [
+  "All", "Hindu", "Sikh", "Muslim", "Jain", "Buddhist",
+  "Pandit Services", "Astrology",
+  "Telugu", "Tamil", "Bengali", "Gujarati", "Swaminarayan", "ISKCON",
+];
 
 const CHIPS = [
   { emoji: "\u{1F6D5}", text: "Telugu temple near Troy" },
@@ -23,6 +28,13 @@ const CHIPS = [
   { emoji: "\u{1F389}", text: "temple events this weekend" },
   { emoji: "\u{1F6D5}", text: "Hindu temple near Canton" },
   { emoji: "\u{1F54C}", text: "Eid prayers Dearborn" },
+  { emoji: "\u{1F52E}", text: "Pandit for puja near me" },
+  { emoji: "\u{2B50}", text: "Astrology consultation Michigan" },
+];
+
+const SORT_OPTIONS = [
+  { value: "name", label: "Name A-Z" },
+  { value: "rating", label: "Highest Rated" },
 ];
 
 export default function TemplesPage() {
@@ -30,6 +42,8 @@ export default function TemplesPage() {
   const [events, setEvents] = useState([]);
   const [denom, setDenom] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [city, setCity] = useState("All");
+  const [sortBy, setSortBy] = useState("name");
 
   useEffect(() => {
     Promise.all([
@@ -47,14 +61,36 @@ export default function TemplesPage() {
     </div>
   );
 
+  // Unique cities for dropdown
+  const cities = ["All", ...Array.from(new Set(temples.map(t => t.city).filter(Boolean))).sort()];
+
   // Filter
   let filtered = temples;
+
   if (denom !== "All") {
-    filtered = filtered.filter(t =>
-      t.subcategories?.some(s => s.toLowerCase().includes(denom.toLowerCase())) ||
-      t.name?.toLowerCase().includes(denom.toLowerCase())
-    );
+    const denomLower = denom.toLowerCase();
+    // "Muslim" should also match "Mosque"
+    const aliases = {
+      muslim: ["muslim", "mosque", "masjid", "islamic"],
+      sikh: ["sikh", "gurudwara", "gurdwara"],
+      "pandit services": ["pandit", "puja", "priest", "pooja"],
+      astrology: ["astrology", "astrologer", "jyotish", "horoscope", "vedic astrology"],
+    };
+    const terms = aliases[denomLower] || [denomLower];
+
+    filtered = filtered.filter(t => {
+      const nameDesc = `${t.name || ""} ${t.description || ""}`.toLowerCase();
+      const subs = (t.subcategories || []).map(s => s.toLowerCase());
+      return terms.some(term =>
+        subs.some(s => s.includes(term)) || nameDesc.includes(term)
+      );
+    });
   }
+
+  if (city !== "All") {
+    filtered = filtered.filter(t => t.city === city);
+  }
+
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase();
     filtered = filtered.filter(t =>
@@ -65,6 +101,11 @@ export default function TemplesPage() {
     );
   }
 
+  // Sort
+  if (sortBy === "rating") {
+    filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  }
+
   // Match events to temples by name similarity
   function getTempleEvents(temple) {
     const tName = temple.name?.toLowerCase() || "";
@@ -72,7 +113,7 @@ export default function TemplesPage() {
     return events.filter(ev => {
       const evText = `${ev.name || ""} ${ev.venue || ""} ${ev.description || ""}`.toLowerCase();
       return tWords.some(w => evText.includes(w));
-    }).slice(0, 3); // Max 3 upcoming events per temple
+    }).slice(0, 3);
   }
 
   const triggerChat = (q) => { window.dispatchEvent(new CustomEvent("askadda", { detail: q })); };
@@ -97,17 +138,17 @@ export default function TemplesPage() {
 
         <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
           <h1 style={{ fontFamily: ff, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
-            Temples & <span style={{ color: SAFFRON, fontStyle: "italic" }}>Worship</span>
+            Temples & <span style={{ color: SAFFRON, fontStyle: "italic" }}>Spiritual</span>
           </h1>
           <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 24px", fontStyle: "italic" }}>
-            Every temple, gurudwara & mosque in Metro Detroit
+            Temples, gurudwaras, mosques, pandit services & astrology in Metro Detroit
           </p>
 
           {/* Search bar */}
           <form onSubmit={e => { e.preventDefault(); if (searchQuery.trim()) triggerChat(searchQuery); }} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
             <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Find a temple, gurudwara, mosque..."
+              placeholder="Find a temple, pandit, astrologer..."
               style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
             <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>
               Ask Adda {"\u2728"}
@@ -133,67 +174,58 @@ export default function TemplesPage() {
 
       {/* TEMPLE LISTINGS */}
       <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "36px 20px" }}>
-        <p style={{ fontSize: "13px", color: COLORS.textFaint, marginBottom: "16px" }}>{filtered.length} temples found</p>
+        {/* Controls row: city dropdown + sort */}
+        <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+          <p style={{ fontSize: "13px", color: COLORS.textFaint, margin: 0 }}>{filtered.length} temples found</p>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <div style={{ position: "relative" }}>
+              <select
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                style={{
+                  appearance: "none", padding: "8px 32px 8px 12px", borderRadius: "10px",
+                  border: "1px solid #EDE6DE", background: "white", fontSize: "13px",
+                  fontFamily: fb, color: "#2D2420", cursor: "pointer", outline: "none",
+                }}
+              >
+                {cities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
+              </select>
+              <ChevronDown size={14} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#8A7968" }} />
+            </div>
+            <div style={{ position: "relative" }}>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                style={{
+                  appearance: "none", padding: "8px 32px 8px 12px", borderRadius: "10px",
+                  border: "1px solid #EDE6DE", background: "white", fontSize: "13px",
+                  fontFamily: fb, color: "#2D2420", cursor: "pointer", outline: "none",
+                }}
+              >
+                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <ChevronDown size={14} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#8A7968" }} />
+            </div>
+          </div>
+        </div>
 
         {filtered.length > 0 ? (
-          <div style={{ display: "grid", gap: "16px" }}>
+          <div style={{ display: "grid", gap: "12px" }}>
             {filtered.map(temple => {
               const templeEvents = getTempleEvents(temple);
-              const subs = temple.subcategories || [];
               return (
-                <div key={temple.id} style={{
-                  background: "white", borderRadius: "16px", border: "1px solid #EDE6DE",
-                  overflow: "hidden", transition: "box-shadow 0.2s",
-                }}
-                  onMouseEnter={e => e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.06)"}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
-                >
-                  {/* Temple info */}
-                  <div style={{ padding: "22px 24px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
-                      <div style={{ flex: 1, minWidth: "250px" }}>
-                        <h3 style={{ fontFamily: ff, fontSize: "19px", fontWeight: 700, margin: "0 0 6px", color: "#2D2420" }}>
-                          {temple.name}
-                        </h3>
-                        {subs.length > 0 && (
-                          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
-                            {subs.map(s => (
-                              <span key={s} style={{
-                                padding: "3px 10px", borderRadius: "999px", fontSize: "11px",
-                                fontWeight: 600, background: "#FFF3E0", color: "#E65100",
-                              }}>{s}</span>
-                            ))}
-                          </div>
-                        )}
-                        <div style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "13px", color: "#8A7968" }}>
-                          {temple.address && (
-                            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <MapPin size={13} color={COLORS.primary} /> {temple.address}{temple.city ? `, ${temple.city}` : ""}
-                            </span>
-                          )}
-                          {temple.phone && (
-                            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <Phone size={13} color={COLORS.primary} /> {temple.phone}
-                            </span>
-                          )}
-                          {temple.website && (
-                            <a href={temple.website.startsWith("http") ? temple.website : `https://${temple.website}`} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "6px", color: COLORS.primary, textDecoration: "none" }}>
-                              <Globe size={13} /> Visit Website <ExternalLink size={10} />
-                            </a>
-                          )}
-                        </div>
-                        {temple.description && (
-                          <p style={{ fontSize: "13px", color: "#6B5B4F", margin: "10px 0 0", lineHeight: 1.5 }}>
-                            {temple.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                <div key={temple.id}>
+                  <Link href={`/temples/${temple.slug}`} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+                    <ListingCard item={temple} cat="temples" />
+                  </Link>
 
                   {/* Upcoming events for this temple */}
                   {templeEvents.length > 0 && (
-                    <div style={{ borderTop: "1px solid #EDE6DE", background: "#FFFBF5", padding: "14px 24px" }}>
+                    <div style={{
+                      background: "#FFFBF5", padding: "14px 24px",
+                      border: "1px solid #EDE6DE", borderTop: "none",
+                      borderRadius: "0 0 16px 16px", marginTop: "-8px",
+                    }}>
                       <h4 style={{ fontFamily: ff, fontSize: "13px", fontWeight: 700, color: "#8A7968", margin: "0 0 10px", display: "flex", alignItems: "center", gap: "6px" }}>
                         <Calendar size={13} /> Upcoming Events
                       </h4>

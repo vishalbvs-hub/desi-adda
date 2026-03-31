@@ -40,7 +40,7 @@ export default function HomePage() {
   useEffect(() => {
     Promise.all([
       supabase.from("events").select("*").eq("status", "approved").order("event_date").limit(4),
-      supabase.from("restaurants").select("id, name, city, rating, reviews, description").order("rating", { ascending: false }).limit(6),
+      supabase.from("restaurants").select("id, name, city, rating, reviews, description, photos, slug, notable_dishes").not("photos", "eq", "{}").order("rating", { ascending: false }).limit(8),
       supabase.from("classifieds").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
       supabase.from("movies_catalog").select("*").eq("status", "ott").order("release_date", { ascending: false }).limit(6),
       supabase.from("movies_catalog").select("*").eq("status", "now_playing").order("release_date", { ascending: false }).limit(4),
@@ -114,7 +114,7 @@ export default function HomePage() {
           </div>
 
           <p style={{ marginTop: "14px", fontSize: "13px", color: "rgba(255,255,255,0.5)", fontFamily: fb, fontWeight: 500 }}>
-            455+ Businesses {"\u00B7"} 18 Cities {"\u00B7"} Powered by AI
+            1,100+ Businesses {"\u00B7"} 45+ Cities {"\u00B7"} Powered by AI
           </p>
         </div>
       </section>

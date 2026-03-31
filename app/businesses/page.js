@@ -56,6 +56,11 @@ const STORE_TYPE_FILTERS = [
   "All Types", "Full Grocery", "South Indian Specialty", "Bengali Specialty",
   "Kerala Specialty", "Halal Meat Shop", "Sweets & Grocery", "Fresh Produce", "Spice Shop",
 ];
+const SWEETS_FILTERS = ["All Types", "Indian Sweets", "Bengali Sweets", "Chai Cafe", "Bakery", "Chaat & Snacks"];
+const BEAUTY_FILTERS = ["All Types", "Full Service Salon", "Threading Specialist", "Henna/Mehndi Artist", "Bridal Makeup", "Med Spa"];
+const WELLNESS_FILTERS = ["All Types", "Yoga Studio", "Ayurveda", "Meditation", "Holistic Wellness"];
+const KIDS_FILTERS = ["All Types", "Bharatanatyam", "Bollywood Dance", "Kathak", "Carnatic Music", "Hindustani Music", "Instruments", "Tutoring", "Language Classes"];
+const SERVICES_FILTERS = ["All Types", "Driving School", "Shipping/Cargo", "Travel Agent", "ITIN Services", "Insurance"];
 const SORT_OPTIONS = [
   { id: "rating", label: "Top Rated" },
   { id: "reviews", label: "Most Reviewed" },
@@ -83,6 +88,12 @@ function BusinessesPageInner() {
   const [storeTypeFilter, setStoreTypeFilter] = useState("All Types");
   const [groceryCityFilter, setGroceryCityFilter] = useState("All");
   const [grocerySortBy, setGrocerySortBy] = useState("rating");
+  // Generic category filter (sweets, beauty, wellness, kids, services)
+  const [genericTypeFilter, setGenericTypeFilter] = useState("All Types");
+  const [genericCityFilter, setGenericCityFilter] = useState("All");
+  const [genericSortBy, setGenericSortBy] = useState("rating");
+  // Pagination
+  const [visibleCount, setVisibleCount] = useState(20);
 
   useEffect(() => { fetchAllData().then(_setData); }, []);
 
@@ -97,6 +108,10 @@ function BusinessesPageInner() {
     setStoreTypeFilter("All Types");
     setGroceryCityFilter("All");
     setGrocerySortBy("rating");
+    setGenericTypeFilter("All Types");
+    setGenericCityFilter("All");
+    setGenericSortBy("rating");
+    setVisibleCount(20);
   }, [activeCat]);
 
   if (!_data) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>);
@@ -205,10 +220,39 @@ function BusinessesPageInner() {
     ? ["All", ...new Set((_data.CATEGORIES.find(c => c.id === "grocery")?.data || []).map(g => g.city).filter(Boolean).sort())]
     : [];
 
-  // Default weighted sort for all other categories
-  if (!isRestaurants && !isGrocery && activeCat !== "sweets") {
+  // Generic category filters (sweets, beauty, wellness, kids, services)
+  const hasGenericFilter = ["sweets", "beauty", "wellness", "family", "services"].includes(activeCat);
+  if (hasGenericFilter) {
+    if (genericTypeFilter !== "All Types") {
+      listings = listings.filter(i =>
+        (i.description || i.store_type || i.specialties || "").toLowerCase().includes(genericTypeFilter.toLowerCase()) ||
+        (i.subcategories || []).some(s => s.toLowerCase().includes(genericTypeFilter.toLowerCase())) ||
+        (i.name || "").toLowerCase().includes(genericTypeFilter.toLowerCase())
+      );
+    }
+    if (genericCityFilter !== "All") {
+      listings = listings.filter(i => i.city === genericCityFilter);
+    }
+    if (genericSortBy === "rating") {
+      listings.sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
+    } else if (genericSortBy === "reviews") {
+      listings.sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
+    } else if (genericSortBy === "name") {
+      listings.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    }
+  }
+
+  // Default weighted sort for other categories without specific filters
+  if (!isRestaurants && !isGrocery && !hasGenericFilter) {
     listings.sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
   }
+
+  // Get unique cities for generic filter
+  const genericCities = hasGenericFilter && currentCat?.data
+    ? ["All", ...new Set(currentCat.data.map(r => r.city).filter(Boolean).sort())]
+    : [];
+  // Get filter options for current category
+  const genericFilterOptions = activeCat === "sweets" ? SWEETS_FILTERS : activeCat === "beauty" ? BEAUTY_FILTERS : activeCat === "wellness" ? WELLNESS_FILTERS : activeCat === "family" ? KIDS_FILTERS : activeCat === "services" ? SERVICES_FILTERS : [];
 
   // Get unique cities for restaurant city filter
   const restaurantCities = isRestaurants
@@ -331,6 +375,29 @@ function BusinessesPageInner() {
         </div>
       )}
 
+      {/* GENERIC CATEGORY FILTERS (sweets, beauty, wellness, kids, services) */}
+      {hasGenericFilter && genericFilterOptions.length > 0 && (
+        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+          <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <select value={genericTypeFilter} onChange={e => { setGenericTypeFilter(e.target.value); setVisibleCount(20); }} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {genericFilterOptions.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <select value={genericCityFilter} onChange={e => { setGenericCityFilter(e.target.value); setVisibleCount(20); }} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {genericCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
+            </select>
+            <select value={genericSortBy} onChange={e => setGenericSortBy(e.target.value)} style={{
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+            }}>
+              {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
+
       {/* LISTINGS */}
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "30px 20px" }}>
         {activeCat !== "all" && currentCat && (
@@ -347,24 +414,39 @@ function BusinessesPageInner() {
         ) : (
           <>
             {listings.length > 0 ? (
-              <div style={{ display: "grid", gap: "12px" }}>
-                {listings.map((item, i) => {
-                  // Determine detail page URL based on category
-                  let detailHref = null;
-                  if ((item._catId === "food" || item._catId === "sweets") && item.slug) detailHref = `/restaurants/${item.slug}`;
-                  else if (item._catId === "grocery" && item.slug) detailHref = `/groceries/${item.slug}`;
-                  else if (item._catId === "beauty" && item.slug) detailHref = `/beauty/${item.slug}`;
-                  else if (item._catId === "wellness" && item.slug) detailHref = `/wellness/${item.slug}`;
-                  else if (item._catId === "family" && item.slug) detailHref = `/kids/${item.slug}`;
+              <>
+                <div style={{ display: "grid", gap: "12px" }}>
+                  {listings.slice(0, visibleCount).map((item, i) => {
+                    let detailHref = null;
+                    if ((item._catId === "food" || item._catId === "sweets") && item.slug) detailHref = `/restaurants/${item.slug}`;
+                    else if (item._catId === "grocery" && item.slug) detailHref = `/groceries/${item.slug}`;
+                    else if (item._catId === "beauty" && item.slug) detailHref = `/beauty/${item.slug}`;
+                    else if (item._catId === "wellness" && item.slug) detailHref = `/wellness/${item.slug}`;
+                    else if (item._catId === "family" && item.slug) detailHref = `/kids/${item.slug}`;
 
-                  const card = <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} href={detailHref} />;
+                    const card = <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} />;
 
-                  if (detailHref) {
-                    return <Link key={`link-${item._catId}-${item.id || i}`} href={detailHref} style={{ textDecoration: "none", color: "inherit" }}>{card}</Link>;
-                  }
-                  return card;
-                })}
-              </div>
+                    if (detailHref) {
+                      return <Link key={`link-${item._catId}-${item.id || i}`} href={detailHref} style={{ textDecoration: "none", color: "inherit" }}>{card}</Link>;
+                    }
+                    return card;
+                  })}
+                </div>
+                {visibleCount < listings.length && (
+                  <div style={{ textAlign: "center", marginTop: "24px" }}>
+                    <button onClick={() => setVisibleCount(prev => prev + 20)} style={{
+                      padding: "12px 32px", borderRadius: "12px", background: "white",
+                      border: `2px solid ${SAFFRON}`, color: SAFFRON, fontFamily: fb,
+                      fontWeight: 600, fontSize: "14px", cursor: "pointer", transition: "all 0.2s",
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.background = SAFFRON; e.currentTarget.style.color = "white"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "white"; e.currentTarget.style.color = SAFFRON; }}
+                    >
+                      Load More ({listings.length - visibleCount} remaining)
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}>
                 <p style={{ fontFamily: ff, fontSize: "20px" }}>No results found</p>
