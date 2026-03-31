@@ -13,10 +13,10 @@ const PLATE_IMG = "https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=480,h
 
 export const metadata = {
   title: "The Plate That Disappears — Eco Dosth | Desi Adda Spotlight",
-  description: "How one Troy entrepreneur is replacing plastic with an ancient tradition — one sal leaf at a time.",
+  description: "Krishna Alapati spent two decades in tech before launching Eco Dosth — a sustainability brand rooted in a tradition older than plastic itself.",
   openGraph: {
     title: "The Plate That Disappears — Eco Dosth",
-    description: "How one Troy entrepreneur is replacing plastic with an ancient tradition — one sal leaf at a time.",
+    description: "Krishna Alapati spent two decades in tech before launching Eco Dosth — a sustainability brand rooted in a tradition older than plastic itself.",
     images: [{ url: HERO_IMG, width: 1224, height: 756 }],
     type: "article",
   },
@@ -32,7 +32,7 @@ export default function EcoDosthSpotlight() {
   const jsonLd = {
     "@context": "https://schema.org", "@type": "Article",
     headline: "The Plate That Disappears",
-    description: "How one Troy entrepreneur is replacing plastic with an ancient tradition — one sal leaf at a time.",
+    description: "Krishna Alapati spent two decades in tech before launching Eco Dosth — a sustainability brand rooted in a tradition older than plastic itself.",
     image: HERO_IMG,
     author: { "@type": "Organization", name: "Desi Adda" },
     publisher: { "@type": "Organization", name: "Desi Adda" },
@@ -138,15 +138,15 @@ export default function EcoDosthSpotlight() {
           {/* Body */}
           <div style={{ fontFamily: fb, fontSize: "16px", color: "#2D2420", lineHeight: 1.7 }}>
             <p style={{ marginBottom: "24px" }}>
-              Every desi kid has eaten off a leaf plate at some point — at a temple prasadam line, a wedding in India, a family puja. It&apos;s one of those things you don&apos;t think about until someone reframes it. Krishna Alapati reframed it.
+              South Asian culture has practiced sustainable dining for centuries. Long before &ldquo;eco-friendly&rdquo; became a marketing term, communities across India served meals on sal leaves, banana leaves, and areca palm — natural materials that decompose in weeks rather than decades.
             </p>
 
             <p style={{ marginBottom: "24px" }}>
-              Alapati, a longtime Troy resident and IT professional, launched Eco Dosth (<em>dosth</em> means &ldquo;friend&rdquo; in Hindi/Telugu) to bring sal leaf plates, wooden cutlery, and other plastic-free alternatives to the American market. The pitch is simple: why use styrofoam at your next Diwali party when you could use something your grandmother would recognize — and that composts in weeks instead of sitting in a landfill for centuries?
+              Krishna Alapati, a Troy-based IT professional and entrepreneur, is bringing that tradition to the American market through Eco Dosth. The name combines &ldquo;eco&rdquo; with &ldquo;dosth,&rdquo; meaning friend in Hindi and Telugu — a fitting identity for a brand built around the idea that sustainability and culture can reinforce each other.
             </p>
 
             <p style={{ marginBottom: "24px" }}>
-              The product line includes sal leaf plates in multiple sizes (6-inch bowls to 14-inch buffet plates), compartment plates perfect for a thali setup, and wooden cutlery. Everything is 100% natural, chemical-free, compostable, and — this matters for anyone who&apos;s hosted a 200-person function — genuinely sturdy. Heat-resistant, leak-proof, and they hold up to dal without going soft.
+              The product line is straightforward: sal leaf plates in multiple sizes ranging from 6-inch bowls to 14-inch buffet plates, compartment plates designed for thali-style serving, and wooden cutlery. Every product is 100% natural, chemical-free, compostable, and built to perform. The plates are heat-resistant, leak-proof for up to four hours, and sturdy enough for heavy catering use — a practical alternative to styrofoam and plastic at community events, temple functions, and large gatherings.
             </p>
 
             {/* Pull Quote */}
@@ -159,20 +159,20 @@ export default function EcoDosthSpotlight() {
                 fontFamily: ff, fontSize: "22px", fontWeight: 500, fontStyle: "italic",
                 color: DARK_GREEN, lineHeight: 1.4, margin: 0,
               }}>
-                &ldquo;Why use styrofoam at your next Diwali party when you could use something your grandmother would recognize?&rdquo;
+                &ldquo;Sustainability and culture can reinforce each other.&rdquo;
               </p>
             </blockquote>
 
             <p style={{ marginBottom: "24px" }}>
-              But Eco Dosth is more than a product. It&apos;s a statement about what the desi community can lead on. South Asian culture has practiced sustainable dining for thousands of years. Eating off banana leaves in the South, sal leaves in the East, dona-pattal across the North — this isn&apos;t a trend, it&apos;s heritage. Alapati is just making it accessible in a 48083 zip code.
+              What makes Eco Dosth notable is the intersection of cultural heritage and environmental impact. The sal leaf plate is not a new invention. It has been used across eastern and central India for generations, crafted by pressing dried leaves into shape without any chemical binding. Alapati recognized an opportunity to bring this established product to the South Asian diaspora in the United States, where demand for sustainable alternatives is growing and cultural familiarity with leaf plates already exists.
             </p>
 
             <p style={{ marginBottom: "24px" }}>
-              Beyond the business, Alapati is a fixture in Metro Detroit&apos;s Telugu community. As a core member of the Troy Telugu Association (TTA), he&apos;s spent years organizing cultural events, Ugadi celebrations, and community programs that keep Telugu traditions alive for the next generation growing up in Michigan.
+              Beyond the business, Alapati is a well-known figure in Metro Detroit&apos;s Telugu community. As a core member of the Troy Telugu Association, he has spent years organizing cultural events, Ugadi celebrations, and programs that strengthen Telugu heritage for families across Michigan.
             </p>
 
             <p style={{ marginBottom: "0" }}>
-              Eco Dosth ships across the US. For your next house party, temple event, or wedding function, it might be worth trading the Costco plasticware for something with a story.
+              Eco Dosth ships across the United States and is available for individual orders as well as bulk event catering.
             </p>
           </div>
 
