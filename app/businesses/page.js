@@ -353,6 +353,9 @@ function BusinessesPageInner() {
                   let detailHref = null;
                   if ((item._catId === "food" || item._catId === "sweets") && item.slug) detailHref = `/restaurants/${item.slug}`;
                   else if (item._catId === "grocery" && item.slug) detailHref = `/groceries/${item.slug}`;
+                  else if (item._catId === "beauty" && item.slug) detailHref = `/beauty/${item.slug}`;
+                  else if (item._catId === "wellness" && item.slug) detailHref = `/wellness/${item.slug}`;
+                  else if (item._catId === "family" && item.slug) detailHref = `/kids/${item.slug}`;
 
                   const card = <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} href={detailHref} />;
 
