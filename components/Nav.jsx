@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { label: "Entertainment", href: "/entertainment" },
   { label: "Community\n& Events", href: "/community" },
   { label: "Classifieds", href: "/classifieds" },
-  { label: "News", href: "/blog" },
+  { label: "News", href: "/news" },
 ];
 
 export default function Nav() {
