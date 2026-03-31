@@ -1,78 +1,216 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { Play, ExternalLink, MapPin } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
-import { Film, Music } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const ff = FONTS.heading;
 const fb = FONTS.body;
 const SAFFRON = "#E8A317";
 
-// Lazy load the heavy page components
-import dynamic from "next/dynamic";
-const MoviesContent = dynamic(() => import("./MoviesContent"), { ssr: false, loading: () => <div style={{ padding: "60px 20px", textAlign: "center" }}><p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading movies...</p></div> });
-const MusicContent = dynamic(() => import("./MusicContent"), { ssr: false, loading: () => <div style={{ padding: "60px 20px", textAlign: "center" }}><p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading music...</p></div> });
+const PLATFORM_COLORS = { Netflix: "#E50914", "Prime Video": "#00A8E1", "Disney+ Hotstar": "#1A2C5B", Aha: "#FF3C58", "Sun NXT": "#FFA500", Spotify: "#1DB954", "Apple Music": "#FC3C44", "YouTube Music": "#FF0000" };
 
 export default function EntertainmentPage() {
-  return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading...</p></div>}><EntertainmentInner /></Suspense>;
+  return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>}><EntertainmentContent /></Suspense>;
 }
 
-function EntertainmentInner() {
+function EntertainmentContent() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") || "movies";
-  const [tab, setTab] = useState(initialTab);
+  const router = useRouter();
+  const [tab, setTab] = useState(searchParams.get("tab") || "watch");
+  const [ott, setOtt] = useState([]);
+  const [coming, setComing] = useState([]);
+  const [lists, setLists] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
+  const [musicEvents, setMusicEvents] = useState([]);
+  const [trailerVideoId, setTrailerVideoId] = useState(null);
 
-  const heroGradient = tab === "movies"
-    ? "linear-gradient(135deg, #1a0a0a 0%, #2d1117 40%, #4a1527 100%)"
-    : "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)";
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    Promise.all([
+      supabase.from("ott_releases").select("*").eq("release_type", "new").order("release_date", { ascending: false }),
+      supabase.from("ott_releases").select("*").eq("release_type", "coming_soon").order("release_date"),
+      supabase.from("curated_lists").select("*").order("title"),
+      supabase.from("curated_playlists").select("*").order("name"),
+      supabase.from("community_events").select("*, community_networking(name, slug)").gte("event_date", today).order("event_date").limit(10),
+    ]).then(([o, c, l, p, me]) => {
+      setOtt(o.data || []);
+      setComing(c.data || []);
+      setLists(l.data || []);
+      setPlaylists(p.data || []);
+      const musicKw = /music|concert|garba|dandiya|sangeet|karaoke|bhajan|kirtan/i;
+      setMusicEvents((me.data || []).filter(e => musicKw.test(e.event_name) || musicKw.test(e.event_description || "")));
+    });
+  }, []);
+
+  const changeTab = (t) => { setTab(t); router.replace(`/entertainment?tab=${t}`, { scroll: false }); };
 
   return (
     <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
-      {/* HERO */}
-      <section style={{
-        background: heroGradient, minHeight: "300px", padding: "40px 20px 36px",
-        textAlign: "center", position: "relative", overflow: "hidden",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        transition: "background 0.5s ease",
-      }}>
-        {/* Decorative icons */}
-        <div style={{ position: "absolute", top: "8%", left: "5%", fontSize: "44px", opacity: 0.06, transform: "rotate(-12deg)" }}>{tab === "movies" ? "\u{1F3AC}" : "\u{1F3B6}"}</div>
-        <div style={{ position: "absolute", top: "15%", right: "8%", fontSize: "50px", opacity: 0.05, transform: "rotate(15deg)" }}>{tab === "movies" ? "\u{1F3A5}" : "\u{1F3B5}"}</div>
-        <div style={{ position: "absolute", bottom: "20%", left: "10%", fontSize: "42px", opacity: 0.05, transform: "rotate(20deg)" }}>{tab === "movies" ? "\u{1F37F}" : "\u{1F3A7}"}</div>
-        <div style={{ position: "absolute", top: "50%", right: "5%", fontSize: "46px", opacity: 0.05, transform: "rotate(10deg)" }}>{tab === "movies" ? "\u{2B50}" : "\u{1F3B8}"}</div>
-        <div style={{ position: "absolute", bottom: "8%", right: "20%", fontSize: "38px", opacity: 0.04 }}>{tab === "movies" ? "\u{1F4FA}" : "\u{1F3B9}"}</div>
-        <div style={{ position: "absolute", top: "65%", left: "3%", fontSize: "36px", opacity: 0.04 }}>{tab === "movies" ? "\u{1F39E}\uFE0F" : "\u{1F3A4}"}</div>
-
-        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
-          {/* Tab Toggle */}
-          <div style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "20px" }}>
-            <button onClick={() => setTab("movies")} style={{
-              padding: "10px 28px", borderRadius: "999px", fontSize: "15px", fontFamily: ff, fontWeight: 700, cursor: "pointer",
-              background: tab === "movies" ? SAFFRON : "rgba(255,255,255,0.1)",
-              color: tab === "movies" ? "#1a0a0a" : "rgba(255,255,255,0.6)",
-              border: tab === "movies" ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.2)",
-              transition: "all 0.3s", display: "flex", alignItems: "center", gap: "8px",
-            }}><Film size={16} /> Movies</button>
-            <button onClick={() => setTab("music")} style={{
-              padding: "10px 28px", borderRadius: "999px", fontSize: "15px", fontFamily: ff, fontWeight: 700, cursor: "pointer",
-              background: tab === "music" ? SAFFRON : "rgba(255,255,255,0.1)",
-              color: tab === "music" ? "#1a1a2e" : "rgba(255,255,255,0.6)",
-              border: tab === "music" ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.2)",
-              transition: "all 0.3s", display: "flex", alignItems: "center", gap: "8px",
-            }}><Music size={16} /> Music</button>
+      {/* Trailer Modal */}
+      {trailerVideoId && (
+        <div onClick={() => setTrailerVideoId(null)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "min(900px, 95vw)", position: "relative" }}>
+            <button onClick={() => setTrailerVideoId(null)} style={{ position: "absolute", top: "-40px", right: "0", background: "none", border: "none", color: "white", fontSize: "28px", cursor: "pointer" }}>{"\u2715"}</button>
+            <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: "12px", overflow: "hidden" }}>
+              <iframe src={`https://www.youtube.com/embed/${trailerVideoId}?autoplay=1&rel=0`} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen loading="lazy" title="Trailer" />
+            </div>
           </div>
-
-          <h1 style={{ fontFamily: ff, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
-            Desi <span style={{ color: SAFFRON, fontStyle: "italic" }}>{tab === "movies" ? "Movies" : "Music"}</span>
-          </h1>
-          <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 8px", fontStyle: "italic" }}>
-            {tab === "movies" ? "Now playing, streaming, trailers & curated lists" : "Charts, playlists & live shows — all in one place"}
-          </p>
         </div>
-      </section>
+      )}
 
-      {/* CONTENT */}
-      {tab === "movies" ? <MoviesContent /> : <MusicContent />}
+      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px 20px" }}>
+        <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 36px)", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>Entertainment</h1>
+        <p style={{ fontSize: "14px", color: "#8A7968", margin: "0 0 20px" }}>What to watch, what to listen to.</p>
+
+        <div style={{ display: "flex", gap: "6px", marginBottom: "28px" }}>
+          {[{ id: "watch", label: "Watch" }, { id: "listen", label: "Listen" }].map(t => (
+            <button key={t.id} onClick={() => changeTab(t.id)} style={{
+              padding: "8px 24px", borderRadius: "999px", fontSize: "14px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
+              border: tab === t.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+              background: tab === t.id ? SAFFRON : "white",
+              color: tab === t.id ? "#2D2420" : "#8A7968", transition: "all 0.2s",
+            }}>{t.label}</button>
+          ))}
+        </div>
+
+        {tab === "watch" && (
+          <>
+            <section style={{ marginBottom: "40px" }}>
+              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>New on OTT</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
+                {ott.map(m => <MovieCard key={m.id} movie={m} onTrailer={setTrailerVideoId} />)}
+              </div>
+            </section>
+
+            {coming.length > 0 && (
+              <section style={{ marginBottom: "40px" }}>
+                <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Coming Soon</h2>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
+                  {coming.map(m => <MovieCard key={m.id} movie={m} onTrailer={setTrailerVideoId} isComing />)}
+                </div>
+              </section>
+            )}
+
+            <section>
+              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Curated Lists</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "14px" }}>
+                {lists.map(l => (
+                  <Link key={l.id} href={`/entertainment/lists/${l.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
+                    <div style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #EDE6DE", borderLeft: `4px solid ${SAFFRON}`, transition: "box-shadow 0.2s" }}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)"}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                      <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: "0 0 6px", color: "#2D2420" }}>{l.title}</h3>
+                      <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 10px", lineHeight: 1.5 }}>{l.subtitle}</p>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: "12px", color: "#A89888" }}>{l.film_count} films</span>
+                        <span style={{ fontSize: "13px", fontWeight: 600, color: COLORS.primary }}>View list {"\u2192"}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {tab === "listen" && (
+          <>
+            <section style={{ marginBottom: "40px" }}>
+              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Curated Playlists</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
+                {playlists.map(p => {
+                  const pc = PLATFORM_COLORS[p.platform] || "#333";
+                  return (
+                    <a key={p.id} href={p.playlist_url} target="_blank" rel="noopener noreferrer" style={{ background: "white", borderRadius: "16px", padding: "20px", border: "1px solid #EDE6DE", textDecoration: "none", color: "inherit", transition: "box-shadow 0.2s", display: "flex", flexDirection: "column", gap: "10px" }}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)"}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${SAFFRON}15`, color: SAFFRON }}>{p.language}</span>
+                        <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${pc}15`, color: pc }}>{p.platform}</span>
+                      </div>
+                      <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: 0, color: "#2D2420" }}>{p.name}</h3>
+                      <p style={{ fontSize: "12px", color: "#8A7968", margin: 0, lineHeight: 1.5 }}>{p.description}</p>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto" }}>
+                        <span style={{ fontSize: "11px", color: "#A89888" }}>{p.song_count} songs</span>
+                        <span style={{ fontSize: "12px", fontWeight: 600, color: pc, display: "flex", alignItems: "center", gap: "3px" }}>Listen <ExternalLink size={10} /></span>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section>
+              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Live Near You</h2>
+              {musicEvents.length > 0 ? (
+                <div style={{ display: "grid", gap: "10px" }}>
+                  {musicEvents.map((ev, i) => {
+                    const d = new Date(ev.event_date + "T00:00:00");
+                    return (
+                      <div key={`me-${ev.id}-${i}`} style={{ display: "flex", gap: "14px", padding: "14px 16px", background: "white", borderRadius: "12px", border: "1px solid #EDE6DE", alignItems: "center" }}>
+                        <div style={{ width: "48px", textAlign: "center", flexShrink: 0, padding: "6px", borderRadius: "10px", background: "#FFF3E0" }}>
+                          <div style={{ fontSize: "10px", fontWeight: 700, color: "#BF360C", textTransform: "uppercase" }}>{d.toLocaleDateString("en-US", { month: "short" })}</div>
+                          <div style={{ fontSize: "18px", fontWeight: 700, fontFamily: ff }}>{d.getDate()}</div>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: fb, fontSize: "14px", fontWeight: 600, color: "#2D2420" }}>{ev.event_name}</div>
+                          {ev.community_networking?.name && <Link href={`/community/${ev.community_networking.slug}`} style={{ fontSize: "12px", color: COLORS.primary, textDecoration: "none", fontWeight: 600 }}>{ev.community_networking.name}</Link>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "40px 20px", background: "white", borderRadius: "16px", border: "1px solid #EDE6DE" }}>
+                  <p style={{ fontSize: "15px", color: "#8A7968", margin: "0 0 8px" }}>No upcoming music events. Check back soon!</p>
+                  <Link href="/events/submit" style={{ color: COLORS.primary, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>Submit an event {"\u2192"}</Link>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MovieCard({ movie: m, onTrailer, isComing }) {
+  const pc = PLATFORM_COLORS[m.platform] || "#333";
+  return (
+    <div style={{ background: "white", borderRadius: "14px", overflow: "hidden", border: "1px solid #EDE6DE", transition: "box-shadow 0.2s", display: "flex", flexDirection: "column" }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08)"}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+      <div style={{ width: "100%", aspectRatio: "2/3", overflow: "hidden", position: "relative", background: "#F5EDE4" }}>
+        {m.poster_url ? <img src={m.poster_url} alt={m.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.target.onerror = null; e.target.style.display = "none"; }} /> : null}
+        {!m.poster_url && <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "40px" }}>{"\u{1F3AC}"}</div>}
+        {m.youtube_video_id && (
+          <button onClick={() => onTrailer(m.youtube_video_id)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
+            <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Play size={18} fill={COLORS.primary} color={COLORS.primary} style={{ marginLeft: "2px" }} />
+            </div>
+          </button>
+        )}
+        {isComing && m.release_date && (
+          <div style={{ position: "absolute", top: "8px", left: "8px", padding: "3px 8px", borderRadius: "6px", background: "rgba(0,0,0,0.7)", color: SAFFRON, fontSize: "10px", fontWeight: 700, fontFamily: fb }}>
+            Coming {new Date(m.release_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: "12px 14px", flex: 1, display: "flex", flexDirection: "column" }}>
+        <h3 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 700, margin: "0 0 6px", color: "#2D2420", lineHeight: 1.3 }}>{m.title}</h3>
+        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "8px" }}>
+          {m.language && <span style={{ padding: "2px 6px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: `${SAFFRON}12`, color: SAFFRON }}>{m.language}</span>}
+          {m.platform && m.platform !== "Coming Soon" && <span style={{ padding: "2px 6px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: `${pc}12`, color: pc }}>{m.platform}</span>}
+        </div>
+        <div style={{ display: "flex", gap: "6px", marginTop: "auto" }}>
+          {m.streaming_url && <a href={m.streaming_url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", background: pc, color: "white", fontSize: "11px", fontWeight: 700, fontFamily: fb, textDecoration: "none", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "3px" }}><Play size={10} /> Watch</a>}
+          {m.youtube_video_id && <button onClick={() => onTrailer(m.youtube_video_id)} style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", background: "#2D2420", color: "white", fontSize: "11px", fontWeight: 700, fontFamily: fb, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "3px" }}><Play size={10} /> Trailer</button>}
+        </div>
+      </div>
     </div>
   );
 }
