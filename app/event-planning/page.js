@@ -13,21 +13,21 @@ const SAFFRON = "#E8A317";
 
 const FILTER_TABS = [
   { id: "all", label: "All" },
-  { id: "photographer", label: "Photographers" },
-  { id: "dj", label: "DJs" },
-  { id: "mehndi", label: "Mehndi" },
+  { id: "catering", label: "Caterers" },
+  { id: "venues", label: "Venues & Halls" },
+  { id: "dj", label: "DJs & Music" },
+  { id: "photographer", label: "Photo & Video" },
   { id: "decorator", label: "Decorators" },
+  { id: "planner", label: "Wedding Planners" },
+  { id: "mehndi", label: "Mehndi" },
   { id: "makeup", label: "Makeup" },
-  { id: "catering", label: "Catering" },
-  { id: "venues", label: "Venues" },
-  { id: "planner", label: "Planners" },
   { id: "florist", label: "Florists" },
   { id: "jewelry", label: "Jewelry" },
   { id: "bridal", label: "Bridal Wear" },
 ];
 
 const TAB_MATCH = {
-  photographer: ["Photography", "Photographer", "Cinematography", "Videographer"],
+  photographer: ["Photography", "Photographer", "Cinematography", "Videographer", "Video"],
   dj: ["DJ", "Entertainment", "Sangeet"],
   mehndi: ["Mehndi", "Mehndi Artist"],
   decorator: ["Decor", "Decorator", "Mandap"],

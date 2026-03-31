@@ -11,11 +11,8 @@ const ff = FONTS.heading;
 const fb = FONTS.body;
 const SAFFRON = "#E8A317";
 
-const DENOMINATIONS = [
-  "All", "Hindu", "Sikh", "Muslim", "Jain", "Buddhist",
-  "Pandit Services", "Astrology",
-  "Telugu", "Tamil", "Bengali", "Gujarati", "Swaminarayan", "ISKCON",
-];
+const RELIGION_FILTERS = ["All", "Hindu", "Sikh", "Islamic", "Jain", "Buddhist", "Multi-faith"];
+const SERVICE_FILTERS = ["All", "Temples", "Pandit/Priest Services", "Astrology/Vastu"];
 
 const CHIPS = [
   { emoji: "\u{1F6D5}", text: "Telugu temple near Troy" },
@@ -40,7 +37,8 @@ const SORT_OPTIONS = [
 export default function TemplesPage() {
   const [temples, setTemples] = useState(null);
   const [events, setEvents] = useState([]);
-  const [denom, setDenom] = useState("All");
+  const [religionFilter, setReligionFilter] = useState("All");
+  const [serviceFilter, setServiceFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [city, setCity] = useState("All");
   const [sortBy, setSortBy] = useState("name");
@@ -67,23 +65,34 @@ export default function TemplesPage() {
   // Filter
   let filtered = temples;
 
-  if (denom !== "All") {
-    const denomLower = denom.toLowerCase();
-    // "Muslim" should also match "Mosque"
+  // Religion filter
+  if (religionFilter !== "All") {
     const aliases = {
-      muslim: ["muslim", "mosque", "masjid", "islamic"],
+      hindu: ["hindu", "mandir", "temple"],
       sikh: ["sikh", "gurudwara", "gurdwara"],
-      "pandit services": ["pandit", "puja", "priest", "pooja"],
-      astrology: ["astrology", "astrologer", "jyotish", "horoscope", "vedic astrology"],
+      islamic: ["muslim", "mosque", "masjid", "islamic", "islam"],
+      jain: ["jain"],
+      buddhist: ["buddhist", "vihara"],
+      "multi-faith": ["multi", "interfaith", "vedanta"],
     };
-    const terms = aliases[denomLower] || [denomLower];
-
+    const terms = aliases[religionFilter.toLowerCase()] || [religionFilter.toLowerCase()];
     filtered = filtered.filter(t => {
-      const nameDesc = `${t.name || ""} ${t.description || ""}`.toLowerCase();
-      const subs = (t.subcategories || []).map(s => s.toLowerCase());
-      return terms.some(term =>
-        subs.some(s => s.includes(term)) || nameDesc.includes(term)
-      );
+      const text = `${t.name || ""} ${t.description || ""} ${(t.subcategories || []).join(" ")}`.toLowerCase();
+      return terms.some(term => text.includes(term));
+    });
+  }
+
+  // Service type filter
+  if (serviceFilter !== "All") {
+    const aliases = {
+      "temples": ["temple", "mandir", "mosque", "masjid", "gurudwara", "church"],
+      "pandit/priest services": ["pandit", "priest", "puja", "pooja", "imam"],
+      "astrology/vastu": ["astrology", "astrologer", "vastu", "jyotish", "horoscope"],
+    };
+    const terms = aliases[serviceFilter.toLowerCase()] || [serviceFilter.toLowerCase()];
+    filtered = filtered.filter(t => {
+      const text = `${t.name || ""} ${t.description || ""} ${(t.subcategories || []).join(" ")}`.toLowerCase();
+      return terms.some(term => text.includes(term));
     });
   }
 
@@ -158,14 +167,14 @@ export default function TemplesPage() {
             <ScrollingChips chips={CHIPS} onChipClick={(chip) => triggerChat(`${chip.emoji} ${chip.text}`)} variant="light" />
           </div>
 
-          {/* Denomination filters inside hero */}
+          {/* Religion filters inside hero */}
           <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", marginTop: "20px" }}>
-            {DENOMINATIONS.map(d => (
-              <button key={d} onClick={() => setDenom(d)} style={{
+            {RELIGION_FILTERS.map(d => (
+              <button key={d} onClick={() => setReligionFilter(d)} style={{
                 padding: "7px 18px", borderRadius: "999px", fontSize: "13px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
-                border: denom === d ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)",
-                background: denom === d ? SAFFRON : "rgba(255,255,255,0.08)",
-                color: denom === d ? "#3E1C0A" : "rgba(255,255,255,0.7)", transition: "all 0.25s",
+                border: religionFilter === d ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)",
+                background: religionFilter === d ? SAFFRON : "rgba(255,255,255,0.08)",
+                color: religionFilter === d ? "#3E1C0A" : "rgba(255,255,255,0.7)", transition: "all 0.25s",
               }}>{d}</button>
             ))}
           </div>
@@ -178,6 +187,13 @@ export default function TemplesPage() {
         <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
           <p style={{ fontSize: "13px", color: COLORS.textFaint, margin: 0 }}>{filtered.length} temples found</p>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <div style={{ position: "relative" }}>
+              <select value={serviceFilter} onChange={e => setServiceFilter(e.target.value)}
+                style={{ appearance: "none", padding: "8px 32px 8px 12px", borderRadius: "10px", border: "1px solid #EDE6DE", background: "white", fontSize: "13px", fontFamily: fb, color: "#2D2420", cursor: "pointer", outline: "none" }}>
+                {SERVICE_FILTERS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <ChevronDown size={14} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#8A7968" }} />
+            </div>
             <div style={{ position: "relative" }}>
               <select
                 value={city}

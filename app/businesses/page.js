@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Search, X, MapPin, Map, List } from "lucide-react";
@@ -69,6 +69,7 @@ const SORT_OPTIONS = [
 
 function BusinessesPageInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialCat = searchParams.get("cat") || "all";
   const initialQ = searchParams.get("q") || "";
   const { culture } = useApp();
@@ -96,6 +97,13 @@ function BusinessesPageInner() {
   const [visibleCount, setVisibleCount] = useState(20);
 
   useEffect(() => { fetchAllData().then(_setData); }, []);
+
+  // Sync category to URL for back button persistence
+  const updateCat = (cat) => {
+    setActiveCat(cat);
+    const url = cat === "all" ? "/businesses" : `/businesses?cat=${cat}`;
+    router.replace(url, { scroll: false });
+  };
 
   // Reset filters when category changes
   useEffect(() => {
@@ -308,7 +316,7 @@ function BusinessesPageInner() {
       <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px", overflowX: "auto", scrollbarWidth: "none" }}>
         <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
           {CAT_TABS.map(tab => (
-            <button key={tab.id} onClick={() => setActiveCat(tab.id)} style={{
+            <button key={tab.id} onClick={() => updateCat(tab.id)} style={{
               padding: "7px 16px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
               border: activeCat === tab.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
               background: activeCat === tab.id ? SAFFRON : "white",
