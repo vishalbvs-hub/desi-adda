@@ -38,14 +38,21 @@ export default function HomePage() {
   const [nowPlaying, setNowPlaying] = useState([]);
 
   useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
     Promise.all([
-      supabase.from("events").select("*").eq("status", "approved").order("event_date").limit(4),
+      supabase.from("temple_events").select("*, temples(name, slug)").gte("event_date", today).order("event_date").limit(10),
+      supabase.from("community_events").select("*, community_networking(name, slug)").gte("event_date", today).order("event_date").limit(10),
       supabase.from("restaurants").select("id, name, city, rating, reviews, description, photos, slug, notable_dishes, what_to_order").not("photos", "eq", "{}").gte("rating", 4.0).gte("reviews", 10).order("reviews", { ascending: false }).limit(20),
       supabase.from("classifieds").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
       supabase.from("movies_catalog").select("*").eq("status", "ott").order("release_date", { ascending: false }).limit(6),
       supabase.from("movies_catalog").select("*").eq("status", "now_playing").order("release_date", { ascending: false }).limit(4),
-    ]).then(([ev, biz, cl, ott, np]) => {
-      setEvents(ev.data || []);
+    ]).then(([te, ce, biz, cl, ott, np]) => {
+      // Build unified events feed
+      const unified = [];
+      (te.data || []).forEach(e => unified.push({ ...e, _type: "temple", _hostName: e.temples?.name, _hostSlug: e.temples?.slug ? `/temples/${e.temples.slug}` : null }));
+      (ce.data || []).forEach(e => unified.push({ ...e, _type: "community", _hostName: e.community_networking?.name, _hostSlug: e.community_networking?.slug ? `/community/${e.community_networking.slug}` : null }));
+      unified.sort((a, b) => a.event_date.localeCompare(b.event_date));
+      setEvents(unified.slice(0, 5));
       // Sort by weighted rating and filter to only good data
       const sorted = (biz.data || [])
         .filter(b => b.photos?.length > 0 && b.rating >= 4.0 && b.reviews >= 10 && b.description)
@@ -60,11 +67,7 @@ export default function HomePage() {
   const triggerChat = (q) => { window.dispatchEvent(new CustomEvent("askadda", { detail: q })); };
   const handleSearch = (e) => { if (e) e.preventDefault(); if (searchQuery.trim()) { triggerChat(searchQuery); setSearchQuery(""); } };
 
-  const formatDate = (d) => {
-    if (!d) return "";
-    const date = new Date(d + "T00:00:00");
-    return isNaN(date.getTime()) ? d : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
+
 
   const featuredRef = useFadeIn();
   const ottRef = useFadeIn();
@@ -218,21 +221,40 @@ export default function HomePage() {
               <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Upcoming Events</h2>
               <Link href="/community?tab=events" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>All events <ArrowRight size={14} /></Link>
             </div>
-            <div style={{ display: "grid", gap: "12px" }}>
-              {events.map(ev => (
-                <div key={ev.id} style={{ display: "flex", gap: "14px", background: "white", borderRadius: "14px", padding: "16px 20px", border: "1px solid #EDE6DE", alignItems: "center", transition: "box-shadow 0.2s" }}
-                  onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-                  <div style={{ padding: "10px 14px", borderRadius: "10px", background: "#FFF3E0", fontFamily: ff, fontSize: "14px", fontWeight: 700, color: SAFFRON, textAlign: "center", lineHeight: 1.2, flexShrink: 0 }}>{formatDate(ev.event_date)}</div>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: "0 0 3px", color: "#2D2420" }}>{ev.name}</h4>
-                    <div style={{ fontSize: "12px", color: "#8A7968", display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      {ev.event_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `rgba(232,163,23,0.1)`, color: SAFFRON }}>{ev.event_type}</span>}
-                      {ev.venue && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {ev.venue}</span>}
+            <div style={{ display: "grid", gap: "10px" }}>
+              {events.map((ev, i) => {
+                const d = new Date(ev.event_date + "T00:00:00");
+                const monthStr = d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+                const dayNum = d.getDate();
+                const isTemple = ev._type === "temple";
+                const badgeColor = isTemple ? "#BF360C" : "#6A1B9A";
+                return (
+                  <div key={`${ev._type}-${ev.id}-${i}`} style={{
+                    display: "flex", gap: "14px", background: "white", borderRadius: "14px",
+                    padding: "14px 18px", border: "1px solid #EDE6DE", alignItems: "center",
+                    transition: "border-color 0.2s",
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = `${SAFFRON}60`}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = "#EDE6DE"}
+                  >
+                    <div style={{ width: "48px", textAlign: "center", flexShrink: 0, padding: "6px 4px", borderRadius: "10px", background: "#FFF3E0" }}>
+                      <div style={{ fontSize: "10px", fontWeight: 700, color: "#BF360C", fontFamily: fb, textTransform: "uppercase" }}>{monthStr}</div>
+                      <div style={{ fontSize: "20px", fontWeight: 700, color: "#2D2420", fontFamily: ff, lineHeight: 1.1 }}>{dayNum}</div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "2px" }}>
+                        <span style={{ padding: "1px 6px", borderRadius: "999px", fontSize: "9px", fontWeight: 700, background: `${badgeColor}12`, color: badgeColor }}>{isTemple ? "Temple" : "Community"}</span>
+                      </div>
+                      <h4 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: "0 0 2px", color: "#2D2420" }}>{ev.event_name}</h4>
+                      {ev._hostName && (
+                        <div style={{ fontSize: "12px", color: "#8A7968" }}>
+                          Hosted by {ev._hostSlug ? <Link href={ev._hostSlug} style={{ color: COLORS.primary, textDecoration: "none", fontWeight: 600 }}>{ev._hostName}</Link> : ev._hostName}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
