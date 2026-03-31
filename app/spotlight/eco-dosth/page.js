@@ -9,6 +9,7 @@ const CREAM = "#F4F1E8";
 const MUTED = "#A8A393";
 
 const HERO_IMG = "https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=1224,h=756,fit=crop/AwvDoRQlrZsGy017/eco-dosth-new-flyer-india-and-us-YleWMQXL3Wc0Bgj9.jpg";
+const PLATE_IMG = "https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=480,h=497,fit=crop/AwvDoRQlrZsGy017/clipped_image_20240122_103955-YbNqppxb4kt5nXkW.png";
 
 export const metadata = {
   title: "The Plate That Disappears — Eco Dosth | Desi Adda Spotlight",
@@ -65,37 +66,41 @@ export default function EcoDosthSpotlight() {
             </Link>
           </div>
 
-          {/* Headline */}
-          <h1 style={{
-            fontFamily: ff, fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 700,
-            lineHeight: 1.1, margin: "0 0 16px", color: CREAM,
-          }}>
-            The plate that disappears.
-          </h1>
-
-          {/* Subhead */}
-          <p style={{
-            fontFamily: fb, fontSize: "clamp(16px, 2.5vw, 20px)", fontWeight: 400,
-            color: MUTED, lineHeight: 1.5, margin: "0 0 28px", maxWidth: "640px",
-          }}>
-            How one Troy entrepreneur is replacing plastic with an ancient tradition — one sal leaf at a time.
-          </p>
-
-          {/* Tags */}
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "36px" }}>
-            {["100% compostable", "zero plastic", "chemical-free"].map(tag => (
-              <span key={tag} style={{
-                padding: "5px 14px", borderRadius: "999px", fontSize: "12px",
-                fontFamily: fb, fontWeight: 500, color: GOLD,
-                border: `1px solid ${GOLD}40`, background: `${GOLD}08`,
-              }}>{tag}</span>
-            ))}
-          </div>
-
-          {/* Product image */}
-          <div style={{ borderRadius: "16px", overflow: "hidden", marginBottom: "32px" }}>
-            <img src={HERO_IMG} alt="Eco Dosth sustainable leaf plates"
-              style={{ width: "100%", height: "auto", maxHeight: "400px", objectFit: "cover" }} />
+          {/* Headline + Product Image */}
+          <div style={{ display: "flex", alignItems: "center", gap: "clamp(24px, 5vw, 48px)", flexWrap: "wrap", marginBottom: "28px" }}>
+            <div style={{ flex: "1 1 320px" }}>
+              <h1 style={{
+                fontFamily: ff, fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 700,
+                lineHeight: 1.1, margin: "0 0 16px", color: CREAM,
+              }}>
+                The plate that disappears.
+              </h1>
+              <p style={{
+                fontFamily: fb, fontSize: "clamp(16px, 2.5vw, 20px)", fontWeight: 400,
+                color: MUTED, lineHeight: 1.5, margin: "0 0 20px", maxWidth: "480px",
+              }}>
+                How one Troy entrepreneur is replacing plastic with an ancient tradition — one sal leaf at a time.
+              </p>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                {["100% compostable", "zero plastic", "chemical-free"].map(tag => (
+                  <span key={tag} style={{
+                    padding: "5px 14px", borderRadius: "999px", fontSize: "12px",
+                    fontFamily: fb, fontWeight: 500, color: GOLD,
+                    border: `1px solid ${GOLD}40`, background: `${GOLD}08`,
+                  }}>{tag}</span>
+                ))}
+              </div>
+            </div>
+            {/* Circular plate image */}
+            <div style={{ flexShrink: 0 }}>
+              <img src={PLATE_IMG} alt="Eco Dosth sal leaf plate"
+                style={{
+                  width: "clamp(160px, 25vw, 200px)", height: "clamp(160px, 25vw, 200px)",
+                  borderRadius: "50%", objectFit: "cover",
+                  border: `2px solid ${GOLD}`,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+                }} />
+            </div>
           </div>
 
           {/* Stats */}

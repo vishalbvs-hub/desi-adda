@@ -138,9 +138,10 @@ export default function HomePage() {
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}
             >
               <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
-                {/* Image side */}
-                <div style={{ flex: "1 1 300px", minHeight: "240px", overflow: "hidden" }}>
-                  <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=1224,h=756,fit=crop/AwvDoRQlrZsGy017/eco-dosth-new-flyer-india-and-us-YleWMQXL3Wc0Bgj9.jpg" alt="Eco Dosth sustainable leaf plates" style={{ width: "100%", height: "100%", objectFit: "cover", minHeight: "240px" }} />
+                {/* Circular plate image side */}
+                <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center", padding: "28px" }}>
+                  <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=480,h=497,fit=crop/AwvDoRQlrZsGy017/clipped_image_20240122_103955-YbNqppxb4kt5nXkW.png" alt="Eco Dosth sal leaf plate"
+                    style={{ width: "clamp(120px, 20vw, 160px)", height: "clamp(120px, 20vw, 160px)", borderRadius: "50%", objectFit: "cover", border: "2px solid #C4A35A", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }} />
                 </div>
                 {/* Content side */}
                 <div style={{ flex: "1 1 320px", padding: "28px 28px" }}>
