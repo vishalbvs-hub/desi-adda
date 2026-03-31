@@ -131,33 +131,40 @@ export default function HomePage() {
           {/* ── BUSINESS SPOTLIGHT — Eco Dosth ── */}
           <Link href="/spotlight/eco-dosth" style={{ textDecoration: "none", color: "inherit", display: "block", marginBottom: "24px" }}>
             <div style={{
-              background: "white", borderRadius: "20px", overflow: "hidden",
-              border: "1px solid #EDE6DE", transition: "all 0.25s",
+              background: "#2C3527", borderRadius: "20px", overflow: "hidden",
+              transition: "all 0.25s", position: "relative",
             }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 32px rgba(44,53,39,0.3)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}
             >
-              <div style={{ width: "100%", height: "280px", overflow: "hidden", position: "relative" }}>
-                <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=1224,h=756,fit=crop/AwvDoRQlrZsGy017/eco-dosth-new-flyer-india-and-us-YleWMQXL3Wc0Bgj9.jpg" alt="Eco Dosth sustainable leaf plates" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <div style={{ position: "absolute", top: "16px", left: "16px", padding: "6px 14px", borderRadius: "999px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", color: SAFFRON, fontSize: "12px", fontWeight: 700, fontFamily: fb, display: "flex", alignItems: "center", gap: "4px" }}>
-                  {"\u2728"} This Week&apos;s Spotlight
+              <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
+                {/* Image side */}
+                <div style={{ flex: "1 1 300px", minHeight: "240px", overflow: "hidden" }}>
+                  <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=1224,h=756,fit=crop/AwvDoRQlrZsGy017/eco-dosth-new-flyer-india-and-us-YleWMQXL3Wc0Bgj9.jpg" alt="Eco Dosth sustainable leaf plates" style={{ width: "100%", height: "100%", objectFit: "cover", minHeight: "240px" }} />
                 </div>
-              </div>
-              <div style={{ padding: "20px 24px" }}>
-                <h3 style={{ fontFamily: ff, fontSize: "clamp(20px, 4vw, 26px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420", lineHeight: 1.3 }}>
-                  The Plate That Disappears: How One Troy Entrepreneur Is Replacing Plastic, One Leaf at a Time
-                </h3>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#8A7968", marginBottom: "10px" }}>
-                  <span>Eco Dosth</span>
-                  <span>{"\u00B7"}</span>
-                  <span>Troy, MI</span>
-                  <span>{"\u00B7"}</span>
-                  <span>5 min read</span>
+                {/* Content side */}
+                <div style={{ flex: "1 1 320px", padding: "28px 28px" }}>
+                  <span style={{
+                    display: "inline-block", padding: "4px 14px", borderRadius: "999px",
+                    border: "1px solid #C4A35A50", background: "#C4A35A10",
+                    color: "#C4A35A", fontSize: "10px", fontWeight: 700, fontFamily: fb,
+                    letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "14px",
+                  }}>
+                    {"\u2728"} This Week&apos;s Spotlight
+                  </span>
+                  <h3 style={{ fontFamily: ff, fontSize: "clamp(20px, 3.5vw, 26px)", fontWeight: 700, margin: "0 0 10px", color: "#F4F1E8", lineHeight: 1.25 }}>
+                    The plate that disappears.
+                  </h3>
+                  <p style={{ fontSize: "14px", color: "#A8A393", margin: "0 0 8px", lineHeight: 1.5 }}>
+                    How one Troy entrepreneur is replacing plastic with an ancient tradition — one sal leaf at a time.
+                  </p>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
+                    {["100% compostable", "zero plastic"].map(t => (
+                      <span key={t} style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "10px", fontFamily: fb, fontWeight: 500, color: "#C4A35A", border: "1px solid #C4A35A30" }}>{t}</span>
+                    ))}
+                  </div>
+                  <span style={{ fontSize: "13px", fontWeight: 600, color: "#C4A35A" }}>Read the full story {"\u2192"}</span>
                 </div>
-                <p style={{ fontSize: "15px", color: "#5A4A3F", margin: "0 0 12px", lineHeight: 1.6 }}>
-                  Every desi kid has eaten off a leaf plate at some point — at a temple prasadam line, a wedding in India, a family puja. Krishna Alapati reframed that tradition into a sustainability brand.
-                </p>
-                <span style={{ fontSize: "14px", fontWeight: 600, color: COLORS.primary }}>Read the full story {"\u2192"}</span>
               </div>
             </div>
           </Link>
