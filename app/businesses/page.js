@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, ArrowLeft, X, MapPin, Map, List, Star, ChevronDown } from "lucide-react";
+import { Search, X, MapPin, Map, List } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { fetchAllData } from "@/lib/data";
 import { useApp } from "@/lib/context";
@@ -205,6 +205,11 @@ function BusinessesPageInner() {
     ? ["All", ...new Set((_data.CATEGORIES.find(c => c.id === "grocery")?.data || []).map(g => g.city).filter(Boolean).sort())]
     : [];
 
+  // Default weighted sort for all other categories
+  if (!isRestaurants && !isGrocery && activeCat !== "sweets") {
+    listings.sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
+  }
+
   // Get unique cities for restaurant city filter
   const restaurantCities = isRestaurants
     ? ["All", ...new Set((_data.CATEGORIES.find(c => c.id === "food")?.data || []).map(r => r.city).filter(Boolean).sort())]
@@ -342,65 +347,19 @@ function BusinessesPageInner() {
         ) : (
           <>
             {listings.length > 0 ? (
-              <div style={{ display: "grid", gap: "14px" }}>
+              <div style={{ display: "grid", gap: "12px" }}>
                 {listings.map((item, i) => {
-                  // Enhanced card for restaurants
-                  if (item._catId === "food" || item._catId === "sweets") {
-                    const thumb = item.photos?.[0] || null;
-                    const card = (
-                      <div key={`food-${item.id || i}`} style={{
-                        background: "white", borderRadius: "16px", overflow: "hidden",
-                        border: "1px solid #EDE6DE", transition: "all 0.2s", cursor: item.slug ? "pointer" : "default",
-                        display: "flex", flexDirection: "row",
-                      }}
-                        onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08)"; e.currentTarget.style.borderColor = `${SAFFRON}40`; }}
-                        onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "#EDE6DE"; }}
-                      >
-                        {/* Thumbnail */}
-                        {thumb && (
-                          <div style={{ width: "140px", minHeight: "140px", flexShrink: 0, overflow: "hidden" }}>
-                            <img src={thumb} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          </div>
-                        )}
-                        {/* Content */}
-                        <div style={{ flex: 1, padding: "16px 20px", minWidth: 0 }}>
-                          <div style={{ display: "flex", gap: "5px", marginBottom: "6px", flexWrap: "wrap" }}>
-                            {item.cuisine_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${SAFFRON}12`, color: SAFFRON }}>{item.cuisine_type}</span>}
-                            {item.veg_status === "Veg" && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#E8F5E9", color: "#2E7D32" }}>🌿 Veg</span>}
-                            {item.price_range && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>{item.price_range}</span>}
-                          </div>
-                          <h3 style={{ fontFamily: ff, fontSize: "17px", fontWeight: 600, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</h3>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#8A7968", marginBottom: "6px" }}>
-                            {item.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {item.city}</span>}
-                          </div>
-                          {item.rating && (
-                            <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "6px" }}>
-                              <div style={{ display: "flex", gap: "1px" }}>
-                                {[1,2,3,4,5].map(s => <Star key={s} size={13} fill={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} color={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} />)}
-                              </div>
-                              <span style={{ fontSize: "13px", fontWeight: 700, color: "#2D2420" }}>{item.rating}</span>
-                              {item.reviews && <span style={{ fontSize: "11px", color: "#A89888" }}>({item.reviews.toLocaleString()})</span>}
-                            </div>
-                          )}
-                          {item.notable_dishes && (
-                            <p style={{ fontSize: "12px", color: "#5A4A3F", margin: 0, lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              🍛 {item.notable_dishes}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                    if (item.slug) {
-                      return <Link key={`food-link-${item.id || i}`} href={`/restaurants/${item.slug}`} style={{ textDecoration: "none", color: "inherit" }}>{card}</Link>;
-                    }
-                    return card;
+                  // Determine detail page URL based on category
+                  let detailHref = null;
+                  if ((item._catId === "food" || item._catId === "sweets") && item.slug) detailHref = `/restaurants/${item.slug}`;
+                  else if (item._catId === "grocery" && item.slug) detailHref = `/groceries/${item.slug}`;
+
+                  const card = <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} href={detailHref} />;
+
+                  if (detailHref) {
+                    return <Link key={`link-${item._catId}-${item.id || i}`} href={detailHref} style={{ textDecoration: "none", color: "inherit" }}>{card}</Link>;
                   }
-                  // Grocery cards link to detail pages
-                  if (item._catId === "grocery" && item.slug) {
-                    return <Link key={`grocery-${item.id || i}`} href={`/groceries/${item.slug}`} style={{ textDecoration: "none", color: "inherit" }}><ListingCard item={item} cat={currentCat || { color: SAFFRON }} /></Link>;
-                  }
-                  // Default card for other categories
-                  return <ListingCard key={`${item._catId || "x"}-${item.id || i}`} item={item} cat={currentCat || { color: SAFFRON }} />;
+                  return card;
                 })}
               </div>
             ) : (

@@ -1,0 +1,37 @@
+{
+  "total_raw": 4208,
+  "unique": 2567,
+  "michigan": 2513,
+  "already_in_db": 192,
+  "new_unique": 2321,
+  "confirmed_desi": 299,
+  "needs_review": 2022,
+  "confirmed_by_category": {
+    "Local Businesses": 78,
+    "Event Planning": 14,
+    "Professionals & Services": 65,
+    "Temples & Spiritual": 2,
+    "South Asian Broad": 57,
+    "Pakistani/Muslim": 10,
+    "Bangladeshi": 1,
+    "Cultural Food Terms": 6,
+    "Language-Specific Professionals": 28,
+    "Beauty/Services": 6,
+    "Event": 4,
+    "Spiritual": 28
+  },
+  "review_by_category": {
+    "Local Businesses": 450,
+    "Event Planning": 101,
+    "Professionals & Services": 829,
+    "Temples & Spiritual": 3,
+    "South Asian Broad": 105,
+    "Pakistani/Muslim": 98,
+    "Bangladeshi": 13,
+    "Cultural Food Terms": 53,
+    "Language-Specific Professionals": 178,
+    "Beauty/Services": 98,
+    "Event": 77,
+    "Spiritual": 17
+  }
+}

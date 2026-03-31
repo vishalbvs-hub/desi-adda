@@ -1,83 +1,92 @@
 "use client";
-import { MapPin, Phone, ExternalLink, Navigation } from "lucide-react";
+import { MapPin, Star, Globe } from "lucide-react";
 import { FONTS } from "@/lib/constants";
-import Badge from "./Badge";
-import StarRating from "./StarRating";
 
-export default function ListingCard({ item, cat }) {
-  return (
+const SAFFRON = "#E8A317";
+const ff = FONTS.heading;
+const fb = FONTS.body;
+
+export default function ListingCard({ item, cat, href }) {
+  const thumb = item.photos?.[0] || null;
+  const hasRating = item.rating && item.rating > 0;
+
+  const inner = (
     <div
       style={{
-        background: "white", borderRadius: "16px", padding: "20px 24px",
-        border: "1px solid #EDE6DE", transition: "box-shadow 0.2s",
+        background: "white", borderRadius: "16px", overflow: "hidden",
+        border: "1px solid #EDE6DE", transition: "all 0.2s",
+        display: "flex", flexDirection: "row", cursor: href ? "pointer" : "default",
       }}
-      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)"}
-      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+      onMouseEnter={e => {
+        e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.08)";
+        e.currentTarget.style.transform = "scale(1.015)";
+        e.currentTarget.style.background = "#FFFDF8";
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.background = "white";
+      }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px" }}>
-        <div style={{ flex: 1, minWidth: "200px" }}>
-          <h3 style={{ fontFamily: FONTS.heading, fontSize: "17px", fontWeight: 600, margin: "0 0 4px" }}>
-            {item.name}
-          </h3>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: "#8A7968", marginBottom: "6px", flexWrap: "wrap" }}>
-            {item.city && (
-              <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <MapPin size={13} />{item.city}
-              </span>
-            )}
-            {item.phone && (
-              <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <Phone size={13} />{item.phone}
-              </span>
-            )}
-          </div>
-          {item.rating && (
-            <div style={{ marginBottom: "8px" }}>
-              <StarRating rating={item.rating} reviews={item.reviews} />
-            </div>
-          )}
-          {(item.description || item.desc) && (
-            <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 8px", lineHeight: 1.4, maxWidth: "370px", fontWeight: 700 }}>
-              {item.description || item.desc}
-            </p>
-          )}
-          {item.badges?.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "10px" }}>
-              {item.badges.map(b => <Badge key={b} name={b} />)}
-            </div>
-          )}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            {item.sub?.map(s => (
-              <span key={s} style={{
-                padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 500,
-                background: `${cat.color}08`, color: cat.color, border: `1px solid ${cat.color}20`,
-              }}>{s}</span>
-            ))}
-          </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-          <a
-            href={item.url || "#"} target="_blank" rel="noopener noreferrer"
-            style={{
-              padding: "8px 18px", borderRadius: "10px", background: cat.color,
-              color: "white", fontFamily: FONTS.body, fontWeight: 600, fontSize: "13px",
-              textDecoration: "none", display: "flex", alignItems: "center", gap: "5px",
-            }}
-          >Visit <ExternalLink size={12} /></a>
-          {item.city && item.city !== "National" && item.city !== "Online" && (
-            <a
-              href={`https://www.google.com/maps/search/${encodeURIComponent(item.name + " " + item.city)}`}
-              target="_blank" rel="noopener noreferrer"
-              style={{
-                padding: "8px 18px", borderRadius: "10px", background: "white",
-                color: "#5A4A3F", fontFamily: FONTS.body, fontWeight: 500, fontSize: "12px",
-                textDecoration: "none", display: "flex", alignItems: "center", gap: "5px",
-                border: "1px solid #E0D8CF",
-              }}
-            ><Navigation size={12} /> Directions</a>
-          )}
-        </div>
+      {/* Thumbnail */}
+      <div style={{
+        width: thumb ? "130px" : "0px", minHeight: thumb ? "120px" : "0px",
+        flexShrink: 0, overflow: "hidden", background: "#F5EDE4",
+      }}>
+        {thumb && <img src={thumb} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
       </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, padding: "14px 18px", minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <h3 style={{
+          fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: "0 0 4px",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#2D2420",
+        }}>{item.name}</h3>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#8A7968", marginBottom: "4px", flexWrap: "wrap" }}>
+          {item.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {item.city}</span>}
+          {item.phone && <span>{item.phone}</span>}
+        </div>
+
+        {hasRating && (
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+            <div style={{ display: "flex", gap: "1px" }}>
+              {[1,2,3,4,5].map(s => <Star key={s} size={12} fill={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} color={s <= Math.round(item.rating) ? SAFFRON : "#E0D8CF"} />)}
+            </div>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#2D2420" }}>{item.rating}</span>
+            {item.reviews && <span style={{ fontSize: "11px", color: "#A89888" }}>({item.reviews.toLocaleString()})</span>}
+          </div>
+        )}
+
+        {(item.description || item.notable_dishes) && (
+          <p style={{
+            fontSize: "12px", color: "#5A4A3F", margin: 0, lineHeight: 1.4,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {item.notable_dishes || item.description}
+          </p>
+        )}
+      </div>
+
+      {/* Small website icon — secondary */}
+      {item.url && (
+        <div style={{ display: "flex", alignItems: "center", paddingRight: "14px", flexShrink: 0 }}
+          onClick={e => { e.preventDefault(); e.stopPropagation(); window.open(item.url.startsWith("http") ? item.url : `https://${item.url}`, "_blank"); }}
+        >
+          <div style={{
+            width: "32px", height: "32px", borderRadius: "8px", background: "#F5EDE4",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "background 0.2s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = "#EDE6DE"}
+            onMouseLeave={e => e.currentTarget.style.background = "#F5EDE4"}
+          >
+            <Globe size={14} color="#8A7968" />
+          </div>
+        </div>
+      )}
     </div>
   );
+
+  return inner;
 }
