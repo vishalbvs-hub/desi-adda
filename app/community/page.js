@@ -65,7 +65,9 @@ function CommunityInner() {
   const [filterLang, setFilterLang] = useState("All");
   const [filterType, setFilterType] = useState("All");
   const [filterCity, setFilterCity] = useState("All");
+  const [sortBy, setSortBy] = useState("active");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [orgEventCounts, setOrgEventCounts] = useState({});
   const now = new Date();
   const [calMonth, setCalMonth] = useState(now.getMonth());
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -74,7 +76,14 @@ function CommunityInner() {
     Promise.all([
       supabase.from("community_networking").select("*").order("name"),
       supabase.from("events").select("*").eq("status", "approved").order("event_date"),
-    ]).then(([o, e]) => { setOrgs(o.data || []); setEvents(e.data || []); });
+      supabase.from("community_events").select("org_id, id").gte("event_date", new Date().toISOString().split("T")[0]),
+    ]).then(([o, e, ce]) => {
+      const counts = {};
+      (ce.data || []).forEach(ev => { counts[ev.org_id] = (counts[ev.org_id] || 0) + 1; });
+      setOrgEventCounts(counts);
+      setOrgs(o.data || []);
+      setEvents(e.data || []);
+    });
   }, []);
 
   const triggerChat = (q) => { window.dispatchEvent(new CustomEvent("askadda", { detail: q })); };
@@ -88,6 +97,7 @@ function CommunityInner() {
 
   if (!orgs || !events) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading...</p></div>;
 
+  const weightedScore = (o) => (o.rating || 0) * Math.log((o.reviews || 0) + 2);
   const filteredOrgs = orgs.filter(o => {
     if (filterLang !== "All" && o.language !== filterLang) return false;
     if (filterType !== "All" && o.org_type !== filterType) return false;
@@ -95,6 +105,16 @@ function CommunityInner() {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return o.name?.toLowerCase().includes(q) || o.description?.toLowerCase().includes(q) || o.city?.toLowerCase().includes(q) || o.subcategories?.some(s => s.toLowerCase().includes(q));
+  }).sort((a, b) => {
+    if (sortBy === "active") {
+      const aEv = orgEventCounts[a.id] || 0;
+      const bEv = orgEventCounts[b.id] || 0;
+      if (bEv !== aEv) return bEv - aEv;
+      return weightedScore(b) - weightedScore(a);
+    }
+    if (sortBy === "rating") return weightedScore(b) - weightedScore(a);
+    if (sortBy === "reviews") return (b.reviews || 0) - (a.reviews || 0);
+    return (a.name || "").localeCompare(b.name || "");
   });
 
   const visibleOrgs = filteredOrgs.slice(0, visibleCount);
@@ -186,6 +206,12 @@ function CommunityInner() {
               </select>
               <select value={filterCity} onChange={e => { setFilterCity(e.target.value); resetPagination(); }} style={selectStyle}>
                 {cityOptions.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
+              </select>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={selectStyle}>
+                <option value="active">Most Active</option>
+                <option value="rating">Top Rated</option>
+                <option value="reviews">Most Reviewed</option>
+                <option value="name">Name A-Z</option>
               </select>
             </div>
 

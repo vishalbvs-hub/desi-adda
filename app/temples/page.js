@@ -32,8 +32,10 @@ const CHIPS = [
 ];
 
 const SORT_OPTIONS = [
+  { value: "active", label: "Most Active" },
+  { value: "rating", label: "Top Rated" },
+  { value: "reviews", label: "Most Reviewed" },
   { value: "name", label: "Name A-Z" },
-  { value: "rating", label: "Highest Rated" },
 ];
 
 export default function TemplesPage() {
@@ -45,13 +47,19 @@ export default function TemplesPage() {
   const [serviceFilter, setServiceFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [city, setCity] = useState("All");
-  const [sortBy, setSortBy] = useState("name");
+  const [sortBy, setSortBy] = useState("active");
+  const [eventCounts, setEventCounts] = useState({});
 
   useEffect(() => {
     Promise.all([
       supabase.from("temples").select("*").order("name"),
       supabase.from("events").select("*").eq("status", "approved").order("event_date"),
-    ]).then(([t, e]) => {
+      supabase.from("temple_events").select("temple_id, id").gte("event_date", new Date().toISOString().split("T")[0]),
+    ]).then(([t, e, te]) => {
+      // Count events per temple
+      const counts = {};
+      (te.data || []).forEach(ev => { counts[ev.temple_id] = (counts[ev.temple_id] || 0) + 1; });
+      setEventCounts(counts);
       setTemples(t.data || []);
       setEvents(e.data || []);
     });
@@ -131,8 +139,20 @@ export default function TemplesPage() {
   }
 
   // Sort
-  if (sortBy === "rating") {
-    filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  const weightedScore = (t) => (t.rating || 0) * Math.log((t.reviews || 0) + 2);
+  if (sortBy === "active") {
+    filtered = [...filtered].sort((a, b) => {
+      const aEvents = eventCounts[a.id] || 0;
+      const bEvents = eventCounts[b.id] || 0;
+      if (bEvents !== aEvents) return bEvents - aEvents;
+      return weightedScore(b) - weightedScore(a);
+    });
+  } else if (sortBy === "rating") {
+    filtered = [...filtered].sort((a, b) => weightedScore(b) - weightedScore(a));
+  } else if (sortBy === "reviews") {
+    filtered = [...filtered].sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
+  } else if (sortBy === "name") {
+    filtered = [...filtered].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }
 
   // Match events to temples by name similarity
