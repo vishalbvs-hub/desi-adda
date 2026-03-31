@@ -40,13 +40,17 @@ export default function HomePage() {
   useEffect(() => {
     Promise.all([
       supabase.from("events").select("*").eq("status", "approved").order("event_date").limit(4),
-      supabase.from("restaurants").select("id, name, city, rating, reviews, description, photos, slug, notable_dishes").not("photos", "eq", "{}").order("rating", { ascending: false }).limit(8),
+      supabase.from("restaurants").select("id, name, city, rating, reviews, description, photos, slug, notable_dishes, what_to_order").not("photos", "eq", "{}").gte("rating", 4.0).gte("reviews", 10).order("reviews", { ascending: false }).limit(20),
       supabase.from("classifieds").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
       supabase.from("movies_catalog").select("*").eq("status", "ott").order("release_date", { ascending: false }).limit(6),
       supabase.from("movies_catalog").select("*").eq("status", "now_playing").order("release_date", { ascending: false }).limit(4),
     ]).then(([ev, biz, cl, ott, np]) => {
       setEvents(ev.data || []);
-      setBusinesses(biz.data || []);
+      // Sort by weighted rating and filter to only good data
+      const sorted = (biz.data || [])
+        .filter(b => b.photos?.length > 0 && b.rating >= 4.0 && b.reviews >= 10 && b.description)
+        .sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
+      setBusinesses(sorted);
       setClassifieds(cl.data || []);
       setOttMovies(ott.data || []);
       setNowPlaying(np.data || []);
@@ -114,7 +118,7 @@ export default function HomePage() {
           </div>
 
           <p style={{ marginTop: "14px", fontSize: "13px", color: "rgba(255,255,255,0.5)", fontFamily: fb, fontWeight: 500 }}>
-            1,100+ Businesses {"\u00B7"} 45+ Cities {"\u00B7"} Powered by AI
+            1,300+ Businesses {"\u00B7"} 125+ Cities {"\u00B7"} Powered by AI
           </p>
         </div>
       </section>
@@ -124,25 +128,84 @@ export default function HomePage() {
 
         {/* ═══ FEATURED BUSINESSES ═══ */}
         <section ref={featuredRef} style={{ padding: "36px 0 24px" }}>
+          {/* ── BUSINESS SPOTLIGHT ── */}
+          {businesses.length > 0 && (() => {
+            const spotlight = businesses[0];
+            const wto = spotlight.what_to_order ? (typeof spotlight.what_to_order === "string" ? (() => { try { return JSON.parse(spotlight.what_to_order); } catch { return null; } })() : spotlight.what_to_order) : null;
+            const excerpt = wto?.the_move || wto?.known_for || spotlight.notable_dishes || spotlight.description || "";
+            return (
+              <Link href={`/restaurants/${spotlight.slug}`} style={{ textDecoration: "none", color: "inherit", display: "block", marginBottom: "24px" }}>
+                <div style={{
+                  background: "white", borderRadius: "20px", overflow: "hidden",
+                  border: "1px solid #EDE6DE", transition: "all 0.25s",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}
+                >
+                  {spotlight.photos?.[0] && (
+                    <div style={{ width: "100%", height: "280px", overflow: "hidden", position: "relative" }}>
+                      <img src={spotlight.photos[0]} alt={spotlight.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <div style={{ position: "absolute", top: "16px", left: "16px", padding: "6px 14px", borderRadius: "999px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", color: SAFFRON, fontSize: "12px", fontWeight: 700, fontFamily: fb, display: "flex", alignItems: "center", gap: "4px" }}>
+                        {"\u2728"} This Week&apos;s Spotlight
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ padding: "20px 24px" }}>
+                    <h3 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>{spotlight.name}</h3>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#8A7968", marginBottom: "10px", flexWrap: "wrap" }}>
+                      {spotlight.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={13} /> {spotlight.city}</span>}
+                      {spotlight.rating && (
+                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Star size={13} fill={SAFFRON} color={SAFFRON} /> {spotlight.rating} ({spotlight.reviews?.toLocaleString()} reviews)
+                        </span>
+                      )}
+                    </div>
+                    {excerpt && <p style={{ fontSize: "15px", color: "#5A4A3F", margin: 0, lineHeight: 1.6 }}>{excerpt.substring(0, 200)}{excerpt.length > 200 ? "..." : ""}</p>}
+                  </div>
+                </div>
+              </Link>
+            );
+          })()}
+
+          {/* ── TRENDING BUSINESSES ── */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Featured Businesses</h2>
+            <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Trending Businesses</h2>
             <Link href="/businesses" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>View all <ArrowRight size={14} /></Link>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
-            {businesses.slice(0, 6).map(biz => (
-              <Link key={biz.id} href={`/businesses?cat=food`} style={{ background: "white", borderRadius: "14px", padding: "18px 20px", border: "1px solid #EDE6DE", textDecoration: "none", color: "inherit", transition: "all 0.2s" }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.06)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-                <h3 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>{biz.name}</h3>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#8A7968", marginBottom: "6px" }}>
-                  {biz.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {biz.city}</span>}
-                  {biz.rating && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><Star size={11} fill={SAFFRON} color={SAFFRON} /> {biz.rating}</span>}
-                  {biz.reviews && <span>({biz.reviews})</span>}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "14px" }}>
+            {businesses.slice(1, 7).map(biz => (
+              <Link key={biz.id} href={biz.slug ? `/restaurants/${biz.slug}` : "/businesses?cat=food"} style={{ textDecoration: "none", color: "inherit" }}>
+                <div style={{
+                  background: "white", borderRadius: "16px", overflow: "hidden",
+                  border: "1px solid #EDE6DE", transition: "all 0.2s",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.08)"; e.currentTarget.style.transform = "scale(1.015)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "scale(1)"; }}
+                >
+                  {biz.photos?.[0] && (
+                    <div style={{ width: "100%", height: "160px", overflow: "hidden" }}>
+                      <img src={biz.photos[0]} alt={biz.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  )}
+                  <div style={{ padding: "14px 18px" }}>
+                    <h3 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{biz.name}</h3>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#8A7968", marginBottom: "4px" }}>
+                      {biz.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {biz.city}</span>}
+                      {biz.rating && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><Star size={11} fill={SAFFRON} color={SAFFRON} /> {biz.rating} ({biz.reviews?.toLocaleString()})</span>}
+                    </div>
+                    {(biz.notable_dishes || biz.description) && (
+                      <p style={{ fontSize: "12px", color: "#6B5B4F", margin: 0, lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {biz.notable_dishes || biz.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                {biz.description && <p style={{ fontSize: "12px", color: "#6B5B4F", margin: 0, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{biz.description}</p>}
               </Link>
             ))}
           </div>
+          <p style={{ fontSize: "11px", color: "#A89888", textAlign: "center", marginTop: "12px" }}>
+            <Link href="/suggest" style={{ color: COLORS.primary, textDecoration: "none" }}>Want your business featured? Contact us</Link>
+          </p>
         </section>
 
         {/* ═══ UPCOMING EVENTS ═══ */}
