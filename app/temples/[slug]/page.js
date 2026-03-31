@@ -115,7 +115,7 @@ export default async function TemplePage({ params }) {
 
               {/* Events + Email signup — client component */}
               <TempleClient
-                temple={{ id: t.id, name: t.name, address: t.address || t.city || "" }}
+                temple={{ id: t.id, name: t.name, address: t.address || t.city || "", website: t.url || null }}
                 events={events || []}
               />
             </div>

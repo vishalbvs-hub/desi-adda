@@ -153,8 +153,11 @@ export default function CommunityClient({ org, events }) {
         ) : (
           <div style={{ textAlign: "center", padding: "24px 0", color: "#8A7968" }}>
             <p style={{ fontSize: "14px", margin: "0 0 8px" }}>No upcoming events listed yet.</p>
-            <p style={{ fontSize: "12px", margin: 0 }}>
-              Know about an event? <a href="/suggest" style={{ color: COLORS.primary, textDecoration: "none", fontWeight: 600 }}>Let us know</a>
+            <p style={{ fontSize: "12px", margin: 0, lineHeight: 1.6 }}>
+              {org.website ? (
+                <>Visit <a href={org.website.startsWith("http") ? org.website : `https://${org.website}`} target="_blank" rel="noopener noreferrer" style={{ color: COLORS.primary, textDecoration: "none", fontWeight: 600 }}>{org.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a> for updates, or </>
+              ) : null}
+              <a href="/suggest" style={{ color: COLORS.primary, textDecoration: "none", fontWeight: 600 }}>let us know</a> about upcoming events.
             </p>
           </div>
         )}

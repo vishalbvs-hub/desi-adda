@@ -131,7 +131,7 @@ export default async function CommunityOrgPage({ params }) {
 
               {/* Events + Email signup — client component */}
               <CommunityClient
-                org={{ id: o.id, name: o.name, address: o.address || o.city || "" }}
+                org={{ id: o.id, name: o.name, address: o.address || o.city || "", website: o.website || o.url || null }}
                 events={communityEvents || []}
               />
 
