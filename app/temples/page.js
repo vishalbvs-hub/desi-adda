@@ -11,8 +11,10 @@ const ff = FONTS.heading;
 const fb = FONTS.body;
 const SAFFRON = "#E8A317";
 
-const RELIGION_FILTERS = ["All", "Hindu", "Sikh", "Islamic", "Jain", "Buddhist", "Multi-faith"];
-const SERVICE_FILTERS = ["All", "Temples", "Pandit/Priest Services", "Astrology/Vastu"];
+const RELIGION_FILTERS = ["All", "Hindu", "Christian", "Sikh", "Jain", "Buddhist", "Islamic"];
+const CHRISTIAN_DENOMS = ["All", "Syrian Orthodox", "Syro-Malabar", "Mar Thoma", "CSI", "Pentecostal", "Catholic", "Protestant", "Non-denominational"];
+const LANGUAGE_FILTERS = ["All", "Malayalam", "Tamil", "Telugu", "Hindi", "Punjabi", "Gujarati", "Bengali", "Multi"];
+const SERVICE_FILTERS = ["All", "Temples/Churches/Mosques", "Pandit/Priest Services", "Astrology/Vastu"];
 
 const CHIPS = [
   { emoji: "\u{1F6D5}", text: "Telugu temple near Troy" },
@@ -38,6 +40,8 @@ export default function TemplesPage() {
   const [temples, setTemples] = useState(null);
   const [events, setEvents] = useState([]);
   const [religionFilter, setReligionFilter] = useState("All");
+  const [denomFilter, setDenomFilter] = useState("All");
+  const [langFilter, setLangFilter] = useState("All");
   const [serviceFilter, setServiceFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [city, setCity] = useState("All");
@@ -69,11 +73,11 @@ export default function TemplesPage() {
   if (religionFilter !== "All") {
     const aliases = {
       hindu: ["hindu", "mandir", "temple"],
+      christian: ["christian", "church", "orthodox", "catholic", "mar thoma", "syro", "csi", "pentecostal", "protestant"],
       sikh: ["sikh", "gurudwara", "gurdwara"],
       islamic: ["muslim", "mosque", "masjid", "islamic", "islam"],
       jain: ["jain"],
       buddhist: ["buddhist", "vihara"],
-      "multi-faith": ["multi", "interfaith", "vedanta"],
     };
     const terms = aliases[religionFilter.toLowerCase()] || [religionFilter.toLowerCase()];
     filtered = filtered.filter(t => {
@@ -82,10 +86,26 @@ export default function TemplesPage() {
     });
   }
 
+  // Christian denomination sub-filter
+  if (religionFilter === "Christian" && denomFilter !== "All") {
+    filtered = filtered.filter(t => {
+      const text = `${t.name || ""} ${t.description || ""} ${(t.subcategories || []).join(" ")}`.toLowerCase();
+      return text.includes(denomFilter.toLowerCase());
+    });
+  }
+
+  // Language filter
+  if (langFilter !== "All") {
+    filtered = filtered.filter(t => {
+      const text = `${t.name || ""} ${t.description || ""} ${(t.subcategories || []).join(" ")}`.toLowerCase();
+      return text.includes(langFilter.toLowerCase());
+    });
+  }
+
   // Service type filter
   if (serviceFilter !== "All") {
     const aliases = {
-      "temples": ["temple", "mandir", "mosque", "masjid", "gurudwara", "church"],
+      "temples/churches/mosques": ["temple", "mandir", "mosque", "masjid", "gurudwara", "church", "orthodox", "catholic", "pentecostal"],
       "pandit/priest services": ["pandit", "priest", "puja", "pooja", "imam"],
       "astrology/vastu": ["astrology", "astrologer", "vastu", "jyotish", "horoscope"],
     };
@@ -170,7 +190,7 @@ export default function TemplesPage() {
           {/* Religion filters inside hero */}
           <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", marginTop: "20px" }}>
             {RELIGION_FILTERS.map(d => (
-              <button key={d} onClick={() => setReligionFilter(d)} style={{
+              <button key={d} onClick={() => { setReligionFilter(d); if (d !== "Christian") setDenomFilter("All"); }} style={{
                 padding: "7px 18px", borderRadius: "999px", fontSize: "13px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
                 border: religionFilter === d ? `2px solid ${SAFFRON}` : "2px solid rgba(255,255,255,0.15)",
                 background: religionFilter === d ? SAFFRON : "rgba(255,255,255,0.08)",
@@ -178,6 +198,19 @@ export default function TemplesPage() {
               }}>{d}</button>
             ))}
           </div>
+          {/* Christian denomination sub-filter */}
+          {religionFilter === "Christian" && (
+            <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap", marginTop: "10px" }}>
+              {CHRISTIAN_DENOMS.map(d => (
+                <button key={d} onClick={() => setDenomFilter(d)} style={{
+                  padding: "5px 14px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 500, cursor: "pointer",
+                  border: denomFilter === d ? "2px solid rgba(255,255,255,0.6)" : "2px solid rgba(255,255,255,0.1)",
+                  background: denomFilter === d ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.04)",
+                  color: denomFilter === d ? "white" : "rgba(255,255,255,0.5)", transition: "all 0.2s",
+                }}>{d}</button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -187,6 +220,13 @@ export default function TemplesPage() {
         <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
           <p style={{ fontSize: "13px", color: COLORS.textFaint, margin: 0 }}>{filtered.length} temples found</p>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <div style={{ position: "relative" }}>
+              <select value={langFilter} onChange={e => setLangFilter(e.target.value)}
+                style={{ appearance: "none", padding: "8px 32px 8px 12px", borderRadius: "10px", border: "1px solid #EDE6DE", background: "white", fontSize: "13px", fontFamily: fb, color: "#2D2420", cursor: "pointer", outline: "none" }}>
+                {LANGUAGE_FILTERS.map(l => <option key={l} value={l}>{l === "All" ? "All Languages" : l}</option>)}
+              </select>
+              <ChevronDown size={14} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#8A7968" }} />
+            </div>
             <div style={{ position: "relative" }}>
               <select value={serviceFilter} onChange={e => setServiceFilter(e.target.value)}
                 style={{ appearance: "none", padding: "8px 32px 8px 12px", borderRadius: "10px", border: "1px solid #EDE6DE", background: "white", fontSize: "13px", fontFamily: fb, color: "#2D2420", cursor: "pointer", outline: "none" }}>
