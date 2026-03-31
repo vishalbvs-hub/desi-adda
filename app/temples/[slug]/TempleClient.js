@@ -46,27 +46,29 @@ function generateICS(event, templeAddress) {
 }
 
 export default function TempleClient({ temple, events }) {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  });
+  const [filter, setFilter] = useState("90days");
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  // Build month options from events
-  const months = [...new Set(events.map(e => e.event_date.substring(0, 7)))].sort();
-  if (!months.includes(selectedMonth) && months.length > 0) {
-    // Add current month even if no events
-    months.unshift(selectedMonth);
-  }
-  if (months.length === 0) months.push(selectedMonth);
+  // Build filter options: "Next 90 days" + individual months from events
+  const eventMonths = [...new Set(events.map(e => e.event_date.substring(0, 7)))].sort();
+  const filterOptions = [
+    { value: "90days", label: "Next 90 days" },
+    { value: "all", label: "All upcoming" },
+    ...eventMonths.map(ym => {
+      const [y, m] = ym.split("-");
+      return { value: ym, label: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }) };
+    }),
+  ];
 
-  const filteredEvents = events.filter(e => e.event_date.startsWith(selectedMonth));
-
-  const formatMonthLabel = (ym) => {
-    const [y, m] = ym.split("-");
-    return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  };
+  const now = new Date();
+  const in90 = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  const filteredEvents = events.filter(e => {
+    const d = new Date(e.event_date + "T00:00:00");
+    if (filter === "90days") return d >= now && d <= in90;
+    if (filter === "all") return d >= now;
+    return e.event_date.startsWith(filter);
+  });
 
   const formatEventDate = (dateStr) => {
     const d = new Date(dateStr + "T00:00:00");
@@ -91,11 +93,11 @@ export default function TempleClient({ temple, events }) {
           <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: 0, color: "#2D2420" }}>
             Upcoming Events
           </h3>
-          <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} style={{
+          <select value={filter} onChange={e => setFilter(e.target.value)} style={{
             padding: "6px 12px", borderRadius: "8px", border: "1px solid #E0D8CF",
             fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
           }}>
-            {months.map(m => <option key={m} value={m}>{formatMonthLabel(m)}</option>)}
+            {filterOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
 
@@ -151,7 +153,7 @@ export default function TempleClient({ temple, events }) {
           </div>
         ) : (
           <div style={{ textAlign: "center", padding: "24px 0", color: "#8A7968" }}>
-            <p style={{ fontSize: "14px", margin: "0 0 8px" }}>No upcoming events listed for {formatMonthLabel(selectedMonth)}.</p>
+            <p style={{ fontSize: "14px", margin: "0 0 8px" }}>No upcoming events listed yet.</p>
             <p style={{ fontSize: "12px", margin: 0 }}>
               Know about an event? <a href="/suggest" style={{ color: COLORS.primary, textDecoration: "none", fontWeight: 600 }}>Let us know</a>
             </p>
