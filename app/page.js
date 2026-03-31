@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, ArrowRight, MapPin, Star, Clock, Calendar, Play, Ticket, ExternalLink, Film, Music } from "lucide-react";
+import { Search, ArrowRight, MapPin, Star } from "lucide-react";
 import { FONTS, COLORS, CLASSIFIEDS_CATEGORIES } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 import ScrollingChips from "@/components/ScrollingChips";
@@ -9,13 +9,6 @@ import ScrollingChips from "@/components/ScrollingChips";
 const ff = FONTS.heading;
 const fb = FONTS.body;
 const SAFFRON = "#E8A317";
-
-const PLATFORM_COLORS = {
-  "Netflix": { bg: "#FDECEA", color: "#E50914", label: "Netflix" },
-  "Prime Video": { bg: "#E3F2FD", color: "#00A8E1", label: "Prime" },
-  "Hotstar": { bg: "#FFF8E1", color: "#1A73E8", label: "Hotstar" },
-  "Zee5": { bg: "#F3E5F5", color: "#8E24AA", label: "Zee5" },
-};
 
 function useFadeIn() {
   const ref = useRef(null);
@@ -34,8 +27,6 @@ export default function HomePage() {
   const [events, setEvents] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [classifieds, setClassifieds] = useState([]);
-  const [ottMovies, setOttMovies] = useState([]);
-  const [nowPlaying, setNowPlaying] = useState([]);
 
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -44,9 +35,7 @@ export default function HomePage() {
       supabase.from("community_events").select("*, community_networking(name, slug)").gte("event_date", today).order("event_date").limit(10),
       supabase.from("restaurants").select("id, name, city, rating, reviews, description, photos, slug, notable_dishes, what_to_order").not("photos", "eq", "{}").gte("rating", 4.0).gte("reviews", 10).order("reviews", { ascending: false }).limit(20),
       supabase.from("classifieds").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
-      supabase.from("movies_catalog").select("*").eq("status", "ott").order("release_date", { ascending: false }).limit(6),
-      supabase.from("movies_catalog").select("*").eq("status", "now_playing").order("release_date", { ascending: false }).limit(4),
-    ]).then(([te, ce, biz, cl, ott, np]) => {
+    ]).then(([te, ce, biz, cl]) => {
       // Build unified events feed
       const unified = [];
       (te.data || []).forEach(e => unified.push({ ...e, _type: "temple", _hostName: e.temples?.name, _hostSlug: e.temples?.slug ? `/temples/${e.temples.slug}` : null }));
@@ -59,8 +48,6 @@ export default function HomePage() {
         .sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
       setBusinesses(sorted);
       setClassifieds(cl.data || []);
-      setOttMovies(ott.data || []);
-      setNowPlaying(np.data || []);
     });
   }, []);
 
@@ -70,10 +57,8 @@ export default function HomePage() {
 
 
   const featuredRef = useFadeIn();
-  const ottRef = useFadeIn();
   const eventsRef = useFadeIn();
   const classifiedsRef = useFadeIn();
-  const nowPlayingRef = useFadeIn();
 
   return (
     <div style={{ background: "#FFFBF5" }}>
@@ -287,67 +272,6 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* ═══ NOW IN THEATERS ═══ */}
-        {nowPlaying.length > 0 && (
-          <section ref={nowPlayingRef} style={{ padding: "24px 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Now in Theaters</h2>
-              <Link href="/entertainment?tab=movies" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>All movies <ArrowRight size={14} /></Link>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "14px" }}>
-              {nowPlaying.map(m => (
-                <div key={m.id} style={{ borderRadius: "14px", overflow: "hidden", background: "white", border: "1px solid #EDE6DE", transition: "all 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.06)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-                  <div style={{ height: "120px", background: "#2D2420", overflow: "hidden" }}>
-                    {m.poster_url ? <img src={m.poster_url} alt={m.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px" }}>{"\u{1F3AC}"}</div>}
-                  </div>
-                  <div style={{ padding: "12px 14px" }}>
-                    <h4 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420", lineHeight: 1.3 }}>{m.title}</h4>
-                    <div style={{ display: "flex", gap: "6px", fontSize: "10px", color: "#8A7968" }}>
-                      <span style={{ padding: "2px 6px", borderRadius: "999px", background: "rgba(0,0,0,0.06)", fontWeight: 600 }}>{m.language}</span>
-                      {m.imdb_rating && <span style={{ display: "flex", alignItems: "center", gap: "2px" }}><Star size={9} fill={SAFFRON} color={SAFFRON} /> {m.imdb_rating}</span>}
-                    </div>
-                    {m.fandango_url && <a href={m.fandango_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "11px", fontWeight: 600, color: COLORS.primary, marginTop: "8px", textDecoration: "none" }}><Ticket size={11} /> Get Tickets</a>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ═══ NEW ON STREAMING ═══ */}
-        {ottMovies.length > 0 && (
-          <section ref={ottRef} style={{ padding: "24px 0 36px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>New on Streaming</h2>
-              <Link href="/entertainment?tab=movies" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>All OTT <ArrowRight size={14} /></Link>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
-              {ottMovies.slice(0, 6).map(m => {
-                const plat = PLATFORM_COLORS[m.platform] || { bg: "#F5F5F5", color: "#666", label: m.platform };
-                return (
-                  <div key={m.id} style={{ display: "flex", gap: "14px", background: "white", borderRadius: "14px", padding: "16px", border: "1px solid #EDE6DE", transition: "all 0.2s" }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.06)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-                    <div style={{ width: "60px", height: "80px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, background: "#2D2420" }}>
-                      {m.poster_url ? <img src={m.poster_url} alt={m.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>{"\u{1F3AC}"}</div>}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h4 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420", lineHeight: 1.3 }}>{m.title}</h4>
-                      <div style={{ display: "flex", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
-                        <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 700, background: plat.bg, color: plat.color }}>{plat.label}</span>
-                        <span style={{ padding: "2px 6px", borderRadius: "999px", fontSize: "10px", background: "rgba(0,0,0,0.06)", fontWeight: 600, color: "#8A7968" }}>{m.language}</span>
-                        {m.imdb_rating && <span style={{ fontSize: "10px", display: "flex", alignItems: "center", gap: "2px", color: "#8A7968" }}><Star size={9} fill={SAFFRON} color={SAFFRON} /> {m.imdb_rating}</span>}
-                      </div>
-                      {m.watch_url && <a href={m.watch_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "11px", fontWeight: 600, color: plat.color, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "3px" }}><Play size={10} /> Watch Now</a>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
 
       </div>
     </div>

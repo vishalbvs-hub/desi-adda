@@ -22,7 +22,6 @@ function EntertainmentContent() {
   const [tab, setTab] = useState(searchParams.get("tab") || "watch");
   const [langFilter, setLangFilter] = useState("All");
   const [ott, setOtt] = useState([]);
-  const [coming, setComing] = useState([]);
   const [lists, setLists] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [musicEvents, setMusicEvents] = useState([]);
@@ -31,13 +30,11 @@ function EntertainmentContent() {
     const today = new Date().toISOString().split("T")[0];
     Promise.all([
       supabase.from("ott_releases").select("*").eq("release_type", "new").order("release_date", { ascending: false }),
-      supabase.from("ott_releases").select("*").eq("release_type", "coming_soon").order("release_date"),
       supabase.from("curated_lists").select("*").order("title"),
       supabase.from("curated_playlists").select("*").order("name"),
       supabase.from("community_events").select("*, community_networking(name, slug)").gte("event_date", today).order("event_date").limit(10),
-    ]).then(([o, c, l, p, me]) => {
+    ]).then(([o, l, p, me]) => {
       setOtt(o.data || []);
-      setComing(c.data || []);
       setLists(l.data || []);
       setPlaylists(p.data || []);
       const musicKw = /music|concert|garba|dandiya|sangeet|karaoke|bhajan|kirtan/i;
@@ -84,15 +81,6 @@ function EntertainmentContent() {
                 {filterLang(ott).map(m => <MovieCard key={m.id} movie={m} />)}
               </div>
             </section>
-
-            {coming.length > 0 && (
-              <section style={{ marginBottom: "40px" }}>
-                <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Coming Soon</h2>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
-                  {filterLang(coming).map(m => <MovieCard key={m.id} movie={m} isComing />)}
-                </div>
-              </section>
-            )}
 
             <section>
               <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Recommendations</h2>
@@ -181,7 +169,7 @@ function EntertainmentContent() {
   );
 }
 
-function MovieCard({ movie: m, isComing }) {
+function MovieCard({ movie: m }) {
   const pc = PLATFORM_COLORS[m.platform] || "#333";
   return (
     <div style={{ background: "white", borderRadius: "14px", overflow: "hidden", border: "1px solid #EDE6DE", transition: "box-shadow 0.2s", display: "flex", flexDirection: "column" }}
@@ -196,11 +184,6 @@ function MovieCard({ movie: m, isComing }) {
             <Play size={18} fill={COLORS.primary} color={COLORS.primary} style={{ marginLeft: "2px" }} />
           </div>
         </a>
-        {isComing && m.release_date && (
-          <div style={{ position: "absolute", top: "8px", left: "8px", padding: "3px 8px", borderRadius: "6px", background: "rgba(0,0,0,0.7)", color: SAFFRON, fontSize: "10px", fontWeight: 700, fontFamily: fb }}>
-            Coming {new Date(m.release_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-          </div>
-        )}
       </div>
       <div style={{ padding: "12px 14px", flex: 1, display: "flex", flexDirection: "column" }}>
         <h3 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 700, margin: "0 0 6px", color: "#2D2420", lineHeight: 1.3 }}>{m.title}</h3>
