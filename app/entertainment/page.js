@@ -20,12 +20,12 @@ function EntertainmentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [tab, setTab] = useState(searchParams.get("tab") || "watch");
+  const [langFilter, setLangFilter] = useState("All");
   const [ott, setOtt] = useState([]);
   const [coming, setComing] = useState([]);
   const [lists, setLists] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [musicEvents, setMusicEvents] = useState([]);
-  const [trailerVideoId, setTrailerVideoId] = useState(null);
 
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -49,17 +49,6 @@ function EntertainmentContent() {
 
   return (
     <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
-      {/* Trailer Modal */}
-      {trailerVideoId && (
-        <div onClick={() => setTrailerVideoId(null)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "min(900px, 95vw)", position: "relative" }}>
-            <button onClick={() => setTrailerVideoId(null)} style={{ position: "absolute", top: "-40px", right: "0", background: "none", border: "none", color: "white", fontSize: "28px", cursor: "pointer" }}>{"\u2715"}</button>
-            <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: "12px", overflow: "hidden" }}>
-              <iframe src={`https://www.youtube.com/embed/${trailerVideoId}?autoplay=1&rel=0`} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen loading="lazy" title="Trailer" />
-            </div>
-          </div>
-        </div>
-      )}
 
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px 20px" }}>
         <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 36px)", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>Entertainment</h1>
@@ -76,12 +65,23 @@ function EntertainmentContent() {
           ))}
         </div>
 
-        {tab === "watch" && (
+        {/* Language filter */}
+        <div style={{ marginBottom: "20px" }}>
+          <select value={langFilter} onChange={e => setLangFilter(e.target.value)} style={{
+            padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+          }}>
+            {["All", "Telugu", "Hindi", "Tamil", "Malayalam", "Kannada", "Punjabi", "Bengali"].map(l => <option key={l} value={l}>{l === "All" ? "All Languages" : l}</option>)}
+          </select>
+        </div>
+
+        {tab === "watch" && (() => {
+          const filterLang = (items) => langFilter === "All" ? items : items.filter(m => m.language === langFilter);
+          return (
           <>
             <section style={{ marginBottom: "40px" }}>
               <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>New on OTT</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
-                {ott.map(m => <MovieCard key={m.id} movie={m} onTrailer={setTrailerVideoId} />)}
+                {filterLang(ott).map(m => <MovieCard key={m.id} movie={m} />)}
               </div>
             </section>
 
@@ -89,13 +89,13 @@ function EntertainmentContent() {
               <section style={{ marginBottom: "40px" }}>
                 <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Coming Soon</h2>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
-                  {coming.map(m => <MovieCard key={m.id} movie={m} onTrailer={setTrailerVideoId} isComing />)}
+                  {filterLang(coming).map(m => <MovieCard key={m.id} movie={m} isComing />)}
                 </div>
               </section>
             )}
 
             <section>
-              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Curated Lists</h2>
+              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Recommendations</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "14px" }}>
                 {lists.map(l => (
                   <Link key={l.id} href={`/entertainment/lists/${l.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
@@ -114,14 +114,17 @@ function EntertainmentContent() {
               </div>
             </section>
           </>
-        )}
+          );
+        })()}
 
-        {tab === "listen" && (
+        {tab === "listen" && (() => {
+          const filterLang = (items) => langFilter === "All" ? items : items.filter(p => p.language === langFilter || p.language === "Multi");
+          return (
           <>
             <section style={{ marginBottom: "40px" }}>
               <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: "0 0 16px", color: "#2D2420" }}>Curated Playlists</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
-                {playlists.map(p => {
+                {filterLang(playlists).map(p => {
                   const pc = PLATFORM_COLORS[p.platform] || "#333";
                   return (
                     <a key={p.id} href={p.playlist_url} target="_blank" rel="noopener noreferrer" style={{ background: "white", borderRadius: "16px", padding: "20px", border: "1px solid #EDE6DE", textDecoration: "none", color: "inherit", transition: "box-shadow 0.2s", display: "flex", flexDirection: "column", gap: "10px" }}
@@ -171,13 +174,14 @@ function EntertainmentContent() {
               )}
             </section>
           </>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
 }
 
-function MovieCard({ movie: m, onTrailer, isComing }) {
+function MovieCard({ movie: m, isComing }) {
   const pc = PLATFORM_COLORS[m.platform] || "#333";
   return (
     <div style={{ background: "white", borderRadius: "14px", overflow: "hidden", border: "1px solid #EDE6DE", transition: "box-shadow 0.2s", display: "flex", flexDirection: "column" }}
@@ -186,14 +190,12 @@ function MovieCard({ movie: m, onTrailer, isComing }) {
       <div style={{ width: "100%", aspectRatio: "2/3", overflow: "hidden", position: "relative", background: "#F5EDE4" }}>
         {m.poster_url ? <img src={m.poster_url} alt={m.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.target.onerror = null; e.target.style.display = "none"; }} /> : null}
         {!m.poster_url && <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "40px" }}>{"\u{1F3AC}"}</div>}
-        {m.youtube_video_id && (
-          <button onClick={() => onTrailer(m.youtube_video_id)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
-            <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Play size={18} fill={COLORS.primary} color={COLORS.primary} style={{ marginLeft: "2px" }} />
-            </div>
-          </button>
-        )}
+        <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(m.title + " official trailer")}`} target="_blank" rel="noopener noreferrer" style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s", textDecoration: "none" }}
+          onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
+          <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Play size={18} fill={COLORS.primary} color={COLORS.primary} style={{ marginLeft: "2px" }} />
+          </div>
+        </a>
         {isComing && m.release_date && (
           <div style={{ position: "absolute", top: "8px", left: "8px", padding: "3px 8px", borderRadius: "6px", background: "rgba(0,0,0,0.7)", color: SAFFRON, fontSize: "10px", fontWeight: 700, fontFamily: fb }}>
             Coming {new Date(m.release_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -208,7 +210,7 @@ function MovieCard({ movie: m, onTrailer, isComing }) {
         </div>
         <div style={{ display: "flex", gap: "6px", marginTop: "auto" }}>
           {m.streaming_url && <a href={m.streaming_url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", background: pc, color: "white", fontSize: "11px", fontWeight: 700, fontFamily: fb, textDecoration: "none", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "3px" }}><Play size={10} /> Watch</a>}
-          {m.youtube_video_id && <button onClick={() => onTrailer(m.youtube_video_id)} style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", background: "#2D2420", color: "white", fontSize: "11px", fontWeight: 700, fontFamily: fb, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "3px" }}><Play size={10} /> Trailer</button>}
+          <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(m.title + " official trailer")}`} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "7px 10px", borderRadius: "8px", background: "#2D2420", color: "white", fontSize: "11px", fontWeight: 700, fontFamily: fb, textDecoration: "none", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "3px" }}><Play size={10} /> Trailer</a>
         </div>
       </div>
     </div>
