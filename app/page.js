@@ -128,44 +128,39 @@ export default function HomePage() {
 
         {/* ═══ FEATURED BUSINESSES ═══ */}
         <section ref={featuredRef} style={{ padding: "36px 0 24px" }}>
-          {/* ── BUSINESS SPOTLIGHT ── */}
-          {businesses.length > 0 && (() => {
-            const spotlight = businesses[0];
-            const wto = spotlight.what_to_order ? (typeof spotlight.what_to_order === "string" ? (() => { try { return JSON.parse(spotlight.what_to_order); } catch { return null; } })() : spotlight.what_to_order) : null;
-            const excerpt = wto?.the_move || wto?.known_for || spotlight.notable_dishes || spotlight.description || "";
-            return (
-              <Link href={`/restaurants/${spotlight.slug}`} style={{ textDecoration: "none", color: "inherit", display: "block", marginBottom: "24px" }}>
-                <div style={{
-                  background: "white", borderRadius: "20px", overflow: "hidden",
-                  border: "1px solid #EDE6DE", transition: "all 0.25s",
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}
-                >
-                  {spotlight.photos?.[0] && (
-                    <div style={{ width: "100%", height: "280px", overflow: "hidden", position: "relative" }}>
-                      <img src={spotlight.photos[0]} alt={spotlight.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      <div style={{ position: "absolute", top: "16px", left: "16px", padding: "6px 14px", borderRadius: "999px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", color: SAFFRON, fontSize: "12px", fontWeight: 700, fontFamily: fb, display: "flex", alignItems: "center", gap: "4px" }}>
-                        {"\u2728"} This Week&apos;s Spotlight
-                      </div>
-                    </div>
-                  )}
-                  <div style={{ padding: "20px 24px" }}>
-                    <h3 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>{spotlight.name}</h3>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#8A7968", marginBottom: "10px", flexWrap: "wrap" }}>
-                      {spotlight.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={13} /> {spotlight.city}</span>}
-                      {spotlight.rating && (
-                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          <Star size={13} fill={SAFFRON} color={SAFFRON} /> {spotlight.rating} ({spotlight.reviews?.toLocaleString()} reviews)
-                        </span>
-                      )}
-                    </div>
-                    {excerpt && <p style={{ fontSize: "15px", color: "#5A4A3F", margin: 0, lineHeight: 1.6 }}>{excerpt.substring(0, 200)}{excerpt.length > 200 ? "..." : ""}</p>}
-                  </div>
+          {/* ── BUSINESS SPOTLIGHT — Eco Dosth ── */}
+          <Link href="/spotlight/eco-dosth" style={{ textDecoration: "none", color: "inherit", display: "block", marginBottom: "24px" }}>
+            <div style={{
+              background: "white", borderRadius: "20px", overflow: "hidden",
+              border: "1px solid #EDE6DE", transition: "all 0.25s",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              <div style={{ width: "100%", height: "280px", overflow: "hidden", position: "relative" }}>
+                <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=1224,h=756,fit=crop/AwvDoRQlrZsGy017/eco-dosth-new-flyer-india-and-us-YleWMQXL3Wc0Bgj9.jpg" alt="Eco Dosth sustainable leaf plates" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "absolute", top: "16px", left: "16px", padding: "6px 14px", borderRadius: "999px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", color: SAFFRON, fontSize: "12px", fontWeight: 700, fontFamily: fb, display: "flex", alignItems: "center", gap: "4px" }}>
+                  {"\u2728"} This Week&apos;s Spotlight
                 </div>
-              </Link>
-            );
-          })()}
+              </div>
+              <div style={{ padding: "20px 24px" }}>
+                <h3 style={{ fontFamily: ff, fontSize: "clamp(20px, 4vw, 26px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420", lineHeight: 1.3 }}>
+                  The Plate That Disappears: How One Troy Entrepreneur Is Replacing Plastic, One Leaf at a Time
+                </h3>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#8A7968", marginBottom: "10px" }}>
+                  <span>Eco Dosth</span>
+                  <span>{"\u00B7"}</span>
+                  <span>Troy, MI</span>
+                  <span>{"\u00B7"}</span>
+                  <span>5 min read</span>
+                </div>
+                <p style={{ fontSize: "15px", color: "#5A4A3F", margin: "0 0 12px", lineHeight: 1.6 }}>
+                  Every desi kid has eaten off a leaf plate at some point — at a temple prasadam line, a wedding in India, a family puja. Krishna Alapati reframed that tradition into a sustainability brand.
+                </p>
+                <span style={{ fontSize: "14px", fontWeight: 600, color: COLORS.primary }}>Read the full story {"\u2192"}</span>
+              </div>
+            </div>
+          </Link>
 
           {/* ── TRENDING BUSINESSES ── */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
