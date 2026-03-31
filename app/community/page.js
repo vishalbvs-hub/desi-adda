@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, ExternalLink, Users, MessageCircle, Globe, MapPin, ChevronLeft, ChevronRight, Plus, Calendar, List, Clock, Filter } from "lucide-react";
+import { Search, ExternalLink, Users, MessageCircle, Globe, MapPin, Plus, Clock, Filter } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 import ScrollingChips from "@/components/ScrollingChips";
@@ -15,9 +15,9 @@ const SAFFRON = "#E8A317";
 const PAGE_SIZE = 20;
 
 const TABS = [
+  { id: "events", label: "Events", icon: "\u{1F389}" },
   { id: "orgs", label: "Organizations", icon: "\u{1F465}" },
   { id: "whatsapp", label: "WhatsApp Groups", icon: "\u{1F4AC}" },
-  { id: "events", label: "Local Events", icon: "\u{1F389}" },
 ];
 
 const LANGUAGE_OPTIONS = ["All", "Telugu", "Tamil", "Gujarati", "Marathi", "Malayalam", "Kannada", "Bengali", "Punjabi", "Hindi", "Urdu", "Multi"];
@@ -36,12 +36,8 @@ const CHIPS = [
   { emoji: "\u{1F465}", text: "Bengali association Metro Detroit" },
 ];
 
-const TYPE_COLORS = { Cultural: "#E8832A", Festival: "#E8832A", Religious: "#8B1A2B", Concert: "#6A1B9A", Comedy: "#6A1B9A", Entertainment: "#6A1B9A", Sports: "#2E7D32", Food: "#795548", Music: "#1565C0", Family: "#C2185B", Garba: "#E8832A" };
 
-function tryParseDate(d) { if (!d) return null; const iso = new Date(d + "T00:00:00"); return isNaN(iso.getTime()) ? null : iso; }
-function formatDateLong(d) { const p = tryParseDate(d); return p ? p.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : d || ""; }
-function getDaysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
-function getFirstDayOfMonth(y, m) { return new Date(y, m, 1).getDay(); }
+
 
 const selectStyle = {
   padding: "8px 12px", borderRadius: "10px", border: "1px solid #EDE6DE",
@@ -55,34 +51,47 @@ export default function CommunityPage() {
 
 function CommunityInner() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") || "orgs";
+  const initialTab = searchParams.get("tab") || "events";
   const [tab, setTab] = useState(initialTab);
   const [orgs, setOrgs] = useState(null);
   const [events, setEvents] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState("calendar");
-  const [selectedDay, setSelectedDay] = useState(null);
   const [filterLang, setFilterLang] = useState("All");
   const [filterType, setFilterType] = useState("All");
   const [filterCity, setFilterCity] = useState("All");
   const [sortBy, setSortBy] = useState("active");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [orgEventCounts, setOrgEventCounts] = useState({});
+  const [unifiedEvents, setUnifiedEvents] = useState([]);
+  const [eventFilter, setEventFilter] = useState("90days");
+  const [eventTypeFilter, setEventTypeFilter] = useState("all");
   const now = new Date();
-  const [calMonth, setCalMonth] = useState(now.getMonth());
-  const [calYear, setCalYear] = useState(now.getFullYear());
 
   useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
     Promise.all([
       supabase.from("community_networking").select("*").order("name"),
       supabase.from("events").select("*").eq("status", "approved").order("event_date"),
-      supabase.from("community_events").select("org_id, id").gte("event_date", new Date().toISOString().split("T")[0]),
-    ]).then(([o, e, ce]) => {
+      supabase.from("community_events").select("org_id, id").gte("event_date", today),
+      supabase.from("temple_events").select("*, temples(id, name, slug)").gte("event_date", today).order("event_date"),
+      supabase.from("community_events").select("*, community_networking(id, name, slug)").gte("event_date", today).order("event_date"),
+    ]).then(([o, e, ce, te, fullCe]) => {
       const counts = {};
       (ce.data || []).forEach(ev => { counts[ev.org_id] = (counts[ev.org_id] || 0) + 1; });
       setOrgEventCounts(counts);
       setOrgs(o.data || []);
       setEvents(e.data || []);
+
+      // Build unified events feed
+      const unified = [];
+      (te.data || []).forEach(ev => unified.push({
+        ...ev, _type: "temple", _hostName: ev.temples?.name, _hostSlug: ev.temples?.slug ? `/temples/${ev.temples.slug}` : null,
+      }));
+      (fullCe.data || []).forEach(ev => unified.push({
+        ...ev, _type: "community", _hostName: ev.community_networking?.name, _hostSlug: ev.community_networking?.slug ? `/community/${ev.community_networking.slug}` : null,
+      }));
+      unified.sort((a, b) => a.event_date.localeCompare(b.event_date));
+      setUnifiedEvents(unified);
     });
   }, []);
 
@@ -123,20 +132,6 @@ function CommunityInner() {
   // Reset pagination when filters change
   const resetPagination = () => setVisibleCount(PAGE_SIZE);
 
-  // Calendar logic
-  const eventsByDate = {};
-  for (const ev of events) { const p = tryParseDate(ev.event_date); if (p) { const k = `${p.getFullYear()}-${p.getMonth()}-${p.getDate()}`; if (!eventsByDate[k]) eventsByDate[k] = []; eventsByDate[k].push(ev); } }
-  const prevMonth = () => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); setSelectedDay(null); };
-  const nextMonth = () => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); setSelectedDay(null); };
-  const daysInMonth = getDaysInMonth(calYear, calMonth);
-  const firstDay = getFirstDayOfMonth(calYear, calMonth);
-  const today = now.getDate(); const isCurrentMonth = calMonth === now.getMonth() && calYear === now.getFullYear();
-  const monthName = new Date(calYear, calMonth).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  const selectedEvents = selectedDay ? (eventsByDate[`${calYear}-${calMonth}-${selectedDay}`] || []) : [];
-  const groupedByMonth = {};
-  for (const ev of events) { const p = tryParseDate(ev.event_date); const k = p ? p.toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "Upcoming"; if (!groupedByMonth[k]) groupedByMonth[k] = []; groupedByMonth[k].push(ev); }
-
-  const toggleStyle = (active) => ({ padding: "6px 14px", borderRadius: "8px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer", border: "none", background: active ? SAFFRON : "transparent", color: active ? "white" : "#5A4A3F", display: "flex", alignItems: "center", gap: "5px", transition: "all 0.2s" });
 
   return (
     <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
@@ -276,102 +271,108 @@ function CommunityInner() {
         )}
 
         {/* ═══ LOCAL EVENTS TAB ═══ */}
-        {tab === "events" && (
-          <>
-            {/* View toggle + Submit */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
-              <div style={{ display: "flex", gap: "4px", background: "white", padding: "4px", borderRadius: "12px", border: "1px solid #EDE6DE" }}>
-                <button onClick={() => setViewMode("calendar")} style={toggleStyle(viewMode === "calendar")}><Calendar size={14} /> Calendar</button>
-                <button onClick={() => setViewMode("list")} style={toggleStyle(viewMode === "list")}><List size={14} /> List</button>
-              </div>
-              <Link href="/events/submit" style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "8px 16px", borderRadius: "10px", background: COLORS.primary, color: "white", fontFamily: fb, fontWeight: 600, fontSize: "13px", textDecoration: "none" }}><Plus size={14} /> Submit Event</Link>
-            </div>
+        {tab === "events" && (() => {
+          const in90 = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+          const eventMonths = [...new Set(unifiedEvents.map(e => e.event_date.substring(0, 7)))].sort();
+          const filterOpts = [
+            { value: "90days", label: "Next 90 days" },
+            ...eventMonths.map(ym => { const [y, m] = ym.split("-"); return { value: ym, label: new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }) }; }),
+          ];
 
-            {viewMode === "calendar" ? (
-              <>
-                {/* Calendar */}
-                <div style={{ background: "white", borderRadius: "16px", border: "1px solid #EDE6DE", overflow: "hidden" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #EDE6DE" }}>
-                    <button onClick={prevMonth} style={{ background: "none", border: "none", cursor: "pointer", padding: "6px" }}><ChevronLeft size={20} color="#5A4A3F" /></button>
-                    <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: 0 }}>{monthName}</h3>
-                    <button onClick={nextMonth} style={{ background: "none", border: "none", cursor: "pointer", padding: "6px" }}><ChevronRight size={20} color="#5A4A3F" /></button>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center" }}>
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => <div key={d} style={{ padding: "10px 0", fontSize: "11px", fontWeight: 700, color: "#8A7968", fontFamily: fb }}>{d}</div>)}
-                    {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
-                    {Array.from({ length: daysInMonth }).map((_, i) => {
-                      const day = i + 1;
-                      const key = `${calYear}-${calMonth}-${day}`;
-                      const hasEvents = !!eventsByDate[key];
-                      const isToday = isCurrentMonth && day === today;
-                      const isSelected = selectedDay === day;
-                      return (
-                        <button key={day} onClick={() => setSelectedDay(isSelected ? null : day)} style={{
-                          padding: "8px 0", fontSize: "14px", fontFamily: fb, fontWeight: isToday ? 700 : 500,
-                          background: isSelected ? SAFFRON : isToday ? "#FFF3E0" : "transparent",
-                          color: isSelected ? "white" : isToday ? SAFFRON : "#2D2420",
-                          border: "none", cursor: "pointer", borderRadius: "8px", margin: "2px",
-                          position: "relative",
-                        }}>
-                          {day}
-                          {hasEvents && <div style={{ position: "absolute", bottom: "4px", left: "50%", transform: "translateX(-50%)", width: "5px", height: "5px", borderRadius: "50%", background: isSelected ? "white" : SAFFRON }} />}
-                        </button>
-                      );
-                    })}
-                  </div>
+          let filtered = unifiedEvents.filter(e => {
+            const d = new Date(e.event_date + "T00:00:00");
+            if (eventFilter === "90days") return d >= now && d <= in90;
+            return e.event_date.startsWith(eventFilter);
+          });
+          if (eventTypeFilter !== "all") {
+            filtered = filtered.filter(e => e._type === eventTypeFilter);
+          }
+
+          const formatDate = (ds) => {
+            const d = new Date(ds + "T00:00:00");
+            return { month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(), day: d.getDate(), weekday: d.toLocaleDateString("en-US", { weekday: "short" }) };
+          };
+
+          const generateICS = (ev) => {
+            const d = new Date(ev.event_date + "T00:00:00");
+            const dtStart = d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+            const ics = ["BEGIN:VCALENDAR","VERSION:2.0","BEGIN:VEVENT",`DTSTART:${dtStart}`,`SUMMARY:${ev.event_name}`,`DESCRIPTION:${(ev.event_description || "").replace(/\n/g, "\\n")}`,`LOCATION:${ev._hostName || ""}`,
+              "END:VEVENT","END:VCALENDAR"].join("\r\n");
+            const blob = new Blob([ics], { type: "text/calendar" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url; a.download = `${ev.event_name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.ics`; a.click(); URL.revokeObjectURL(url);
+          };
+
+          return (
+            <>
+              {/* Filters + Submit */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {[{ id: "all", label: "All" }, { id: "community", label: "Community" }, { id: "temple", label: "Temple" }].map(t => (
+                    <button key={t.id} onClick={() => setEventTypeFilter(t.id)} style={{
+                      padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
+                      border: eventTypeFilter === t.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+                      background: eventTypeFilter === t.id ? SAFFRON : "white",
+                      color: eventTypeFilter === t.id ? "#2D2420" : "#8A7968", transition: "all 0.2s",
+                    }}>{t.label}</button>
+                  ))}
+                  <select value={eventFilter} onChange={e => setEventFilter(e.target.value)} style={{ padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer" }}>
+                    {filterOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                 </div>
-
-                {/* Selected day events */}
-                {selectedDay && (
-                  <div style={{ marginTop: "20px" }}>
-                    <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, marginBottom: "12px" }}>
-                      {new Date(calYear, calMonth, selectedDay).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                    </h3>
-                    {selectedEvents.length > 0 ? selectedEvents.map(ev => <EventCard key={ev.id} ev={ev} />) : <p style={{ fontSize: "14px", color: "#8A7968" }}>No events on this day.</p>}
-                  </div>
-                )}
-              </>
-            ) : (
-              /* List view */
-              <div>
-                {Object.entries(groupedByMonth).map(([month, evts]) => (
-                  <div key={month} style={{ marginBottom: "32px" }}>
-                    <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, marginBottom: "12px", color: "#2D2420" }}>{month}</h3>
-                    <div style={{ display: "grid", gap: "12px" }}>
-                      {evts.map(ev => <EventCard key={ev.id} ev={ev} />)}
-                    </div>
-                  </div>
-                ))}
-                {events.length === 0 && <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}><p style={{ fontFamily: ff, fontSize: "18px" }}>No upcoming events</p></div>}
+                <Link href="/events/submit" style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "8px 16px", borderRadius: "10px", background: COLORS.primary, color: "white", fontFamily: fb, fontWeight: 600, fontSize: "13px", textDecoration: "none" }}><Plus size={14} /> Submit Event</Link>
               </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
-function EventCard({ ev }) {
-  const d = tryParseDate(ev.event_date);
-  const dateStr = d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
-  const typeColor = TYPE_COLORS[ev.event_type] || "#8A7968";
-  return (
-    <div style={{ background: "white", borderRadius: "14px", padding: "18px 22px", border: "1px solid #EDE6DE", borderLeft: `4px solid ${typeColor}`, transition: "box-shadow 0.2s" }}
-      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
-      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-      <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
-        {dateStr && <div style={{ padding: "8px 12px", borderRadius: "10px", background: "#FFF3E0", fontFamily: FONTS.heading, fontSize: "13px", fontWeight: 700, color: "#E8A317", textAlign: "center", lineHeight: 1.2, flexShrink: 0 }}>{dateStr}</div>}
-        <div style={{ flex: 1 }}>
-          <h4 style={{ fontFamily: FONTS.heading, fontSize: "16px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>{ev.name}</h4>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", fontSize: "12px", color: "#8A7968", marginBottom: "4px" }}>
-            {ev.event_type && <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: `${typeColor}15`, color: typeColor }}>{ev.event_type}</span>}
-            {ev.venue && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {ev.venue}</span>}
-            {ev.time && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><Clock size={11} /> {ev.time}</span>}
-          </div>
-          {ev.description && <p style={{ fontSize: "13px", color: "#6B5B4F", margin: "4px 0 0", lineHeight: 1.5 }}>{ev.description?.substring(0, 150)}{ev.description?.length > 150 ? "..." : ""}</p>}
-          {ev.url && <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "12px", color: COLORS.primary, fontWeight: 600, marginTop: "6px", textDecoration: "none" }}>More Info <ExternalLink size={10} /></a>}
-        </div>
+              <p style={{ fontSize: "13px", color: COLORS.textFaint, marginBottom: "14px" }}>{filtered.length} events</p>
+
+              {filtered.length > 0 ? (
+                <div style={{ display: "grid", gap: "10px" }}>
+                  {filtered.map((ev, i) => {
+                    const d = formatDate(ev.event_date);
+                    const isTemple = ev._type === "temple";
+                    const badgeColor = isTemple ? "#BF360C" : "#6A1B9A";
+                    const badgeLabel = isTemple ? "Temple Event" : "Community Event";
+                    return (
+                      <div key={`${ev._type}-${ev.id}-${i}`} style={{
+                        display: "flex", gap: "14px", alignItems: "center",
+                        padding: "14px 16px", borderRadius: "12px", background: "white",
+                        border: "1px solid #EDE6DE", transition: "border-color 0.2s",
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = `${SAFFRON}60`}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = "#EDE6DE"}
+                      >
+                        <div style={{ width: "52px", textAlign: "center", flexShrink: 0, padding: "6px 4px", borderRadius: "10px", background: "#FFF3E0" }}>
+                          <div style={{ fontSize: "10px", fontWeight: 700, color: "#BF360C", fontFamily: fb, textTransform: "uppercase" }}>{d.month}</div>
+                          <div style={{ fontSize: "20px", fontWeight: 700, color: "#2D2420", fontFamily: ff, lineHeight: 1.1 }}>{d.day}</div>
+                          <div style={{ fontSize: "10px", color: "#8A7968", fontFamily: fb }}>{d.weekday}</div>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "2px", flexWrap: "wrap" }}>
+                            <span style={{ padding: "1px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 700, background: `${badgeColor}12`, color: badgeColor }}>{badgeLabel}</span>
+                          </div>
+                          <div style={{ fontFamily: fb, fontSize: "15px", fontWeight: 600, color: "#2D2420", marginBottom: "2px" }}>{ev.event_name}</div>
+                          {ev._hostName && (
+                            <div style={{ fontSize: "12px", color: "#8A7968", marginBottom: "2px" }}>
+                              Hosted by {ev._hostSlug ? <Link href={ev._hostSlug} style={{ color: COLORS.primary, textDecoration: "none", fontWeight: 600 }}>{ev._hostName}</Link> : ev._hostName}
+                            </div>
+                          )}
+                          {ev.event_description && <div style={{ fontSize: "12px", color: "#8A7968", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.event_description}</div>}
+                          {(ev.start_time || ev.is_all_day) && <div style={{ fontSize: "11px", color: "#A89888", marginTop: "2px" }}>{ev.is_all_day ? "All day" : `${ev.start_time}${ev.end_time ? " – " + ev.end_time : ""}`}</div>}
+                        </div>
+                        <button onClick={() => generateICS(ev)} style={{ flexShrink: 0, padding: "5px 10px", borderRadius: "8px", background: `${SAFFRON}10`, border: `1px solid ${SAFFRON}30`, color: SAFFRON, fontSize: "10px", fontWeight: 600, fontFamily: fb, cursor: "pointer", whiteSpace: "nowrap" }}>+ Cal</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "48px 20px", color: "#8A7968" }}>
+                  <p style={{ fontSize: "16px", margin: "0 0 8px" }}>No events found for this period.</p>
+                  <Link href="/events/submit" style={{ color: COLORS.primary, fontWeight: 600, textDecoration: "none" }}>Submit an event →</Link>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );
