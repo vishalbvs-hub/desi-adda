@@ -1,11 +1,11 @@
 import "./globals.css";
+import { cookies } from "next/headers";
 import { AppProvider } from "@/lib/context";
 import TopBar from "@/components/TopBar";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import NewsletterOverlay from "@/components/NewsletterOverlay";
 import AskAdda from "@/components/AskAdda";
-
 
 export const metadata = {
   title: "Desi Adda — Your Desi Life in Detroit",
@@ -19,18 +19,25 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const cookieStore = await cookies();
+  const isAuthed = cookieStore.get("adda_access")?.value === "granted";
+
   return (
     <html lang="en">
       <body>
-        <AppProvider>
-          <NewsletterOverlay />
+        {isAuthed ? (
+          <AppProvider>
+            <NewsletterOverlay />
             <TopBar />
-          <Nav />
-          {children}
-          <Footer />
-          <AskAdda />
-        </AppProvider>
+            <Nav />
+            {children}
+            <Footer />
+            <AskAdda />
+          </AppProvider>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );
