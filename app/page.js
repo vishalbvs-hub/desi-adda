@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Search, ArrowRight, MapPin, Star } from "lucide-react";
-import { FONTS, COLORS, CLASSIFIEDS_CATEGORIES } from "@/lib/constants";
+import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 import ScrollingChips from "@/components/ScrollingChips";
 
@@ -26,7 +26,6 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [events, setEvents] = useState([]);
   const [businesses, setBusinesses] = useState([]);
-  const [classifieds, setClassifieds] = useState([]);
 
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -34,8 +33,7 @@ export default function HomePage() {
       supabase.from("temple_events").select("*, temples(name, slug)").gte("event_date", today).order("event_date").limit(10),
       supabase.from("community_events").select("*, community_networking(name, slug)").gte("event_date", today).order("event_date").limit(10),
       supabase.from("restaurants").select("id, name, city, rating, reviews, description, photos, slug, notable_dishes, what_to_order").not("photos", "eq", "{}").gte("rating", 4.0).gte("reviews", 10).order("reviews", { ascending: false }).limit(20),
-      supabase.from("classifieds").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(4),
-    ]).then(([te, ce, biz, cl]) => {
+    ]).then(([te, ce, biz]) => {
       // Build unified events feed
       const unified = [];
       (te.data || []).forEach(e => unified.push({ ...e, _type: "temple", _hostName: e.temples?.name, _hostSlug: e.temples?.slug ? `/temples/${e.temples.slug}` : null }));
@@ -47,7 +45,6 @@ export default function HomePage() {
         .filter(b => b.photos?.length > 0 && b.rating >= 4.0 && b.reviews >= 10 && b.description)
         .sort((a, b) => ((b.rating || 0) * Math.log((b.reviews || 0) + 2)) - ((a.rating || 0) * Math.log((a.reviews || 0) + 2)));
       setBusinesses(sorted);
-      setClassifieds(cl.data || []);
     });
   }, []);
 
@@ -58,7 +55,6 @@ export default function HomePage() {
 
   const featuredRef = useFadeIn();
   const eventsRef = useFadeIn();
-  const classifiedsRef = useFadeIn();
 
   return (
     <div style={{ background: "#FFFBF5" }}>
@@ -238,34 +234,6 @@ export default function HomePage() {
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ═══ LATEST CLASSIFIEDS ═══ */}
-        {classifieds.length > 0 && (
-          <section ref={classifiedsRef} style={{ padding: "24px 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, margin: 0, color: "#2D2420" }}>Latest Classifieds</h2>
-              <Link href="/classifieds" style={{ fontSize: "13px", fontFamily: fb, fontWeight: 600, color: COLORS.primary, textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>View all <ArrowRight size={14} /></Link>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
-              {classifieds.map(post => {
-                const catInfo = CLASSIFIEDS_CATEGORIES.find(c => c.id === post.cat);
-                return (
-                  <Link key={post.id} href="/classifieds" style={{ background: "white", borderRadius: "14px", padding: "16px 20px", border: "1px solid #EDE6DE", textDecoration: "none", color: "inherit", transition: "box-shadow 0.2s" }}
-                    onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
-                    onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                      <span style={{ padding: "3px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>{catInfo ? `${catInfo.emoji} ${catInfo.label}` : post.cat}</span>
-                      {post.city && <span style={{ fontSize: "10px", color: "#A89888" }}>{post.city}</span>}
-                    </div>
-                    <h4 style={{ fontFamily: ff, fontSize: "14px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>{post.title}</h4>
-                    <p style={{ fontSize: "12px", color: "#6B5B4F", margin: 0, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{post.body?.substring(0, 120)}</p>
-                    {post.budget && <p style={{ fontSize: "12px", fontWeight: 600, color: COLORS.primary, margin: "6px 0 0" }}>{post.budget}</p>}
-                  </Link>
                 );
               })}
             </div>

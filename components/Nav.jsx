@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { label: "Event\nPlanning", href: "/event-planning" },
   { label: "Entertainment", href: "/entertainment" },
   { label: "Community\n& Events", href: "/community" },
-  { label: "Classifieds", href: "/classifieds" },
+  { label: "Groups", href: "/classifieds" },
   { label: "News", href: "/news" },
 ];
 
