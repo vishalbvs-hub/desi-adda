@@ -50,13 +50,13 @@ export default function SubmitEventPage() {
   };
 
   const labelStyle = {
-    display: "block", fontSize: "13px", fontWeight: 600, color: "#5A4A3F",
+    display: "block", fontSize: "13px", fontWeight: 600, color: "#6B6B6B",
     fontFamily: FONTS.body, marginBottom: "6px",
   };
 
   const inputStyle = {
     width: "100%", padding: "12px 16px", borderRadius: "10px",
-    border: "1px solid #E0D8CF", fontSize: "14px", fontFamily: FONTS.body,
+    border: "1px solid #E2DFD8", fontSize: "14px", fontFamily: FONTS.body,
     outline: "none", boxSizing: "border-box",
   };
 
@@ -65,13 +65,13 @@ export default function SubmitEventPage() {
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
         <div style={{
           background: "white", borderRadius: "16px", padding: "48px 32px",
-          border: "1px solid #EDE6DE", textAlign: "center",
+          border: "1px solid #E2DFD8", textAlign: "center",
         }}>
           <CheckCircle size={48} color="#2E7D32" style={{ marginBottom: "16px" }} />
-          <h2 style={{ fontFamily: FONTS.heading, fontSize: "24px", fontWeight: 700, margin: "0 0 8px" }}>
+          <h2 style={{ fontFamily: FONTS.body, fontSize: "24px", fontWeight: 700, margin: "0 0 8px" }}>
             Event Submitted!
           </h2>
-          <p style={{ fontSize: "14px", color: "#5A4A3F", margin: "0 0 24px" }}>
+          <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0 0 24px" }}>
             Your event is pending review and will appear on the events page once approved.
           </p>
           <Link href="/events" style={{
@@ -88,23 +88,23 @@ export default function SubmitEventPage() {
 
   return (
     <>
-      <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
         <Link href="/events" style={{ display: "flex", alignItems: "center", gap: "6px", color: COLORS.primary, fontFamily: FONTS.body, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
           <ArrowLeft size={18} /> Back to Events
         </Link>
       </div>
 
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: "28px", fontWeight: 700, margin: "0 0 4px" }}>
+        <h1 style={{ fontFamily: FONTS.body, fontSize: "28px", fontWeight: 700, margin: "0 0 4px" }}>
           Submit an Event
         </h1>
-        <p style={{ fontSize: "14px", color: "#8A7968", margin: "0 0 24px" }}>
+        <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0 0 24px" }}>
           Hosting a desi event in Detroit? Submit it here and we will feature it on our events page.
         </p>
 
         <form onSubmit={handleSubmit} style={{
           background: "white", borderRadius: "16px", padding: "32px",
-          border: "1px solid #EDE6DE",
+          border: "1px solid #E2DFD8",
         }}>
           <div style={{ display: "grid", gap: "20px" }}>
             <div>

@@ -15,8 +15,8 @@ export default function CategoryCard({ cat }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: "white",
-        border: `1px solid ${hovered && isActive ? cat.color + "40" : "#EDE6DE"}`,
-        borderRadius: "16px",
+        border: `1px solid ${hovered && isActive ? cat.color + "40" : "#E2DFD8"}`,
+        borderRadius: "10px",
         padding: "20px",
         textAlign: "left",
         cursor: isActive ? "pointer" : "default",
@@ -29,7 +29,7 @@ export default function CategoryCard({ cat }) {
         boxShadow: hovered && isActive
           ? `0 12px 24px ${cat.color}15, 0 4px 8px rgba(0,0,0,0.06)`
           : "0 1px 3px rgba(0,0,0,0.04)",
-        borderLeft: hovered && isActive ? `3px solid ${cat.color}` : "1px solid #EDE6DE",
+        borderLeft: hovered && isActive ? `3px solid ${cat.color}` : "1px solid #E2DFD8",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -50,10 +50,10 @@ export default function CategoryCard({ cat }) {
           <cat.icon size={20} color={cat.color} />
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: FONTS.heading, fontSize: "15px", fontWeight: 600 }}>
+          <div style={{ fontFamily: FONTS.body, fontSize: "15px", fontWeight: 600 }}>
             {cat.name}
           </div>
-          <div style={{ fontSize: "12px", color: "#A89888", fontWeight: 500 }}>
+          <div style={{ fontSize: "12px", color: "#999999", fontWeight: 500 }}>
             {cat.count} listings
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function CategoryCard({ cat }) {
               fontSize: "10px",
               fontWeight: 600,
               color: "#BFB098",
-              background: "#F5EDE4",
+              background: "#F5F2EB",
               padding: "2px 8px",
               borderRadius: "999px",
             }}

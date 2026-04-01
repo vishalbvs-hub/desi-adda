@@ -6,9 +6,9 @@ import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 import ScrollingChips from "@/components/ScrollingChips";
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = "#C4943D";
 
 const LANGUAGES = ["All", "Telugu", "Hindi", "Tamil", "Punjabi", "Malayalam", "Kannada", "Bengali", "English"];
 
@@ -94,7 +94,7 @@ export default function MusicPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5F2EB" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "48px", marginBottom: "12px" }}>{"\u{1F3B5}"}</div>
           <p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading the music...</p>
@@ -104,9 +104,9 @@ export default function MusicPage() {
   }
 
   return (
-    <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+    <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
       {/* ═══ BACK NAV ═══ */}
-      <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: "6px", color: COLORS.primary, fontFamily: fb, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
           <ArrowLeft size={18} /> Back
         </Link>
@@ -171,7 +171,7 @@ export default function MusicPage() {
 
           {/* Search bar inside hero */}
           <form onSubmit={e => { e.preventDefault(); if (true) { window.dispatchEvent(new CustomEvent("askadda", { detail: document.getElementById("music-search").value })); document.getElementById("music-search").value = ""; } }} style={{ maxWidth: "560px", margin: "24px auto 0", position: "relative" }}>
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#999999" }} />
             <input id="music-search" placeholder="Ask about music... new Telugu songs? best playlist?"
               style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
             <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
@@ -195,7 +195,7 @@ export default function MusicPage() {
 
       {/* ═══ FILTERS ═══ */}
       <div style={{
-        background: "white", borderBottom: "1px solid #EDE6DE",
+        background: "white", borderBottom: "1px solid #E2DFD8",
         padding: "12px 20px", display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap", alignItems: "center",
       }}>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -207,13 +207,13 @@ export default function MusicPage() {
           ].map(s => (
             <button key={s.id} onClick={() => setSection(s.id)} style={{
               padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
-              border: section === s.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+              border: section === s.id ? `2px solid ${SAFFRON}` : "2px solid #E2DFD8",
               background: section === s.id ? SAFFRON : "white",
-              color: section === s.id ? "#2D2420" : COLORS.textMuted, transition: "all 0.25s",
+              color: section === s.id ? "#1A1A1A" : COLORS.textMuted, transition: "all 0.25s",
             }}>{s.icon} {s.label}</button>
           ))}
         </div>
-        <div style={{ width: "1px", height: "24px", background: "#EDE6DE" }} />
+        <div style={{ width: "1px", height: "24px", background: "#E2DFD8" }} />
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
           {[
             { id: "All", label: "All Platforms" },
@@ -223,9 +223,9 @@ export default function MusicPage() {
             <button key={p.id} onClick={() => setPlatform(p.id)} style={{
               padding: "5px 12px", borderRadius: "999px", fontSize: "11px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
               display: "flex", alignItems: "center", gap: "5px",
-              border: platform === p.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+              border: platform === p.id ? `2px solid ${SAFFRON}` : "2px solid #E2DFD8",
               background: platform === p.id ? SAFFRON : "white",
-              color: platform === p.id ? "#2D2420" : COLORS.textMuted, transition: "all 0.25s",
+              color: platform === p.id ? "#1A1A1A" : COLORS.textMuted, transition: "all 0.25s",
             }}>{p.icon && p.icon} {p.label}</button>
           ))}
         </div>
@@ -244,7 +244,7 @@ export default function MusicPage() {
       <section ref={trendingRef} style={{ padding: "48px 20px" }}>
         <div style={{ maxWidth: "100%", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
-            <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: 0, color: "#2D2420" }}>
+            <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: 0, color: "#1A1A1A" }}>
               {"\u{1F525}"} Trending This Week
             </h2>
             <span style={{ fontSize: "12px", color: COLORS.textMuted, fontFamily: fb }}>
@@ -281,7 +281,7 @@ export default function MusicPage() {
       {(section === "All" || section === "Playlists") && (
       <section ref={playlistsRef} style={{ padding: "48px 20px", background: "rgba(240,228,212,0.3)" }}>
         <div style={{ maxWidth: "100%", margin: "0 auto" }}>
-          <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>
+          <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: "0 0 8px", color: "#1A1A1A" }}>
             {"\u{1F3A7}"} Our Playlists
           </h2>
           <p style={{ fontFamily: fb, fontSize: "14px", color: COLORS.textMuted, margin: "0 0 24px" }}>
@@ -301,7 +301,7 @@ export default function MusicPage() {
                 rel="noopener noreferrer"
                 style={{
                   padding: "20px", borderRadius: "16px",
-                  background: "white", border: "1px solid #EDE6DE",
+                  background: "white", border: "1px solid #E2DFD8",
                   textDecoration: "none", color: "inherit",
                   transition: "all 0.25s", display: "flex", flexDirection: "column", gap: "10px",
                 }}
@@ -330,7 +330,7 @@ export default function MusicPage() {
                     </span>
                   )}
                 </div>
-                <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: 0, color: "#2D2420", lineHeight: 1.3 }}>
+                <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: 0, color: "#1A1A1A", lineHeight: 1.3 }}>
                   {p.name}
                 </h4>
                 <p style={{ fontSize: "12px", color: COLORS.textMuted, margin: 0, lineHeight: 1.5 }}>
@@ -357,7 +357,7 @@ export default function MusicPage() {
       {(section === "All" || section === "Live") && (
       <section ref={concertsRef} style={{ padding: "48px 20px" }}>
         <div style={{ maxWidth: "100%", margin: "0 auto" }}>
-          <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>
+          <h2 style={{ fontFamily: ff, fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, margin: "0 0 8px", color: "#1A1A1A" }}>
             {"\u{1F3A4}"} Live Near You
           </h2>
           <p style={{ fontFamily: fb, fontSize: "14px", color: COLORS.textMuted, margin: "0 0 28px" }}>
@@ -369,7 +369,7 @@ export default function MusicPage() {
             <div style={{ marginBottom: "32px" }}>
               <h3 style={{
                 fontFamily: ff, fontSize: "18px", fontWeight: 600, margin: "0 0 14px",
-                color: "#2D2420", display: "flex", alignItems: "center", gap: "8px",
+                color: "#1A1A1A", display: "flex", alignItems: "center", gap: "8px",
               }}>
                 <MapPin size={16} color={COLORS.primary} /> Metro Detroit
               </h3>
@@ -384,7 +384,7 @@ export default function MusicPage() {
             <div>
               <h3 style={{
                 fontFamily: ff, fontSize: "18px", fontWeight: 600, margin: "0 0 14px",
-                color: "#2D2420", display: "flex", alignItems: "center", gap: "8px",
+                color: "#1A1A1A", display: "flex", alignItems: "center", gap: "8px",
               }}>
                 {"\u{1F697}"} Worth the Drive
               </h3>
@@ -395,8 +395,8 @@ export default function MusicPage() {
           )}
 
           {concerts.length === 0 && (
-            <div style={{ padding: "40px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #E0D8CF" }}>
-              <p style={{ fontSize: "15px", color: "#8A7968", margin: 0 }}>No upcoming shows right now — check back soon!</p>
+            <div style={{ padding: "40px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #E2DFD8" }}>
+              <p style={{ fontSize: "15px", color: "#6B6B6B", margin: 0 }}>No upcoming shows right now — check back soon!</p>
             </div>
           )}
         </div>
@@ -414,13 +414,13 @@ export default function MusicPage() {
           display: "flex", flexDirection: "column",
         }}>
           <div style={{
-            background: "white", borderRadius: "16px", border: "1px solid #EDE6DE",
+            background: "white", borderRadius: "16px", border: "1px solid #E2DFD8",
             overflow: "hidden", display: "flex", flexDirection: "column",
             maxHeight: "calc(100vh - 140px)",
           }}>
             <div style={{
-              padding: "14px 18px", borderBottom: "1px solid #EDE6DE",
-              background: "#2D2420", flexShrink: 0,
+              padding: "14px 18px", borderBottom: "1px solid #E2DFD8",
+              background: "#1A1A1A", flexShrink: 0,
             }}>
               <h3 style={{
                 fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: 0,
@@ -447,14 +447,14 @@ export default function MusicPage() {
                       textDecoration: "none", color: "inherit",
                       transition: "background 0.2s",
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#FFFBF5"}
+                    onMouseEnter={e => e.currentTarget.style.background = "#F5F2EB"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
                     {/* Thumbnail */}
                     <div style={{
                       width: "64px", height: "64px", borderRadius: "10px",
                       overflow: "hidden", flexShrink: 0,
-                      background: item.image_url ? "#EDE6DE" : `hsl(${hue}, 30%, 90%)`,
+                      background: item.image_url ? "#E2DFD8" : `hsl(${hue}, 30%, 90%)`,
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
                       {item.image_url ? (
@@ -479,7 +479,7 @@ export default function MusicPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{
                         fontFamily: fb, fontSize: "12.5px", fontWeight: 600,
-                        color: "#2D2420", margin: "0 0 6px", lineHeight: 1.35,
+                        color: "#1A1A1A", margin: "0 0 6px", lineHeight: 1.35,
                         display: "-webkit-box", WebkitLineClamp: 3,
                         WebkitBoxOrient: "vertical", overflow: "hidden",
                       }}>
@@ -509,7 +509,7 @@ export default function MusicPage() {
               {/*
               <div style={{
                 padding: "14px 16px", borderTop: "1px solid #F5F0EA",
-                background: "#FFFBF5",
+                background: "#F5F2EB",
               }}>
                 <div style={{
                   fontSize: "9px", fontWeight: 600, color: COLORS.textFaint,
@@ -518,7 +518,7 @@ export default function MusicPage() {
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ width: "64px", height: "64px", borderRadius: "10px", background: "#FDE8EF", flexShrink: 0 }} />
                   <div>
-                    <p style={{ fontFamily: fb, fontSize: "12.5px", fontWeight: 600, color: "#2D2420", margin: "0 0 4px", lineHeight: 1.35 }}>
+                    <p style={{ fontFamily: fb, fontSize: "12.5px", fontWeight: 600, color: "#1A1A1A", margin: "0 0 4px", lineHeight: 1.35 }}>
                       Your ad here — reach the desi music community
                     </p>
                     <span style={{ fontSize: "10px", color: COLORS.primary, fontWeight: 600 }}>Learn more</span>
@@ -545,12 +545,12 @@ export default function MusicPage() {
           }
         `}</style>
         <div style={{
-          background: "white", borderRadius: "16px", border: "1px solid #EDE6DE",
+          background: "white", borderRadius: "16px", border: "1px solid #E2DFD8",
           overflow: "hidden", maxWidth: "600px", margin: "0 auto",
         }}>
           <div style={{
-            padding: "14px 18px", borderBottom: "1px solid #EDE6DE",
-            background: "#2D2420",
+            padding: "14px 18px", borderBottom: "1px solid #E2DFD8",
+            background: "#1A1A1A",
           }}>
             <h3 style={{
               fontFamily: ff, fontSize: "15px", fontWeight: 700, margin: 0,
@@ -579,7 +579,7 @@ export default function MusicPage() {
                   <div style={{
                     width: "56px", height: "56px", borderRadius: "10px",
                     overflow: "hidden", flexShrink: 0,
-                    background: item.image_url ? "#EDE6DE" : `hsl(${hue}, 30%, 90%)`,
+                    background: item.image_url ? "#E2DFD8" : `hsl(${hue}, 30%, 90%)`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
                     {item.image_url ? (
@@ -593,7 +593,7 @@ export default function MusicPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
                       fontFamily: fb, fontSize: "13px", fontWeight: 600,
-                      color: "#2D2420", margin: "0 0 4px", lineHeight: 1.35,
+                      color: "#1A1A1A", margin: "0 0 4px", lineHeight: 1.35,
                     }}>
                       {item.headline}
                     </p>
@@ -646,7 +646,7 @@ function SongList({ songs, platform }) {
             border: "1px solid transparent",
             transition: "all 0.2s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = "white"; e.currentTarget.style.border = "1px solid #EDE6DE"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.04)"; }}
+          onMouseEnter={e => { e.currentTarget.style.background = "white"; e.currentTarget.style.border = "1px solid #E2DFD8"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.04)"; }}
           onMouseLeave={e => { e.currentTarget.style.background = i % 2 === 0 ? "white" : "rgba(255,251,245,0.6)"; e.currentTarget.style.border = "1px solid transparent"; e.currentTarget.style.boxShadow = "none"; }}
         >
           {/* Rank */}
@@ -660,7 +660,7 @@ function SongList({ songs, platform }) {
 
           {/* Song info */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: fb, fontSize: "14px", fontWeight: 600, color: "#2D2420", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontFamily: fb, fontSize: "14px", fontWeight: 600, color: "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {song.title}
             </div>
             <div style={{ fontSize: "12px", color: COLORS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -737,7 +737,7 @@ function ConcertCard({ concert }) {
       style={{
         display: "flex", gap: "16px", alignItems: "flex-start",
         padding: "18px 20px", borderRadius: "14px",
-        background: "white", border: "1px solid #EDE6DE",
+        background: "white", border: "1px solid #E2DFD8",
         borderLeft: `3px solid ${COLORS.primary}`,
         textDecoration: "none", color: "inherit",
         transition: "all 0.25s",
@@ -761,7 +761,7 @@ function ConcertCard({ concert }) {
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <h4 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 600, margin: "0 0 4px", color: "#2D2420", lineHeight: 1.3 }}>
+        <h4 style={{ fontFamily: ff, fontSize: "15px", fontWeight: 600, margin: "0 0 4px", color: "#1A1A1A", lineHeight: 1.3 }}>
           {concert.name}
         </h4>
         {concert.artist && concert.artist !== concert.name && (

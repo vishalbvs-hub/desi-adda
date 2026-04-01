@@ -5,9 +5,9 @@ import { Plus, Users, ExternalLink, CheckCircle } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const ACCENT = COLORS.accent;
 
 const CATEGORIES = [
   { value: "all", label: "All" },
@@ -30,7 +30,7 @@ const PLATFORM_STYLES = {
   telegram: { color: "#0088CC", bg: "#E3F2FD", icon: "\u2708\uFE0F", border: "#0088CC" },
   meetup:   { color: "#ED1C40", bg: "#FDE8EC", icon: "\uD83E\uDD1D", border: "#ED1C40" },
   discord:  { color: "#5865F2", bg: "#EDEEFE", icon: "\uD83C\uDFAE", border: "#5865F2" },
-  other:    { color: "#6B5B4F", bg: "#F5EDE4", icon: "\uD83C\uDF10", border: "#8A7968" },
+  other:    { color: COLORS.textSecondary, bg: COLORS.bg, icon: "\uD83C\uDF10", border: COLORS.textSecondary },
 };
 
 const CAT_COLORS = {
@@ -38,7 +38,7 @@ const CAT_COLORS = {
   "Jobs & Careers":      { bg: "#E3F2FD", color: "#1565C0" },
   "Buy/Sell/Trade":      { bg: "#FFF3E0", color: "#E65100" },
   "Social & Networking": { bg: "#F3E5F5", color: "#7B1FA2" },
-  "Parents & Families":  { bg: "#FCE4EC", color: "#C2185B" },
+  "Parents & Families":  { bg: "#FCE4EC", color: COLORS.primary },
   "Language-Specific":   { bg: "#FFF8E1", color: "#F57F17" },
   "Students":            { bg: "#E0F7FA", color: "#00838F" },
 };
@@ -80,22 +80,22 @@ function GroupsInner() {
 
   const pillStyle = (active) => ({
     padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 600,
-    cursor: "pointer", border: active ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
-    background: active ? SAFFRON : "white", color: active ? "#2D2420" : "#8A7968",
+    cursor: "pointer", border: active ? `2px solid ${ACCENT}` : `2px solid ${COLORS.border}`,
+    background: active ? ACCENT : "white", color: active ? COLORS.text : COLORS.textSecondary,
     transition: "all 0.2s", whiteSpace: "nowrap",
   });
 
   const selectStyle = {
-    padding: "6px 12px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "12px",
-    fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+    padding: "6px 12px", borderRadius: "10px", border: `1px solid ${COLORS.border}`, fontSize: "12px",
+    fontFamily: fb, color: COLORS.textSecondary, background: "white", cursor: "pointer",
   };
 
   return (
-    <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+    <div style={{ background: COLORS.bg, minHeight: "100vh" }}>
       {/* HEADER */}
-      <div style={{ background: "linear-gradient(135deg, #2D2420 0%, #3E2F26 40%, #5A4435 100%)", padding: "36px 20px 28px", textAlign: "center" }}>
+      <div style={{ background: `linear-gradient(135deg, ${COLORS.text} 0%, #3E2F26 40%, #5A4435 100%)`, padding: "36px 20px 28px", textAlign: "center" }}>
         <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, color: "white", margin: "0 0 6px" }}>
-          Find your <span style={{ color: SAFFRON, fontStyle: "italic" }}>people</span>
+          Find your <span style={{ color: ACCENT, fontStyle: "italic" }}>people</span>
         </h1>
         <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", margin: 0, fontFamily: fb, maxWidth: "560px", marginLeft: "auto", marginRight: "auto", lineHeight: 1.5 }}>
           Every WhatsApp group, Facebook group, and online community for desi life in Metro Detroit — in one place.
@@ -105,8 +105,8 @@ function GroupsInner() {
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "24px 20px" }}>
         {/* TOP CTA */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
-          <p style={{ fontSize: "14px", color: "#8A7968", margin: 0, fontFamily: fb }}>
-            <strong style={{ color: "#2D2420" }}>{groups.length} groups</strong> and counting
+          <p style={{ fontSize: "14px", color: COLORS.textSecondary, margin: 0, fontFamily: fb }}>
+            <strong style={{ color: COLORS.text }}>{groups.length} groups</strong> and counting
           </p>
           <button onClick={() => { setShowForm(!showForm); if (!showForm) setTimeout(() => document.getElementById("submit-form")?.scrollIntoView({ behavior: "smooth" }), 100); }} style={{
             padding: "8px 18px", borderRadius: "10px", background: COLORS.primary, color: "white",
@@ -135,7 +135,7 @@ function GroupsInner() {
 
         {/* WhatsApp notice */}
         {(platform === "All" || platform === "whatsapp") && (
-          <p style={{ fontSize: "11px", color: "#A89888", margin: "0 0 16px", fontStyle: "italic" }}>
+          <p style={{ fontSize: "11px", color: COLORS.textMuted, margin: "0 0 16px", fontStyle: "italic" }}>
             WhatsApp links may expire. If a link doesn&apos;t work, use the Submit form to let us know.
           </p>
         )}
@@ -144,13 +144,13 @@ function GroupsInner() {
         <div style={{ display: "grid", gap: "12px" }}>
           {filtered.map(g => {
             const ps = PLATFORM_STYLES[g.platform] || PLATFORM_STYLES.other;
-            const cc = CAT_COLORS[g.category] || { bg: "#F5EDE4", color: "#8A7968" };
+            const cc = CAT_COLORS[g.category] || { bg: COLORS.bg, color: COLORS.textSecondary };
             const langVal = g.language || "Multi";
 
             return (
               <div key={g.id} style={{
-                background: "white", borderRadius: "14px", padding: "20px 22px",
-                border: "1px solid #EDE6DE", borderLeft: `4px solid ${ps.border}`,
+                background: "white", borderRadius: "10px", padding: "20px 22px",
+                border: `1px solid ${COLORS.border}`, borderLeft: `4px solid ${ps.border}`,
                 transition: "box-shadow 0.2s",
               }}
                 onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"}
@@ -173,26 +173,26 @@ function GroupsInner() {
                       <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 700, background: ps.bg, color: ps.color }}>{platformLabel(g.platform)}</span>
                       <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: cc.bg, color: cc.color }}>{g.category}</span>
                       {langVal !== "Multi" && (
-                        <span style={{ padding: "2px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: `${SAFFRON}15`, color: SAFFRON }}>{langVal}</span>
+                        <span style={{ padding: "2px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: `${ACCENT}15`, color: ACCENT }}>{langVal}</span>
                       )}
                       {langVal === "Multi" && (
-                        <span style={{ padding: "2px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>Multi-language</span>
+                        <span style={{ padding: "2px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: COLORS.bg, color: COLORS.textSecondary }}>Multi-language</span>
                       )}
                     </div>
 
                     {/* Name */}
-                    <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>{g.name}</h3>
+                    <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 500, margin: "0 0 4px", color: COLORS.text }}>{g.name}</h3>
 
                     {/* Member count */}
                     {g.member_count && (
-                      <p style={{ fontSize: "12px", color: "#8A7968", margin: "0 0 4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <p style={{ fontSize: "12px", color: COLORS.textSecondary, margin: "0 0 4px", display: "flex", alignItems: "center", gap: "4px" }}>
                         <Users size={11} /> {g.member_count.toLocaleString()} members
                       </p>
                     )}
 
                     {/* Description */}
                     {g.description && (
-                      <p style={{ fontSize: "13px", color: "#6B5B4F", margin: "0 0 10px", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      <p style={{ fontSize: "13px", color: COLORS.textSecondary, margin: "0 0 10px", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                         {g.description}
                       </p>
                     )}
@@ -209,7 +209,7 @@ function GroupsInner() {
                         </a>
                       )}
                       {g.verified_date && (
-                        <span style={{ fontSize: "10px", color: "#A89888" }}>
+                        <span style={{ fontSize: "10px", color: COLORS.textMuted }}>
                           Last verified: {new Date(g.verified_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                         </span>
                       )}
@@ -221,9 +221,9 @@ function GroupsInner() {
           })}
 
           {filtered.length === 0 && (
-            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "16px", border: "1px solid #EDE6DE" }}>
-              <p style={{ fontFamily: ff, fontSize: "18px", color: "#8A7968", margin: "0 0 8px" }}>No groups found</p>
-              <p style={{ fontSize: "13px", color: "#A89888" }}>Try adjusting your filters or submit a group below.</p>
+            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "10px", border: `1px solid ${COLORS.border}` }}>
+              <p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textSecondary, margin: "0 0 8px" }}>No groups found</p>
+              <p style={{ fontSize: "13px", color: COLORS.textMuted }}>Try adjusting your filters or submit a group below.</p>
             </div>
           )}
         </div>
@@ -272,23 +272,23 @@ function SubmitGroupForm({ onSuccess }) {
     else setSuccess(true);
   };
 
-  const labelStyle = { display: "block", fontSize: "13px", fontWeight: 600, color: "#5A4A3F", fontFamily: fb, marginBottom: "6px" };
-  const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "14px", fontFamily: fb, outline: "none", boxSizing: "border-box" };
+  const labelStyle = { display: "block", fontSize: "13px", fontWeight: 600, color: COLORS.textSecondary, fontFamily: fb, marginBottom: "6px" };
+  const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: "10px", border: `1px solid ${COLORS.border}`, fontSize: "14px", fontFamily: fb, outline: "none", boxSizing: "border-box" };
 
   if (success) {
     return (
-      <div style={{ background: "#E8F5E9", borderRadius: "14px", padding: "28px", textAlign: "center" }}>
+      <div style={{ background: "#E8F5E9", borderRadius: "10px", padding: "28px", textAlign: "center" }}>
         <CheckCircle size={36} color="#2E7D32" style={{ marginBottom: "10px" }} />
         <p style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, color: "#2E7D32", margin: "0 0 4px" }}>Thanks!</p>
-        <p style={{ fontSize: "13px", color: "#5A4A3F", margin: 0 }}>We&apos;ll verify and add this group within 24 hours.</p>
+        <p style={{ fontSize: "13px", color: COLORS.textSecondary, margin: 0 }}>We&apos;ll verify and add this group within 24 hours.</p>
       </div>
     );
   }
 
   return (
-    <div style={{ background: "white", borderRadius: "16px", padding: "28px", border: "1px solid #EDE6DE" }}>
-      <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>Know a group we&apos;re missing?</h3>
-      <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 20px" }}>Add it below. We&apos;ll verify the link and publish it.</p>
+    <div style={{ background: "white", borderRadius: "10px", padding: "28px", border: `1px solid ${COLORS.border}` }}>
+      <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 600, margin: "0 0 4px", color: COLORS.text }}>Know a group we&apos;re missing?</h3>
+      <p style={{ fontSize: "13px", color: COLORS.textSecondary, margin: "0 0 20px" }}>Add it below. We&apos;ll verify the link and publish it.</p>
 
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: "16px" }}>
         <div>
@@ -339,7 +339,7 @@ function SubmitGroupForm({ onSuccess }) {
         {error && <p style={{ color: "#C62828", fontSize: "13px", margin: 0 }}>{error}</p>}
 
         <button type="submit" disabled={submitting} style={{
-          padding: "12px 32px", borderRadius: "12px",
+          padding: "12px 32px", borderRadius: "10px",
           background: submitting ? "#ccc" : COLORS.primary, color: "white",
           border: "none", fontFamily: fb, fontWeight: 700, fontSize: "14px",
           cursor: submitting ? "not-allowed" : "pointer", justifySelf: "start",

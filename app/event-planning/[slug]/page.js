@@ -7,9 +7,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = "#C4943D";
 
 async function findBySlug(slug) {
   const { data: vendor } = await supabase
@@ -97,9 +97,9 @@ export default async function EventDetailPage({ params }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+      <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
         {/* Back nav */}
-        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px" }}>
           <Link href="/event-planning" style={{ color: COLORS.primary, fontFamily: fb, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
             ← Back to Event Planning
           </Link>
@@ -109,7 +109,7 @@ export default async function EventDetailPage({ params }) {
         {photos.length > 0 && (
           <>
             <div style={{
-              display: "flex", gap: "4px", overflowX: "auto", background: "#2D2420",
+              display: "flex", gap: "4px", overflowX: "auto", background: "#1A1A1A",
               scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollbarWidth: "none",
             }}>
               {photos.map((url, i) => (
@@ -123,7 +123,7 @@ export default async function EventDetailPage({ params }) {
               ))}
             </div>
             {photos.length > 1 && (
-              <div style={{ background: "#2D2420", padding: "6px 0", textAlign: "center" }}>
+              <div style={{ background: "#1A1A1A", padding: "6px 0", textAlign: "center" }}>
                 <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", fontFamily: fb }}>{photos.length} photos — scroll →</span>
               </div>
             )}
@@ -137,7 +137,7 @@ export default async function EventDetailPage({ params }) {
               <span style={{
                 padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600,
                 background: s._type === "hall" ? "#EFEBE9" : "#FCE4EC",
-                color: s._type === "hall" ? "#795548" : "#C2185B",
+                color: s._type === "hall" ? "#795548" : "#2D5A3D",
               }}>
                 {typeLabel}
               </span>
@@ -151,7 +151,7 @@ export default async function EventDetailPage({ params }) {
               ))}
             </div>
 
-            <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>
+            <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, margin: "0 0 8px", color: "#1A1A1A" }}>
               {s.name}
             </h1>
 
@@ -159,17 +159,17 @@ export default async function EventDetailPage({ params }) {
               <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px", fontSize: "14px" }}>
                 <div style={{ display: "flex", gap: "1px" }}>
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i <= Math.round(s.rating) ? SAFFRON : "#E0D8CF"} stroke="none">
+                    <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i <= Math.round(s.rating) ? SAFFRON : "#E2DFD8"} stroke="none">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
                   ))}
                 </div>
-                <span style={{ fontWeight: 700, color: "#2D2420" }}>{s.rating}</span>
-                {s.reviews && <span style={{ color: "#8A7968" }}>({s.reviews.toLocaleString()} reviews)</span>}
+                <span style={{ fontWeight: 700, color: "#1A1A1A" }}>{s.rating}</span>
+                {s.reviews && <span style={{ color: "#6B6B6B" }}>({s.reviews.toLocaleString()} reviews)</span>}
               </div>
             )}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "14px", color: "#5A4A3F" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "14px", color: "#6B6B6B" }}>
               {(s.address || s.city) && <div>📍 {s.address ? `${s.address}, ${s.city}` : s.city}</div>}
               {s.phone && (
                 <div>📞 <a href={`tel:${s.phone}`} style={{ color: COLORS.primary, textDecoration: "none" }}>{s.phone}</a></div>
@@ -188,20 +188,20 @@ export default async function EventDetailPage({ params }) {
             {/* LEFT — main content */}
             <div>
               {s.description && (
-                <div style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #EDE6DE", marginBottom: "20px" }}>
-                  <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: "0 0 12px", color: "#2D2420" }}>About</h3>
-                  <p style={{ fontSize: "15px", color: "#5A4A3F", margin: 0, lineHeight: 1.7 }}>{s.description}</p>
+                <div style={{ background: "white", borderRadius: "10px", padding: "24px", border: "1px solid #E2DFD8", marginBottom: "20px" }}>
+                  <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: "0 0 12px", color: "#1A1A1A" }}>About</h3>
+                  <p style={{ fontSize: "15px", color: "#6B6B6B", margin: 0, lineHeight: 1.7 }}>{s.description}</p>
                 </div>
               )}
 
               {s.badges && s.badges.length > 0 && (
-                <div style={{ background: "white", borderRadius: "16px", padding: "20px 24px", border: "1px solid #EDE6DE", marginBottom: "20px" }}>
+                <div style={{ background: "white", borderRadius: "10px", padding: "20px 24px", border: "1px solid #E2DFD8", marginBottom: "20px" }}>
                   <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: "0 0 12px" }}>Highlights</h3>
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                     {s.badges.map((badge) => (
                       <span key={badge} style={{
                         padding: "5px 12px", borderRadius: "999px", fontSize: "12px", fontWeight: 600,
-                        background: "#FFF3E0", color: "#E65100",
+                        background: "#F5F2EB", color: "#E65100",
                       }}>
                         {badge}
                       </span>
@@ -212,9 +212,9 @@ export default async function EventDetailPage({ params }) {
 
               {/* Reviews count summary */}
               {s.reviews && s.reviews > 0 && (
-                <div style={{ background: "white", borderRadius: "16px", padding: "20px 24px", border: "1px solid #EDE6DE", marginBottom: "20px" }}>
+                <div style={{ background: "white", borderRadius: "10px", padding: "20px 24px", border: "1px solid #E2DFD8", marginBottom: "20px" }}>
                   <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: "0 0 8px" }}>Reviews</h3>
-                  <p style={{ fontSize: "14px", color: "#5A4A3F", margin: 0, lineHeight: 1.6 }}>
+                  <p style={{ fontSize: "14px", color: "#6B6B6B", margin: 0, lineHeight: 1.6 }}>
                     {s.reviews.toLocaleString()} Google reviews with an average rating of {s.rating}/5
                   </p>
                 </div>
@@ -226,14 +226,14 @@ export default async function EventDetailPage({ params }) {
               {/* Contact CTA */}
               {(s.phone || websiteUrl) && (
                 <div style={{
-                  background: "linear-gradient(135deg, #4A1942, #6B2569)", borderRadius: "16px",
+                  background: "linear-gradient(135deg, #4A1942, #6B2569)", borderRadius: "10px",
                   padding: "20px", marginBottom: "16px", textAlign: "center",
                 }}>
                   <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, color: "white", margin: "0 0 12px" }}>Get in Touch</h3>
                   {s.phone && (
                     <a href={`tel:${s.phone}`} style={{
                       display: "block", padding: "10px 20px", borderRadius: "10px",
-                      background: SAFFRON, color: "#2D2420", fontFamily: fb,
+                      background: SAFFRON, color: "#1A1A1A", fontFamily: fb,
                       fontWeight: 600, fontSize: "14px", textDecoration: "none", marginBottom: "8px",
                     }}>
                       📞 Call Now
@@ -253,18 +253,18 @@ export default async function EventDetailPage({ params }) {
 
               {/* Hours */}
               {s.hours && (
-                <div style={{ background: "white", borderRadius: "16px", padding: "18px 20px", border: "1px solid #EDE6DE", marginBottom: "16px" }}>
+                <div style={{ background: "white", borderRadius: "10px", padding: "18px 20px", border: "1px solid #E2DFD8", marginBottom: "16px" }}>
                   <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 10px" }}>Hours</h3>
-                  <div style={{ display: "grid", gap: "2px", fontSize: "12px", color: "#5A4A3F" }}>
+                  <div style={{ display: "grid", gap: "2px", fontSize: "12px", color: "#6B6B6B" }}>
                     {s.hours.split(" | ").map((day, i) => {
                       const [dayName, ...times] = day.split(": ");
                       return (
                         <div key={i} style={{
                           display: "flex", justifyContent: "space-between", padding: "3px 0",
-                          borderBottom: i < 6 ? "1px solid #F5EDE4" : "none",
+                          borderBottom: i < 6 ? "1px solid #F5F2EB" : "none",
                         }}>
                           <span style={{ fontWeight: 600, fontSize: "11px" }}>{dayName}</span>
-                          <span style={{ color: "#8A7968", fontSize: "11px" }}>{times.join(": ")}</span>
+                          <span style={{ color: "#6B6B6B", fontSize: "11px" }}>{times.join(": ")}</span>
                         </div>
                       );
                     })}
@@ -274,7 +274,7 @@ export default async function EventDetailPage({ params }) {
 
               {/* Map */}
               {s.latitude && s.longitude && (
-                <div style={{ marginBottom: "16px", borderRadius: "16px", overflow: "hidden", border: "1px solid #EDE6DE" }}>
+                <div style={{ marginBottom: "16px", borderRadius: "10px", overflow: "hidden", border: "1px solid #E2DFD8" }}>
                   <iframe
                     width="100%" height="220" style={{ border: 0 }}
                     loading="lazy" referrerPolicy="no-referrer-when-downgrade"

@@ -8,9 +8,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = "#C4943D";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -71,8 +71,8 @@ export default async function RestaurantPage({ params }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
-        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+      <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px" }}>
           <Link href="/businesses?cat=restaurants" style={{ color: COLORS.primary, fontFamily: fb, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
             ← Back to Restaurants
           </Link>
@@ -82,7 +82,7 @@ export default async function RestaurantPage({ params }) {
         {photos.length > 0 && (
           <>
             <div style={{
-              display: "flex", gap: "4px", overflowX: "auto", background: "#2D2420",
+              display: "flex", gap: "4px", overflowX: "auto", background: "#1A1A1A",
               scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollbarWidth: "none",
             }}>
               {photos.map((url, i) => (
@@ -95,7 +95,7 @@ export default async function RestaurantPage({ params }) {
               ))}
             </div>
             {photos.length > 1 && (
-              <div style={{ background: "#2D2420", padding: "6px 0", textAlign: "center" }}>
+              <div style={{ background: "#1A1A1A", padding: "6px 0", textAlign: "center" }}>
                 <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", fontFamily: fb }}>{photos.length} photos — scroll to see more →</span>
               </div>
             )}
@@ -107,30 +107,30 @@ export default async function RestaurantPage({ params }) {
           <div style={{ marginBottom: "24px" }}>
             <div style={{ display: "flex", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
               {r.cuisine_type && <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: `${SAFFRON}15`, color: SAFFRON }}>{r.cuisine_type}</span>}
-              {r.veg_status && <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: r.veg_status === "Veg" ? "#E8F5E9" : "#FFF3E0", color: r.veg_status === "Veg" ? "#2E7D32" : "#E65100" }}>{r.veg_status === "Veg" ? "🌿 Vegetarian" : r.veg_status === "Both" ? "🍽️ Veg & Non-Veg" : r.veg_status}</span>}
-              {r.price_range && <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>{r.price_range}</span>}
+              {r.veg_status && <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: r.veg_status === "Veg" ? "#E8F5E9" : "#F5F2EB", color: r.veg_status === "Veg" ? "#2E7D32" : "#E65100" }}>{r.veg_status === "Veg" ? "🌿 Vegetarian" : r.veg_status === "Both" ? "🍽️ Veg & Non-Veg" : r.veg_status}</span>}
+              {r.price_range && <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#F5F2EB", color: "#6B6B6B" }}>{r.price_range}</span>}
             </div>
-            <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>{r.name}</h1>
+            <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, margin: "0 0 8px", color: "#1A1A1A" }}>{r.name}</h1>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px", flexWrap: "wrap", fontSize: "14px" }}>
               {r.rating && (
                 <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                   <div style={{ display: "flex", gap: "1px" }}>
                     {[1,2,3,4,5].map(i => (
-                      <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i <= Math.round(r.rating) ? SAFFRON : "#E0D8CF"} stroke="none">
+                      <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i <= Math.round(r.rating) ? SAFFRON : "#E2DFD8"} stroke="none">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                       </svg>
                     ))}
                   </div>
-                  <span style={{ fontWeight: 700, color: "#2D2420" }}>{r.rating} on Google</span>
-                  <span style={{ color: "#8A7968" }}>({r.reviews?.toLocaleString()})</span>
+                  <span style={{ fontWeight: 700, color: "#1A1A1A" }}>{r.rating} on Google</span>
+                  <span style={{ color: "#6B6B6B" }}>({r.reviews?.toLocaleString()})</span>
                 </div>
               )}
-              <span style={{ color: "#E0D8CF" }}>·</span>
-              <span style={{ color: "#8A7968", fontSize: "13px" }}>
+              <span style={{ color: "#E2DFD8" }}>·</span>
+              <span style={{ color: "#6B6B6B", fontSize: "13px" }}>
                 {communityRating ? `${communityRating} community rating (${communityReviews.length})` : "No community reviews yet"}
               </span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "14px", color: "#5A4A3F" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "14px", color: "#6B6B6B" }}>
               {r.address && <div>📍 {r.address}</div>}
               {r.phone && <div>📞 <a href={`tel:${r.phone}`} style={{ color: COLORS.primary, textDecoration: "none" }}>{r.phone}</a></div>}
               {r.url && <div>🌐 <a href={r.url.startsWith("http") ? r.url : `https://${r.url}`} target="_blank" rel="noopener noreferrer" style={{ color: COLORS.primary, textDecoration: "none" }}>{r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a></div>}
@@ -146,20 +146,20 @@ export default async function RestaurantPage({ params }) {
               <div>
                 {/* What to Order */}
                 {wto && (
-                  <div style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #EDE6DE", borderLeft: `4px solid ${SAFFRON}`, marginBottom: "20px" }}>
+                  <div style={{ background: "white", borderRadius: "10px", padding: "24px", border: "1px solid #E2DFD8", borderLeft: `4px solid ${SAFFRON}`, marginBottom: "20px" }}>
                     <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: "0 0 16px", display: "flex", alignItems: "center", gap: "8px" }}>🍛 What to Order</h3>
-                    {wto.known_for && <div style={{ marginBottom: "14px" }}><div style={{ fontSize: "12px", fontWeight: 600, color: SAFFRON, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Known For</div><div style={{ fontSize: "15px", fontWeight: 600, color: "#2D2420" }}>{wto.known_for}</div></div>}
-                    {wto.the_move && <div style={{ marginBottom: "14px" }}><div style={{ fontSize: "12px", fontWeight: 600, color: SAFFRON, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>The Move</div><div style={{ fontSize: "14px", color: "#5A4A3F", lineHeight: 1.6 }}>{wto.the_move}</div></div>}
-                    {wto.skip && <div style={{ marginBottom: "14px" }}><div style={{ fontSize: "12px", fontWeight: 600, color: "#C62828", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Skip</div><div style={{ fontSize: "14px", color: "#5A4A3F", lineHeight: 1.6 }}>{wto.skip}</div></div>}
-                    {wto.vibe && <div style={{ marginBottom: "14px" }}><div style={{ fontSize: "12px", fontWeight: 600, color: "#6A1B9A", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Vibe</div><div style={{ fontSize: "14px", color: "#5A4A3F", lineHeight: 1.6 }}>{wto.vibe}</div></div>}
-                    {wto.pro_tip && <div style={{ padding: "12px 16px", background: "#FFFBF5", borderRadius: "10px", border: "1px dashed #E0D8CF" }}><div style={{ fontSize: "12px", fontWeight: 600, color: "#00796B", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>💡 Pro Tip</div><div style={{ fontSize: "14px", color: "#5A4A3F", lineHeight: 1.6 }}>{wto.pro_tip}</div></div>}
+                    {wto.known_for && <div style={{ marginBottom: "14px" }}><div style={{ fontSize: "12px", fontWeight: 600, color: SAFFRON, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Known For</div><div style={{ fontSize: "15px", fontWeight: 600, color: "#1A1A1A" }}>{wto.known_for}</div></div>}
+                    {wto.the_move && <div style={{ marginBottom: "14px" }}><div style={{ fontSize: "12px", fontWeight: 600, color: SAFFRON, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>The Move</div><div style={{ fontSize: "14px", color: "#6B6B6B", lineHeight: 1.6 }}>{wto.the_move}</div></div>}
+                    {wto.skip && <div style={{ marginBottom: "14px" }}><div style={{ fontSize: "12px", fontWeight: 600, color: "#C62828", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Skip</div><div style={{ fontSize: "14px", color: "#6B6B6B", lineHeight: 1.6 }}>{wto.skip}</div></div>}
+                    {wto.vibe && <div style={{ marginBottom: "14px" }}><div style={{ fontSize: "12px", fontWeight: 600, color: "#6A1B9A", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Vibe</div><div style={{ fontSize: "14px", color: "#6B6B6B", lineHeight: 1.6 }}>{wto.vibe}</div></div>}
+                    {wto.pro_tip && <div style={{ padding: "12px 16px", background: "#F5F2EB", borderRadius: "10px", border: "1px dashed #E2DFD8" }}><div style={{ fontSize: "12px", fontWeight: 600, color: "#00796B", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>💡 Pro Tip</div><div style={{ fontSize: "14px", color: "#6B6B6B", lineHeight: 1.6 }}>{wto.pro_tip}</div></div>}
                   </div>
                 )}
 
                 {r.notable_dishes && (
-                  <div style={{ background: "white", borderRadius: "16px", padding: "20px 24px", border: "1px solid #EDE6DE", marginBottom: "20px" }}>
+                  <div style={{ background: "white", borderRadius: "10px", padding: "20px 24px", border: "1px solid #E2DFD8", marginBottom: "20px" }}>
                     <h3 style={{ fontFamily: ff, fontSize: "18px", fontWeight: 700, margin: "0 0 8px" }}>Notable Dishes</h3>
-                    <p style={{ fontSize: "14px", color: "#5A4A3F", margin: 0 }}>{r.notable_dishes}</p>
+                    <p style={{ fontSize: "14px", color: "#6B6B6B", margin: 0 }}>{r.notable_dishes}</p>
                   </div>
                 )}
 
@@ -175,15 +175,15 @@ export default async function RestaurantPage({ params }) {
               <div>
                 {/* Hours */}
                 {r.hours && (
-                  <div style={{ background: "white", borderRadius: "16px", padding: "18px 20px", border: "1px solid #EDE6DE", marginBottom: "16px" }}>
+                  <div style={{ background: "white", borderRadius: "10px", padding: "18px 20px", border: "1px solid #E2DFD8", marginBottom: "16px" }}>
                     <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 10px" }}>Hours</h3>
-                    <div style={{ display: "grid", gap: "2px", fontSize: "12px", color: "#5A4A3F" }}>
+                    <div style={{ display: "grid", gap: "2px", fontSize: "12px", color: "#6B6B6B" }}>
                       {r.hours.split(" | ").map((day, i) => {
                         const [dayName, ...times] = day.split(": ");
                         return (
-                          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: i < 6 ? "1px solid #F5EDE4" : "none" }}>
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: i < 6 ? "1px solid #F5F2EB" : "none" }}>
                             <span style={{ fontWeight: 600, fontSize: "11px" }}>{dayName}</span>
-                            <span style={{ color: "#8A7968", fontSize: "11px" }}>{times.join(": ")}</span>
+                            <span style={{ color: "#6B6B6B", fontSize: "11px" }}>{times.join(": ")}</span>
                           </div>
                         );
                       })}
@@ -193,7 +193,7 @@ export default async function RestaurantPage({ params }) {
 
                 {/* Map */}
                 {r.latitude && r.longitude && (
-                  <div style={{ marginBottom: "16px", borderRadius: "16px", overflow: "hidden", border: "1px solid #EDE6DE" }}>
+                  <div style={{ marginBottom: "16px", borderRadius: "10px", overflow: "hidden", border: "1px solid #E2DFD8" }}>
                     <iframe width="100%" height="220" style={{ border: 0 }} loading="lazy" referrerPolicy="no-referrer-when-downgrade"
                       src={`https://www.google.com/maps?q=${r.latitude},${r.longitude}&z=15&output=embed`} />
                   </div>
@@ -201,12 +201,12 @@ export default async function RestaurantPage({ params }) {
 
                 {/* Write a Review CTA */}
                 <div style={{
-                  background: "white", borderRadius: "16px", padding: "20px", border: "1px solid #EDE6DE",
+                  background: "white", borderRadius: "10px", padding: "20px", border: "1px solid #E2DFD8",
                   textAlign: "center",
                 }}>
                   <div style={{ fontSize: "28px", marginBottom: "8px" }}>✍️</div>
-                  <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 6px", color: "#2D2420" }}>Been here?</h4>
-                  <p style={{ fontSize: "13px", color: "#8A7968", margin: "0 0 12px", lineHeight: 1.4 }}>Share your experience and help the community find great food.</p>
+                  <h4 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 6px", color: "#1A1A1A" }}>Been here?</h4>
+                  <p style={{ fontSize: "13px", color: "#6B6B6B", margin: "0 0 12px", lineHeight: 1.4 }}>Share your experience and help the community find great food.</p>
                   <a href="#review-form" style={{
                     display: "inline-block", padding: "10px 24px", borderRadius: "12px", background: SAFFRON,
                     color: "white", fontFamily: fb, fontWeight: 600, fontSize: "13px", textDecoration: "none",

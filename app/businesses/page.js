@@ -12,9 +12,9 @@ import ScrollingChips from "@/components/ScrollingChips";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = COLORS.accent;
 
 const CHIPS = [
   { emoji: "\u{1F35B}", text: "best biryani in Troy" },
@@ -41,7 +41,7 @@ const CAT_TABS = [
 ];
 
 export default function BusinessesPage() {
-  return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>}><BusinessesPageInner /></Suspense>;
+  return <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5F2EB" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>}><BusinessesPageInner /></Suspense>;
 }
 
 const CUISINE_FILTERS = [
@@ -122,7 +122,7 @@ function BusinessesPageInner() {
     setVisibleCount(20);
   }, [activeCat]);
 
-  if (!_data) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>);
+  if (!_data) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5F2EB" }}><p style={{ fontFamily: ff, fontSize: "18px", color: COLORS.textMuted }}>Loading directory...</p></div>);
 
   const { CATEGORIES } = _data;
   // Filter out categories that have dedicated pages
@@ -273,10 +273,10 @@ function BusinessesPageInner() {
   const triggerChat = (q) => { window.dispatchEvent(new CustomEvent("askadda", { detail: q })); };
 
   return (
-    <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+    <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
       {/* HERO */}
       <section style={{
-        background: "linear-gradient(135deg, #2D2420 0%, #4A3728 40%, #6B4D35 100%)",
+        background: "linear-gradient(135deg, #1A1A1A 0%, #4A3728 40%, #6B4D35 100%)",
         minHeight: "280px", padding: "40px 20px 36px", textAlign: "center",
         position: "relative", overflow: "hidden",
         display: "flex", alignItems: "center", justifyContent: "center",
@@ -298,10 +298,10 @@ function BusinessesPageInner() {
 
           {/* Search bar */}
           <form onSubmit={e => { e.preventDefault(); if (searchQuery.trim()) triggerChat(searchQuery); }} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#999999" }} />
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search businesses... biryani, threading, banquet hall..."
-              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
+              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "10px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
             <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>
               Ask Adda {"\u2728"}
             </button>
@@ -313,14 +313,14 @@ function BusinessesPageInner() {
       </section>
 
       {/* CATEGORY TABS */}
-      <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px", overflowX: "auto", scrollbarWidth: "none" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px", overflowX: "auto", scrollbarWidth: "none" }}>
         <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
           {CAT_TABS.map(tab => (
             <button key={tab.id} onClick={() => updateCat(tab.id)} style={{
               padding: "7px 16px", borderRadius: "999px", fontSize: "12px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
-              border: activeCat === tab.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+              border: activeCat === tab.id ? `2px solid ${SAFFRON}` : "2px solid #E2DFD8",
               background: activeCat === tab.id ? SAFFRON : "white",
-              color: activeCat === tab.id ? "#2D2420" : COLORS.textMuted,
+              color: activeCat === tab.id ? "#1A1A1A" : COLORS.textMuted,
               transition: "all 0.25s", display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap",
             }}>{tab.emoji} {tab.label}</button>
           ))}
@@ -329,30 +329,30 @@ function BusinessesPageInner() {
 
       {/* RESTAURANT FILTERS — dropdowns only */}
       {isRestaurants && (
-        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px" }}>
           <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
             <select value={cuisineFilter} onChange={e => setCuisineFilter(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {CUISINE_FILTERS.map(c => <option key={c} value={c}>{c === "All Cuisines" ? "All Cuisines" : c}</option>)}
             </select>
             <select value={vegFilter} onChange={e => setVegFilter(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {VEG_FILTERS.map(v => <option key={v} value={v}>{v === "All" ? "Veg / Non-Veg" : v === "Veg" ? "Veg Only" : v === "Both" ? "Veg & Non-Veg" : v}</option>)}
             </select>
             <select value={priceFilter} onChange={e => setPriceFilter(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {PRICE_FILTERS.map(p => <option key={p} value={p}>{p === "All" ? "Any Price" : p}</option>)}
             </select>
             <select value={cityFilter} onChange={e => setCityFilter(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {restaurantCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
             </select>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
@@ -362,20 +362,20 @@ function BusinessesPageInner() {
 
       {/* GROCERY FILTERS */}
       {isGrocery && (
-        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px" }}>
           <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
             <select value={storeTypeFilter} onChange={e => setStoreTypeFilter(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {STORE_TYPE_FILTERS.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             <select value={groceryCityFilter} onChange={e => setGroceryCityFilter(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {groceryCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
             </select>
             <select value={grocerySortBy} onChange={e => setGrocerySortBy(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
@@ -385,20 +385,20 @@ function BusinessesPageInner() {
 
       {/* GENERIC CATEGORY FILTERS (sweets, beauty, wellness, kids, services) */}
       {hasGenericFilter && genericFilterOptions.length > 0 && (
-        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px" }}>
           <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
             <select value={genericTypeFilter} onChange={e => { setGenericTypeFilter(e.target.value); setVisibleCount(20); }} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {genericFilterOptions.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             <select value={genericCityFilter} onChange={e => { setGenericCityFilter(e.target.value); setVisibleCount(20); }} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {genericCities.map(c => <option key={c} value={c}>{c === "All" ? "All Cities" : c}</option>)}
             </select>
             <select value={genericSortBy} onChange={e => setGenericSortBy(e.target.value)} style={{
-              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E0D8CF", fontSize: "13px", fontFamily: fb, color: "#5A4A3F", background: "white", cursor: "pointer",
+              padding: "8px 14px", borderRadius: "10px", border: "1px solid #E2DFD8", fontSize: "13px", fontFamily: fb, color: "#6B6B6B", background: "white", cursor: "pointer",
             }}>
               {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
@@ -410,7 +410,7 @@ function BusinessesPageInner() {
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "30px 20px" }}>
         {activeCat !== "all" && currentCat && (
           <div style={{ marginBottom: "20px" }}>
-            <h2 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: "0 0 4px", color: "#2D2420" }}>{currentCat.name}</h2>
+            <h2 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 600, margin: "0 0 4px", color: "#1A1A1A" }}>{currentCat.name}</h2>
             <p style={{ fontSize: "14px", color: COLORS.textMuted, margin: 0 }}>{currentCat.desc}</p>
           </div>
         )}
@@ -456,7 +456,7 @@ function BusinessesPageInner() {
                 )}
               </>
             ) : (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}>
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "#6B6B6B" }}>
                 <p style={{ fontFamily: ff, fontSize: "20px" }}>No results found</p>
                 <p style={{ fontSize: "14px" }}>Try a different search or category</p>
               </div>

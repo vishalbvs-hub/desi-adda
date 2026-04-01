@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { FONTS, COLORS } from "@/lib/constants";
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
 const DARK_GREEN = "#2C3527";
-const GOLD = "#C4A35A";
+const GOLD = "#C4943D";
 const CREAM = "#F4F1E8";
 const MUTED = "#A8A393";
 
@@ -49,7 +49,7 @@ export default function EcoDosthSpotlight() {
         position: "relative", overflow: "hidden",
       }}>
         {/* Subtle leaf texture overlay */}
-        <div style={{ position: "absolute", inset: 0, opacity: 0.03, backgroundImage: "radial-gradient(circle at 20% 30%, rgba(196,163,90,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(196,163,90,0.2) 0%, transparent 40%)" }} />
+        <div style={{ position: "absolute", inset: 0, opacity: 0.03, backgroundImage: "radial-gradient(circle at 20% 30%, rgba(196,148,61,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(196,148,61,0.2) 0%, transparent 40%)" }} />
 
         <div style={{ maxWidth: "800px", margin: "0 auto", position: "relative", zIndex: 1 }}>
           {/* Badge */}
@@ -124,19 +124,19 @@ export default function EcoDosthSpotlight() {
       </section>
 
       {/* ═══ ARTICLE BODY ═══ */}
-      <article style={{ background: "#FFFBF5" }}>
+      <article style={{ background: COLORS.bg }}>
         <div style={{ maxWidth: "720px", margin: "0 auto", padding: "48px 20px 60px" }}>
           {/* Byline */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "36px", paddingBottom: "20px", borderBottom: "1px solid #EDE6DE" }}>
-            <span style={{ fontSize: "13px", color: "#8A7968", fontFamily: fb }}>By <strong style={{ color: "#2D2420" }}>Desi Adda</strong></span>
-            <span style={{ color: "#E0D8CF" }}>{"\u00B7"}</span>
-            <span style={{ fontSize: "13px", color: "#8A7968" }}>March 2026</span>
-            <span style={{ color: "#E0D8CF" }}>{"\u00B7"}</span>
-            <span style={{ fontSize: "13px", color: "#8A7968" }}>5 min read</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "36px", paddingBottom: "20px", borderBottom: `1px solid ${COLORS.border}` }}>
+            <span style={{ fontSize: "13px", color: COLORS.textSecondary, fontFamily: fb }}>By <strong style={{ color: COLORS.text }}>Desi Adda</strong></span>
+            <span style={{ color: COLORS.border }}>{"\u00B7"}</span>
+            <span style={{ fontSize: "13px", color: COLORS.textSecondary }}>March 2026</span>
+            <span style={{ color: COLORS.border }}>{"\u00B7"}</span>
+            <span style={{ fontSize: "13px", color: COLORS.textSecondary }}>5 min read</span>
           </div>
 
           {/* Body */}
-          <div style={{ fontFamily: fb, fontSize: "16px", color: "#2D2420", lineHeight: 1.7 }}>
+          <div style={{ fontFamily: fb, fontSize: "16px", color: COLORS.text, lineHeight: 1.7 }}>
             <p style={{ marginBottom: "24px" }}>
               South Asian culture has practiced sustainable dining for centuries. Long before &ldquo;eco-friendly&rdquo; became a marketing term, communities across India served meals on sal leaves, banana leaves, and areca palm — natural materials that decompose in weeks rather than decades.
             </p>
@@ -153,7 +153,7 @@ export default function EcoDosthSpotlight() {
             <blockquote style={{
               margin: "40px 0", padding: "28px 32px",
               borderLeft: `4px solid ${GOLD}`, background: "white",
-              borderRadius: "0 16px 16px 0",
+              borderRadius: "0 10px 10px 0",
             }}>
               <p style={{
                 fontFamily: ff, fontSize: "22px", fontWeight: 500, fontStyle: "italic",
@@ -179,13 +179,13 @@ export default function EcoDosthSpotlight() {
           {/* Business Card */}
           <div style={{
             marginTop: "48px", padding: "32px", background: "white",
-            borderRadius: "20px", border: "1px solid #EDE6DE",
+            borderRadius: "10px", border: `1px solid ${COLORS.border}`,
           }}>
             <h3 style={{ fontFamily: ff, fontSize: "24px", fontWeight: 700, margin: "0 0 4px", color: DARK_GREEN }}>Eco Dosth</h3>
-            <p style={{ fontSize: "14px", color: "#8A7968", margin: "0 0 16px" }}>Troy, Michigan {"\u00B7"} ecodosth.com</p>
+            <p style={{ fontSize: "14px", color: COLORS.textSecondary, margin: "0 0 16px" }}>Troy, Michigan {"\u00B7"} ecodosth.com</p>
 
             <p style={{
-              fontFamily: ff, fontSize: "16px", fontStyle: "italic", color: "#5A4A3F",
+              fontFamily: ff, fontSize: "16px", fontStyle: "italic", color: COLORS.textSecondary,
               lineHeight: 1.5, margin: "0 0 20px", borderLeft: `3px solid ${GOLD}`, paddingLeft: "16px",
             }}>
               &ldquo;Sustainable leaf plates and eco-friendly dining — heritage, not a trend.&rdquo;
@@ -193,14 +193,14 @@ export default function EcoDosthSpotlight() {
 
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "20px" }}>
               <a href="https://ecodosth.com" target="_blank" rel="noopener noreferrer" style={{
-                display: "inline-block", padding: "12px 24px", borderRadius: "12px",
+                display: "inline-block", padding: "12px 24px", borderRadius: "10px",
                 background: DARK_GREEN, color: CREAM, fontFamily: fb, fontWeight: 600,
                 fontSize: "14px", textDecoration: "none",
               }}>
                 Visit ecodosth.com {"\u2192"}
               </a>
               <a href="mailto:ecodosth@gmail.com" style={{
-                display: "inline-block", padding: "12px 24px", borderRadius: "12px",
+                display: "inline-block", padding: "12px 24px", borderRadius: "10px",
                 background: "white", color: DARK_GREEN, fontFamily: fb, fontWeight: 600,
                 fontSize: "14px", textDecoration: "none", border: `1.5px solid ${DARK_GREEN}`,
               }}>
@@ -208,7 +208,7 @@ export default function EcoDosthSpotlight() {
               </a>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "14px", color: "#5A4A3F" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "14px", color: COLORS.textSecondary }}>
               <span>{"\u{1F4E7}"} ecodosth@gmail.com</span>
               <span>{"\u{1F4DE}"} (248) 854-3145</span>
             </div>
@@ -217,12 +217,12 @@ export default function EcoDosthSpotlight() {
           {/* CTA */}
           <div style={{
             marginTop: "48px", textAlign: "center", padding: "36px",
-            background: DARK_GREEN, borderRadius: "20px",
+            background: DARK_GREEN, borderRadius: "10px",
           }}>
             <p style={{ fontFamily: ff, fontSize: "20px", fontWeight: 600, margin: "0 0 8px", color: CREAM }}>More Spotlights Coming Soon</p>
             <p style={{ fontSize: "14px", color: MUTED, margin: "0 0 20px" }}>We feature one South Asian business every week.</p>
             <Link href="/suggest" style={{
-              display: "inline-block", padding: "12px 28px", borderRadius: "12px",
+              display: "inline-block", padding: "12px 28px", borderRadius: "10px",
               background: GOLD, color: DARK_GREEN, fontFamily: fb,
               fontWeight: 700, fontSize: "14px", textDecoration: "none",
             }}>

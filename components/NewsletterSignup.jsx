@@ -11,12 +11,12 @@ export default function NewsletterSignup({ variant = "footer" }) {
     return (
       <div style={{
         background: `linear-gradient(135deg, ${COLORS.primary}06, ${COLORS.marigold}06)`,
-        borderRadius: "16px", padding: "30px", textAlign: "center", border: "1px solid #EDE6DE",
+        borderRadius: "16px", padding: "30px", textAlign: "center", border: "1px solid #E2DFD8",
       }}>
-        <h3 style={{ fontFamily: FONTS.heading, fontSize: "20px", fontWeight: 700, marginBottom: "6px" }}>
+        <h3 style={{ fontFamily: FONTS.body, fontSize: "20px", fontWeight: 700, marginBottom: "6px" }}>
           Enjoyed this? Get more every week.
         </h3>
-        <p style={{ fontSize: "14px", color: "#6B5B4F", marginBottom: "16px" }}>
+        <p style={{ fontSize: "14px", color: "#6B6B6B", marginBottom: "16px" }}>
           The Adda Weekly — Detroit&apos;s desi digest, delivered every Friday.
         </p>
         <div style={{ display: "flex", gap: "8px", maxWidth: "380px", margin: "0 auto" }}>
@@ -24,7 +24,7 @@ export default function NewsletterSignup({ variant = "footer" }) {
             placeholder="your@email.com"
             style={{
               flex: 1, padding: "10px 14px", borderRadius: "10px",
-              border: "1px solid #E0D8CF", fontSize: "14px", fontFamily: FONTS.body, outline: "none",
+              border: "1px solid #E2DFD8", fontSize: "14px", fontFamily: FONTS.body, outline: "none",
             }}
           />
           <button style={{
@@ -40,14 +40,14 @@ export default function NewsletterSignup({ variant = "footer" }) {
   return (
     <section style={{ background: COLORS.primary, padding: "50px 20px", textAlign: "center" }}>
       <div style={{ maxWidth: "500px", margin: "0 auto" }}>
-        <h2 style={{ fontFamily: FONTS.heading, fontSize: "26px", fontWeight: 700, color: "white", marginBottom: "8px" }}>
+        <h2 style={{ fontFamily: FONTS.body, fontSize: "26px", fontWeight: 700, color: "white", marginBottom: "8px" }}>
           Stay in the loop.
         </h2>
         <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "15px", marginBottom: "24px" }}>
           The Adda Weekly — Detroit&apos;s desi digest, every Friday.
         </p>
         {subscribed ? (
-          <p style={{ color: COLORS.marigold, fontWeight: 600, fontFamily: FONTS.heading, fontSize: "18px" }}>
+          <p style={{ color: COLORS.marigold, fontWeight: 600, fontFamily: FONTS.body, fontSize: "18px" }}>
             You&apos;re in! ✨
           </p>
         ) : (

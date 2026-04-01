@@ -8,9 +8,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = "#C4943D";
 
 async function findBySlug(slug) {
   const { data } = await supabase.from("professionals").select("*");
@@ -125,12 +125,12 @@ export default async function ProfessionalPage({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+      <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
         {/* Back nav */}
         <div
           style={{
             background: "white",
-            borderBottom: "1px solid #EDE6DE",
+            borderBottom: "1px solid #E2DFD8",
             padding: "12px 20px",
           }}
         >
@@ -156,7 +156,7 @@ export default async function ProfessionalPage({ params }) {
                 display: "flex",
                 gap: "4px",
                 overflowX: "auto",
-                background: "#2D2420",
+                background: "#1A1A1A",
                 scrollSnapType: "x mandatory",
                 WebkitOverflowScrolling: "touch",
                 scrollbarWidth: "none",
@@ -192,7 +192,7 @@ export default async function ProfessionalPage({ params }) {
             {photos.length > 1 && (
               <div
                 style={{
-                  background: "#2D2420",
+                  background: "#1A1A1A",
                   padding: "6px 0",
                   textAlign: "center",
                 }}
@@ -258,7 +258,7 @@ export default async function ProfessionalPage({ params }) {
                 fontSize: "clamp(28px, 5vw, 40px)",
                 fontWeight: 700,
                 margin: "0 0 4px",
-                color: "#2D2420",
+                color: "#1A1A1A",
               }}
             >
               {p.name}
@@ -308,7 +308,7 @@ export default async function ProfessionalPage({ params }) {
                       height="16"
                       viewBox="0 0 24 24"
                       fill={
-                        i <= Math.round(p.google_rating) ? SAFFRON : "#E0D8CF"
+                        i <= Math.round(p.google_rating) ? SAFFRON : "#E2DFD8"
                       }
                       stroke="none"
                     >
@@ -316,7 +316,7 @@ export default async function ProfessionalPage({ params }) {
                     </svg>
                   ))}
                 </div>
-                <span style={{ fontWeight: 700, color: "#2D2420" }}>
+                <span style={{ fontWeight: 700, color: "#1A1A1A" }}>
                   {p.google_rating} on Google
                 </span>
                 {p.google_reviews > 0 && (
@@ -345,9 +345,9 @@ export default async function ProfessionalPage({ params }) {
                 <div
                   style={{
                     background: "white",
-                    borderRadius: "16px",
+                    borderRadius: "10px",
                     padding: "24px",
-                    border: "1px solid #EDE6DE",
+                    border: "1px solid #E2DFD8",
                     marginBottom: "20px",
                   }}
                 >
@@ -380,9 +380,9 @@ export default async function ProfessionalPage({ params }) {
                 <div
                   style={{
                     background: "white",
-                    borderRadius: "16px",
+                    borderRadius: "10px",
                     padding: "20px 24px",
-                    border: "1px solid #EDE6DE",
+                    border: "1px solid #E2DFD8",
                     marginBottom: "20px",
                   }}
                 >
@@ -411,7 +411,7 @@ export default async function ProfessionalPage({ params }) {
                           borderRadius: "999px",
                           fontSize: "13px",
                           fontWeight: 500,
-                          background: "#F5EDE4",
+                          background: "#F5F2EB",
                           color: COLORS.textSecondary,
                         }}
                       >
@@ -427,9 +427,9 @@ export default async function ProfessionalPage({ params }) {
                 <div
                   style={{
                     background: "white",
-                    borderRadius: "16px",
+                    borderRadius: "10px",
                     padding: "20px 24px",
-                    border: "1px solid #EDE6DE",
+                    border: "1px solid #E2DFD8",
                     marginBottom: "20px",
                   }}
                 >
@@ -476,9 +476,9 @@ export default async function ProfessionalPage({ params }) {
               <div
                 style={{
                   background: "white",
-                  borderRadius: "16px",
+                  borderRadius: "10px",
                   padding: "20px",
-                  border: "1px solid #EDE6DE",
+                  border: "1px solid #E2DFD8",
                   marginBottom: "16px",
                 }}
               >
@@ -560,9 +560,9 @@ export default async function ProfessionalPage({ params }) {
                 <div
                   style={{
                     marginBottom: "16px",
-                    borderRadius: "16px",
+                    borderRadius: "10px",
                     overflow: "hidden",
-                    border: "1px solid #EDE6DE",
+                    border: "1px solid #E2DFD8",
                   }}
                 >
                   <iframe
@@ -580,9 +580,9 @@ export default async function ProfessionalPage({ params }) {
               <div
                 style={{
                   background: "white",
-                  borderRadius: "16px",
+                  borderRadius: "10px",
                   padding: "20px",
-                  border: "1px solid #EDE6DE",
+                  border: "1px solid #E2DFD8",
                   textAlign: "center",
                 }}
               >
@@ -593,7 +593,7 @@ export default async function ProfessionalPage({ params }) {
                     fontSize: "16px",
                     fontWeight: 700,
                     margin: "0 0 6px",
-                    color: "#2D2420",
+                    color: "#1A1A1A",
                   }}
                 >
                   Is this your practice?

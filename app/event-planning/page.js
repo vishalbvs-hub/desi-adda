@@ -7,9 +7,9 @@ import { supabase } from "@/lib/supabase";
 import ListingCard from "@/components/ListingCard";
 import ScrollingChips from "@/components/ScrollingChips";
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = COLORS.accent;
 
 const FILTER_TABS = [
   { id: "all", label: "All" },
@@ -89,7 +89,7 @@ export default function EventPlanningPage() {
 
   if (!vendors || !venues) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF5" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5F2EB" }}>
         <p style={{ fontFamily: ff, color: COLORS.textMuted }}>Loading...</p>
       </div>
     );
@@ -141,7 +141,7 @@ export default function EventPlanningPage() {
   }
 
   return (
-    <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+    <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
       {/* HERO */}
       <section
         style={{
@@ -174,13 +174,13 @@ export default function EventPlanningPage() {
             }}
             style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}
           >
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#999999" }} />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Find a vendor, venue, caterer..."
               style={{
-                width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px",
+                width: "100%", padding: "14px 150px 14px 44px", borderRadius: "10px",
                 border: "none", fontSize: "15px", fontFamily: fb, background: "white",
                 boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none",
               }}
@@ -203,7 +203,7 @@ export default function EventPlanningPage() {
       </section>
 
       {/* FILTER TABS */}
-      <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px", overflowX: "auto" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px", overflowX: "auto" }}>
         <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
           {FILTER_TABS.map((t) => (
             <button
@@ -212,9 +212,9 @@ export default function EventPlanningPage() {
               style={{
                 padding: "7px 16px", borderRadius: "999px", fontSize: "12px", fontFamily: fb,
                 fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
-                border: activeTab === t.id ? `2px solid ${SAFFRON}` : "2px solid #EDE6DE",
+                border: activeTab === t.id ? `2px solid ${SAFFRON}` : "2px solid #E2DFD8",
                 background: activeTab === t.id ? SAFFRON : "white",
-                color: activeTab === t.id ? "#2D2420" : COLORS.textMuted,
+                color: activeTab === t.id ? "#1A1A1A" : COLORS.textMuted,
                 transition: "all 0.25s",
               }}
             >
@@ -225,7 +225,7 @@ export default function EventPlanningPage() {
       </div>
 
       {/* CITY + SORT DROPDOWNS */}
-      <div style={{ background: "#FFFBF5", borderBottom: "1px solid #EDE6DE", padding: "10px 20px" }}>
+      <div style={{ background: "#F5F2EB", borderBottom: "1px solid #E2DFD8", padding: "10px 20px" }}>
         <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
           {/* City filter */}
           <div style={{ position: "relative" }}>
@@ -234,8 +234,8 @@ export default function EventPlanningPage() {
               onChange={(e) => setCity(e.target.value)}
               style={{
                 appearance: "none", padding: "7px 32px 7px 12px", borderRadius: "10px",
-                border: "1px solid #EDE6DE", fontSize: "12px", fontFamily: fb, fontWeight: 500,
-                background: "white", color: "#5A4A3F", cursor: "pointer", outline: "none",
+                border: "1px solid #E2DFD8", fontSize: "12px", fontFamily: fb, fontWeight: 500,
+                background: "white", color: "#6B6B6B", cursor: "pointer", outline: "none",
               }}
             >
               <option value="all">All Cities</option>
@@ -243,7 +243,7 @@ export default function EventPlanningPage() {
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <ChevronDown size={12} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#8A7968" }} />
+            <ChevronDown size={12} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#6B6B6B" }} />
           </div>
 
           {/* Sort */}
@@ -253,15 +253,15 @@ export default function EventPlanningPage() {
               onChange={(e) => setSort(e.target.value)}
               style={{
                 appearance: "none", padding: "7px 32px 7px 12px", borderRadius: "10px",
-                border: "1px solid #EDE6DE", fontSize: "12px", fontFamily: fb, fontWeight: 500,
-                background: "white", color: "#5A4A3F", cursor: "pointer", outline: "none",
+                border: "1px solid #E2DFD8", fontSize: "12px", fontFamily: fb, fontWeight: 500,
+                background: "white", color: "#6B6B6B", cursor: "pointer", outline: "none",
               }}
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.id} value={o.id}>{o.label}</option>
               ))}
             </select>
-            <ChevronDown size={12} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#8A7968" }} />
+            <ChevronDown size={12} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#6B6B6B" }} />
           </div>
         </div>
       </div>
@@ -291,7 +291,7 @@ export default function EventPlanningPage() {
             ))}
           </div>
         ) : (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: "#8A7968" }}>
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#6B6B6B" }}>
             <p style={{ fontFamily: ff, fontSize: "18px" }}>No results found</p>
             <p style={{ fontSize: "13px" }}>Try a different search or filter</p>
           </div>

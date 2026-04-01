@@ -39,9 +39,9 @@ export default function ScrollingChips({ chips, onChipClick, variant = "light", 
   const chipStyle = {
     padding: "7px 16px", borderRadius: "999px", fontSize: "12px", fontFamily: fb,
     fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-    background: isLight ? "rgba(255,255,255,0.15)" : "rgba(45,36,32,0.06)",
-    border: isLight ? "1px solid rgba(255,255,255,0.25)" : "1px solid rgba(45,36,32,0.1)",
-    color: isLight ? "white" : "#5A4A3F",
+    background: isLight ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.04)",
+    border: isLight ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.08)",
+    color: isLight ? "white" : "#1A1A1A",
     transition: "background 0.2s",
   };
   const chipHoverBg = isLight ? "rgba(255,255,255,0.25)" : "rgba(45,36,32,0.12)";

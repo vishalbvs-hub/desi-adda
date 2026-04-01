@@ -4,9 +4,9 @@ import { FONTS, COLORS } from "@/lib/constants";
 import CommunityClient from "./CommunityClient";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = "#C4943D";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -67,9 +67,9 @@ export default async function CommunityOrgPage({ params }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+      <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
         {/* Back nav */}
-        <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px" }}>
           <Link href="/community" style={{ color: COLORS.primary, fontFamily: fb, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
             ← Back to Community
           </Link>
@@ -83,11 +83,11 @@ export default async function CommunityOrgPage({ params }) {
                 <img
                   src={o.logo_url}
                   alt={`${o.name} logo`}
-                  style={{ width: "72px", height: "72px", borderRadius: "14px", objectFit: "cover", border: "1px solid #EDE6DE" }}
+                  style={{ width: "72px", height: "72px", borderRadius: "10px", objectFit: "cover", border: "1px solid #E2DFD8" }}
                 />
               )}
               <div>
-                <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, margin: "0 0 8px", color: "#2D2420" }}>
+                <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, margin: "0 0 8px", color: "#1A1A1A" }}>
                   {o.name}
                 </h1>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -97,12 +97,12 @@ export default async function CommunityOrgPage({ params }) {
                     </span>
                   )}
                   {o.language && (
-                    <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#FFF3E0", color: SAFFRON }}>
+                    <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#F5F2EB", color: SAFFRON }}>
                       {o.language}
                     </span>
                   )}
                   {o.ethnicity && (
-                    <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#FCE4EC", color: "#C2185B" }}>
+                    <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, background: "#FCE4EC", color: "#2D5A3D" }}>
                       {o.ethnicity}
                     </span>
                   )}
@@ -110,7 +110,7 @@ export default async function CommunityOrgPage({ params }) {
               </div>
             </div>
             {o.city && (
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px", color: "#5A4A3F", marginBottom: "4px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px", color: "#6B6B6B", marginBottom: "4px" }}>
                 📍 {o.city}{o.address ? ` — ${o.address}` : ""}
               </div>
             )}
@@ -123,9 +123,9 @@ export default async function CommunityOrgPage({ params }) {
             <div>
               {/* Description */}
               {o.description && (
-                <div style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #EDE6DE", marginBottom: "20px" }}>
-                  <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: "0 0 12px", color: "#2D2420" }}>About</h3>
-                  <p style={{ fontSize: "15px", color: "#5A4A3F", margin: 0, lineHeight: 1.7, whiteSpace: "pre-line" }}>{o.description}</p>
+                <div style={{ background: "white", borderRadius: "10px", padding: "24px", border: "1px solid #E2DFD8", marginBottom: "20px" }}>
+                  <h3 style={{ fontFamily: ff, fontSize: "20px", fontWeight: 700, margin: "0 0 12px", color: "#1A1A1A" }}>About</h3>
+                  <p style={{ fontSize: "15px", color: "#6B6B6B", margin: 0, lineHeight: 1.7, whiteSpace: "pre-line" }}>{o.description}</p>
                 </div>
               )}
 
@@ -157,9 +157,9 @@ export default async function CommunityOrgPage({ params }) {
             {/* RIGHT COLUMN */}
             <div>
               {/* Contact Info */}
-              <div style={{ background: "white", borderRadius: "16px", padding: "20px", border: "1px solid #EDE6DE", marginBottom: "16px" }}>
+              <div style={{ background: "white", borderRadius: "10px", padding: "20px", border: "1px solid #E2DFD8", marginBottom: "16px" }}>
                 <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 12px" }}>Contact</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "14px", color: "#5A4A3F" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "14px", color: "#6B6B6B" }}>
                   {o.email && (
                     <div>📧 <a href={`mailto:${o.email}`} style={{ color: COLORS.primary, textDecoration: "none" }}>{o.email}</a></div>
                   )}
@@ -176,7 +176,7 @@ export default async function CommunityOrgPage({ params }) {
 
               {/* Social Media */}
               {socialLinks.length > 0 && (
-                <div style={{ background: "white", borderRadius: "16px", padding: "20px", border: "1px solid #EDE6DE", marginBottom: "16px" }}>
+                <div style={{ background: "white", borderRadius: "10px", padding: "20px", border: "1px solid #E2DFD8", marginBottom: "16px" }}>
                   <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 12px" }}>Social Media</h3>
                   <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                     {socialLinks.map(s => (
@@ -203,7 +203,7 @@ export default async function CommunityOrgPage({ params }) {
 
               {/* Map */}
               {o.latitude && o.longitude && (
-                <div style={{ marginBottom: "16px", borderRadius: "16px", overflow: "hidden", border: "1px solid #EDE6DE" }}>
+                <div style={{ marginBottom: "16px", borderRadius: "10px", overflow: "hidden", border: "1px solid #E2DFD8" }}>
                   <iframe
                     width="100%"
                     height="220"
@@ -217,15 +217,15 @@ export default async function CommunityOrgPage({ params }) {
 
               {/* Hours */}
               {o.hours && (
-                <div style={{ background: "white", borderRadius: "16px", padding: "18px 20px", border: "1px solid #EDE6DE", marginBottom: "16px" }}>
+                <div style={{ background: "white", borderRadius: "10px", padding: "18px 20px", border: "1px solid #E2DFD8", marginBottom: "16px" }}>
                   <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 700, margin: "0 0 10px" }}>Hours</h3>
-                  <div style={{ display: "grid", gap: "2px", fontSize: "12px", color: "#5A4A3F" }}>
+                  <div style={{ display: "grid", gap: "2px", fontSize: "12px", color: "#6B6B6B" }}>
                     {o.hours.split(" | ").map((day, i) => {
                       const [dayName, ...times] = day.split(": ");
                       return (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: i < 6 ? "1px solid #F5EDE4" : "none" }}>
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: i < 6 ? "1px solid #F5F2EB" : "none" }}>
                           <span style={{ fontWeight: 600, fontSize: "11px" }}>{dayName}</span>
-                          <span style={{ color: "#8A7968", fontSize: "11px" }}>{times.join(": ")}</span>
+                          <span style={{ color: "#6B6B6B", fontSize: "11px" }}>{times.join(": ")}</span>
                         </div>
                       );
                     })}

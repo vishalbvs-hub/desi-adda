@@ -64,13 +64,13 @@ function SearchContent() {
     <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
       {/* Search bar */}
       <form onSubmit={handleSearch} style={{ position: "relative", marginBottom: "28px" }}>
-        <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+        <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#999999" }} />
         <input
           value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Search restaurants, temples, doctors, groceries..."
           style={{
             width: "100%", padding: "14px 120px 14px 44px", borderRadius: "14px",
-            border: "1px solid #E0D8CF", fontSize: "15px", fontFamily: FONTS.body,
+            border: "1px solid #E2DFD8", fontSize: "15px", fontFamily: FONTS.body,
             background: "white", boxSizing: "border-box", outline: "none",
           }}
         />
@@ -83,10 +83,10 @@ function SearchContent() {
 
       {searchTerm.trim() ? (
         <>
-          <h1 style={{ fontFamily: FONTS.heading, fontSize: "24px", fontWeight: 700, margin: "0 0 4px" }}>
+          <h1 style={{ fontFamily: FONTS.body, fontSize: "24px", fontWeight: 700, margin: "0 0 4px" }}>
             Results for &ldquo;{searchTerm}&rdquo;
           </h1>
-          <p style={{ fontSize: "14px", color: "#8A7968", margin: "0 0 24px" }}>
+          <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0 0 24px" }}>
             {results.length} {results.length === 1 ? "result" : "results"} found across all categories
           </p>
 
@@ -98,7 +98,7 @@ function SearchContent() {
                   href={item._catId === "professionals" ? "/professionals" : `/category/${item._catId}?q=${encodeURIComponent(searchTerm)}`}
                   style={{
                     padding: "18px 22px", borderRadius: "16px", background: "white",
-                    border: "1px solid #EDE6DE", borderLeft: `3px solid ${item._catColor}`,
+                    border: "1px solid #E2DFD8", borderLeft: `3px solid ${item._catColor}`,
                     display: "block", textDecoration: "none", color: "inherit",
                     transition: "all 0.2s",
                   }}
@@ -107,8 +107,8 @@ function SearchContent() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
                     <div>
-                      <h3 style={{ fontFamily: FONTS.heading, fontSize: "17px", fontWeight: 600, margin: "0 0 4px" }}>{item.name}</h3>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12px", color: "#8A7968", marginBottom: "4px", flexWrap: "wrap" }}>
+                      <h3 style={{ fontFamily: FONTS.body, fontSize: "17px", fontWeight: 600, margin: "0 0 4px" }}>{item.name}</h3>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12px", color: "#6B6B6B", marginBottom: "4px", flexWrap: "wrap" }}>
                         <span style={{
                           padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600,
                           background: item._catColor + "12", color: item._catColor,
@@ -116,12 +116,12 @@ function SearchContent() {
                         {item.city && <span style={{ display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} /> {item.city}</span>}
                         {item.rating && (
                           <span style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-                            <Star size={11} fill="#E8A317" color="#E8A317" /> {item.rating}
+                            <Star size={11} fill="#C4943D" color="#C4943D" /> {item.rating}
                           </span>
                         )}
                       </div>
                       {(item.description || item.desc) && (
-                        <p style={{ fontSize: "13px", color: "#8A7968", margin: 0, lineHeight: 1.4 }}>
+                        <p style={{ fontSize: "13px", color: "#6B6B6B", margin: 0, lineHeight: 1.4 }}>
                           {(item.description || item.desc).length > 120 ? (item.description || item.desc).substring(0, 120) + "..." : (item.description || item.desc)}
                         </p>
                       )}
@@ -131,11 +131,11 @@ function SearchContent() {
               ))}
             </div>
           ) : (
-            <div style={{ padding: "60px 20px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #EDE6DE" }}>
-              <p style={{ fontFamily: FONTS.heading, fontSize: "20px", fontWeight: 600, margin: "0 0 8px", color: "#2D2420" }}>
+            <div style={{ padding: "60px 20px", textAlign: "center", background: "white", borderRadius: "16px", border: "1px solid #E2DFD8" }}>
+              <p style={{ fontFamily: FONTS.body, fontSize: "20px", fontWeight: 600, margin: "0 0 8px", color: "#1A1A1A" }}>
                 No results found for &ldquo;{searchTerm}&rdquo;
               </p>
-              <p style={{ fontSize: "14px", color: "#8A7968", margin: "0 0 20px" }}>
+              <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0 0 20px" }}>
                 Try a different search term or browse our categories.
               </p>
               <Link href="/" style={{
@@ -149,10 +149,10 @@ function SearchContent() {
         </>
       ) : (
         <div style={{ padding: "60px 20px", textAlign: "center" }}>
-          <p style={{ fontFamily: FONTS.heading, fontSize: "20px", fontWeight: 600, color: "#2D2420", margin: "0 0 8px" }}>
+          <p style={{ fontFamily: FONTS.body, fontSize: "20px", fontWeight: 600, color: "#1A1A1A", margin: "0 0 8px" }}>
             Search the Desi Adda directory
           </p>
-          <p style={{ fontSize: "14px", color: "#8A7968" }}>
+          <p style={{ fontSize: "14px", color: "#6B6B6B" }}>
             Find restaurants, temples, doctors, groceries, wedding vendors, and more.
           </p>
         </div>

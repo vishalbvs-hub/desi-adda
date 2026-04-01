@@ -25,7 +25,7 @@ export default function MapView({ listings, color, catName }) {
 
   if (loadError) {
     return (
-      <div style={{ padding: "40px", textAlign: "center", color: "#8A7968" }}>
+      <div style={{ padding: "40px", textAlign: "center", color: "#6B6B6B" }}>
         Error loading maps
       </div>
     );
@@ -41,7 +41,7 @@ export default function MapView({ listings, color, catName }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#8A7968",
+          color: "#6B6B6B",
           fontFamily: FONTS.body,
         }}
       >
@@ -81,11 +81,11 @@ export default function MapView({ listings, color, catName }) {
           <div style={{ fontFamily: FONTS.body, maxWidth: "220px" }}>
             <h3
               style={{
-                fontFamily: FONTS.heading,
+                fontFamily: FONTS.body,
                 fontSize: "15px",
                 fontWeight: 700,
                 margin: "0 0 4px",
-                color: "#2D2420",
+                color: "#1A1A1A",
               }}
             >
               {selectedListing.name}
@@ -105,7 +105,7 @@ export default function MapView({ listings, color, catName }) {
               <div
                 style={{
                   fontSize: "12px",
-                  color: "#6B5B4F",
+                  color: "#6B6B6B",
                   marginBottom: "4px",
                 }}
               >
@@ -116,7 +116,7 @@ export default function MapView({ listings, color, catName }) {
               <p
                 style={{
                   fontSize: "12px",
-                  color: "#8A7968",
+                  color: "#6B6B6B",
                   margin: 0,
                   lineHeight: "1.4",
                 }}

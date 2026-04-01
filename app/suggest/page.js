@@ -48,13 +48,13 @@ export default function SuggestBusinessPage() {
   };
 
   const labelStyle = {
-    display: "block", fontSize: "13px", fontWeight: 600, color: "#5A4A3F",
+    display: "block", fontSize: "13px", fontWeight: 600, color: "#6B6B6B",
     fontFamily: FONTS.body, marginBottom: "6px",
   };
 
   const inputStyle = {
     width: "100%", padding: "12px 16px", borderRadius: "10px",
-    border: "1px solid #E0D8CF", fontSize: "14px", fontFamily: FONTS.body,
+    border: "1px solid #E2DFD8", fontSize: "14px", fontFamily: FONTS.body,
     outline: "none", boxSizing: "border-box",
   };
 
@@ -63,13 +63,13 @@ export default function SuggestBusinessPage() {
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
         <div style={{
           background: "white", borderRadius: "16px", padding: "48px 32px",
-          border: "1px solid #EDE6DE", textAlign: "center",
+          border: "1px solid #E2DFD8", textAlign: "center",
         }}>
           <CheckCircle size={48} color="#2E7D32" style={{ marginBottom: "16px" }} />
-          <h2 style={{ fontFamily: FONTS.heading, fontSize: "24px", fontWeight: 700, margin: "0 0 8px" }}>
+          <h2 style={{ fontFamily: FONTS.body, fontSize: "24px", fontWeight: 700, margin: "0 0 8px" }}>
             Suggestion Submitted!
           </h2>
-          <p style={{ fontSize: "14px", color: "#5A4A3F", margin: "0 0 24px" }}>
+          <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0 0 24px" }}>
             Thank you for suggesting a business. We will review it and add it to the directory.
           </p>
           <Link href="/" style={{
@@ -86,23 +86,23 @@ export default function SuggestBusinessPage() {
 
   return (
     <>
-      <div style={{ background: "white", borderBottom: "1px solid #EDE6DE", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px" }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: "6px", color: COLORS.primary, fontFamily: FONTS.body, fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
           <ArrowLeft size={18} /> Back
         </Link>
       </div>
 
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: "28px", fontWeight: 700, margin: "0 0 4px" }}>
+        <h1 style={{ fontFamily: FONTS.body, fontSize: "28px", fontWeight: 700, margin: "0 0 4px" }}>
           Suggest a Business
         </h1>
-        <p style={{ fontSize: "14px", color: "#8A7968", margin: "0 0 24px" }}>
+        <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0 0 24px" }}>
           Know a great desi business in Detroit? Let us know and we will add it to our directory.
         </p>
 
         <form onSubmit={handleSubmit} style={{
           background: "white", borderRadius: "16px", padding: "32px",
-          border: "1px solid #EDE6DE",
+          border: "1px solid #E2DFD8",
         }}>
           <div style={{ display: "grid", gap: "20px" }}>
             <div>

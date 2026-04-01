@@ -5,7 +5,7 @@ import { FONTS, COLORS } from "@/lib/constants";
 import ScrollingChips from "./ScrollingChips";
 
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = "#C4943D";
 
 export default function InlineAskBar({ chips, placeholder }) {
   const [query, setQuery] = useState("");
@@ -27,23 +27,23 @@ export default function InlineAskBar({ chips, placeholder }) {
 
   return (
     <div style={{
-      background: "white", borderBottom: "1px solid #EDE6DE",
+      background: "white", borderBottom: "1px solid #E2DFD8",
       padding: "20px 20px 16px",
     }}>
       <div style={{ maxWidth: "700px", margin: "0 auto" }}>
         <form onSubmit={handleSubmit} style={{ position: "relative", marginBottom: "12px" }}>
-          <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
+          <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#999999" }} />
           <input
             value={query} onChange={e => setQuery(e.target.value)}
             placeholder={placeholder || "Ask me anything..."}
             style={{
               width: "100%", padding: "13px 140px 13px 44px", borderRadius: "14px",
-              border: "1px solid #EDE6DE", fontSize: "14px", fontFamily: fb,
-              background: "#FFFBF5", boxSizing: "border-box", outline: "none",
+              border: "1px solid #E2DFD8", fontSize: "14px", fontFamily: fb,
+              background: "#F5F2EB", boxSizing: "border-box", outline: "none",
               transition: "border-color 0.2s",
             }}
             onFocus={e => e.target.style.borderColor = SAFFRON}
-            onBlur={e => e.target.style.borderColor = "#EDE6DE"}
+            onBlur={e => e.target.style.borderColor = "#E2DFD8"}
           />
           <button type="submit" style={{
             position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)",

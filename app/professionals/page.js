@@ -8,9 +8,9 @@ import { fetchProfessionals } from "@/lib/data";
 import { professionalSlug } from "@/lib/slugify";
 import ScrollingChips from "@/components/ScrollingChips";
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = COLORS.accent;
 
 const SPECIALTY_TYPES = [
   "All",
@@ -158,16 +158,16 @@ function ProfessionalsPageInner() {
   const selectStyle = {
     padding: "8px 14px",
     borderRadius: "10px",
-    border: "1px solid #E0D8CF",
+    border: "1px solid #E2DFD8",
     fontSize: "13px",
     fontFamily: FONTS.body,
-    color: "#5A4A3F",
+    color: "#6B6B6B",
     background: "white",
     cursor: "pointer",
   };
 
   return (
-    <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+    <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
       {/* HERO */}
       <section
         style={{
@@ -293,7 +293,7 @@ function ProfessionalsPageInner() {
                 left: "16px",
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "#A89888",
+                color: "#999999",
               }}
             />
             <input
@@ -304,7 +304,7 @@ function ProfessionalsPageInner() {
               style={{
                 width: "100%",
                 padding: "14px 150px 14px 44px",
-                borderRadius: "14px",
+                borderRadius: "10px",
                 border: "none",
                 fontSize: "15px",
                 fontFamily: fb,
@@ -369,7 +369,7 @@ function ProfessionalsPageInner() {
       <div
         style={{
           background: "white",
-          borderBottom: "1px solid #EDE6DE",
+          borderBottom: "1px solid #E2DFD8",
           padding: "14px 20px",
         }}
       >
@@ -420,7 +420,7 @@ function ProfessionalsPageInner() {
           </select>
 
           <span
-            style={{ marginLeft: "auto", fontSize: "13px", color: "#8A7968" }}
+            style={{ marginLeft: "auto", fontSize: "13px", color: "#6B6B6B" }}
           >
             {sorted.length} professional{sorted.length !== 1 ? "s" : ""}
           </span>
@@ -433,7 +433,7 @@ function ProfessionalsPageInner() {
           <div key={type} style={{ marginBottom: "32px" }}>
             <h2
               style={{
-                fontFamily: FONTS.heading,
+                fontFamily: FONTS.body,
                 fontSize: "20px",
                 fontWeight: 600,
                 margin: "0 0 14px",
@@ -458,13 +458,13 @@ function ProfessionalsPageInner() {
             style={{
               textAlign: "center",
               padding: "60px 20px",
-              color: "#8A7968",
+              color: "#6B6B6B",
             }}
           >
             <UserCheck size={40} strokeWidth={1.5} />
             <p
               style={{
-                fontFamily: FONTS.heading,
+                fontFamily: FONTS.body,
                 fontSize: "18px",
                 marginTop: "12px",
               }}
@@ -499,9 +499,9 @@ function ProfessionalCard({ p }) {
       <div
         style={{
           background: "white",
-          borderRadius: "16px",
+          borderRadius: "10px",
           padding: "20px 24px",
-          border: "1px solid #EDE6DE",
+          border: "1px solid #E2DFD8",
           transition: "box-shadow 0.2s",
           cursor: "pointer",
         }}
@@ -518,7 +518,7 @@ function ProfessionalCard({ p }) {
           <div style={{ flex: 1, minWidth: "200px" }}>
             <h3
               style={{
-                fontFamily: FONTS.heading,
+                fontFamily: FONTS.body,
                 fontSize: "17px",
                 fontWeight: 600,
                 margin: "0 0 2px",
@@ -531,7 +531,7 @@ function ProfessionalCard({ p }) {
               <p
                 style={{
                   fontSize: "13px",
-                  color: "#5A4A3F",
+                  color: "#6B6B6B",
                   margin: "0 0 6px",
                   fontWeight: 500,
                 }}
@@ -545,7 +545,7 @@ function ProfessionalCard({ p }) {
                 alignItems: "center",
                 gap: "12px",
                 fontSize: "13px",
-                color: "#8A7968",
+                color: "#6B6B6B",
                 marginBottom: "6px",
                 flexWrap: "wrap",
               }}
@@ -608,7 +608,7 @@ function ProfessionalCard({ p }) {
                       height="12"
                       viewBox="0 0 24 24"
                       fill={
-                        i <= Math.round(p.google_rating) ? SAFFRON : "#E0D8CF"
+                        i <= Math.round(p.google_rating) ? SAFFRON : "#E2DFD8"
                       }
                       stroke="none"
                     >
@@ -642,7 +642,7 @@ function ProfessionalCard({ p }) {
               <p
                 style={{
                   fontSize: "13px",
-                  color: "#8A7968",
+                  color: "#6B6B6B",
                   margin: "6px 0 0",
                   lineHeight: 1.4,
                   fontWeight: 500,
@@ -664,7 +664,7 @@ function ProfessionalCard({ p }) {
                   alignItems: "center",
                   gap: "4px",
                   fontSize: "12px",
-                  color: "#A89888",
+                  color: "#999999",
                   marginTop: "6px",
                 }}
               >

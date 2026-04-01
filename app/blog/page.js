@@ -5,9 +5,9 @@ import { FONTS, COLORS, SPONSORED_HOME } from "@/lib/constants";
 import { fetchBlogArticles } from "@/lib/data";
 import SponsoredCard from "@/components/SponsoredCard";
 
-const ff = FONTS.heading;
+const ff = FONTS.body;
 const fb = FONTS.body;
-const SAFFRON = "#E8A317";
+const SAFFRON = "#C4943D";
 
 export default function BlogPage() {
   const [_data, _setData] = useState(null);
@@ -17,7 +17,7 @@ export default function BlogPage() {
   const BLOG_ARTICLES = _data;
 
   return (
-    <div style={{ background: "#FFFBF5", minHeight: "100vh" }}>
+    <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
       {/* HERO */}
       <section style={{
         background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)",
@@ -45,17 +45,17 @@ export default function BlogPage() {
       {/* Featured articles */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px", marginBottom: "40px" }}>
         {BLOG_ARTICLES.filter(a => a.featured).map(a => (
-          <Link key={a.id} href={`/blog/${a.slug}`} style={{ borderRadius: "16px", overflow: "hidden", border: "1px solid #EDE6DE", transition: "transform 0.2s, box-shadow 0.2s", background: "white", display: "block", textDecoration: "none", color: "inherit" }}>
+          <Link key={a.id} href={`/blog/${a.slug}`} style={{ borderRadius: "16px", overflow: "hidden", border: "1px solid #E2DFD8", transition: "transform 0.2s, box-shadow 0.2s", background: "white", display: "block", textDecoration: "none", color: "inherit" }}>
             <div style={{ height: "8px", background: `linear-gradient(90deg, ${a.color}, ${a.color}80)` }} />
             <div style={{ padding: "22px" }}>
               <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
                 <span style={{ fontSize: "11px", fontWeight: 600, color: a.color, textTransform: "uppercase", letterSpacing: "0.5px" }}>{a.category}</span>
-                <span style={{ fontSize: "11px", color: "#A89888" }}>{"\u00B7"}</span>
-                <span style={{ fontSize: "11px", color: "#A89888" }}>{a.readTime}</span>
+                <span style={{ fontSize: "11px", color: "#999999" }}>{"\u00B7"}</span>
+                <span style={{ fontSize: "11px", color: "#999999" }}>{a.readTime}</span>
               </div>
               <h2 style={{ fontFamily: ff, fontSize: "19px", fontWeight: 700, margin: "0 0 8px", lineHeight: 1.3 }}>{a.title}</h2>
-              <p style={{ fontSize: "13px", color: "#6B5B4F", lineHeight: 1.5, margin: "0 0 12px" }}>{a.excerpt}</p>
-              <div style={{ fontSize: "12px", color: "#A89888" }}>{a.author} {"\u00B7"} {a.date}</div>
+              <p style={{ fontSize: "13px", color: "#6B6B6B", lineHeight: 1.5, margin: "0 0 12px" }}>{a.excerpt}</p>
+              <div style={{ fontSize: "12px", color: "#999999" }}>{a.author} {"\u00B7"} {a.date}</div>
             </div>
           </Link>
         ))}
@@ -70,16 +70,16 @@ export default function BlogPage() {
       <h2 style={{ fontFamily: ff, fontSize: "22px", fontWeight: 700, marginBottom: "16px" }}>All Articles</h2>
       <div style={{ display: "grid", gap: "14px" }}>
         {BLOG_ARTICLES.filter(a => !a.featured).map(a => (
-          <Link key={a.id} href={`/blog/${a.slug}`} style={{ background: "white", borderRadius: "14px", padding: "18px 22px", border: "1px solid #EDE6DE", transition: "box-shadow 0.2s", display: "flex", gap: "16px", alignItems: "flex-start", textDecoration: "none", color: "inherit" }}>
+          <Link key={a.id} href={`/blog/${a.slug}`} style={{ background: "white", borderRadius: "14px", padding: "18px 22px", border: "1px solid #E2DFD8", transition: "box-shadow 0.2s", display: "flex", gap: "16px", alignItems: "flex-start", textDecoration: "none", color: "inherit" }}>
             <div style={{ width: "6px", height: "60px", borderRadius: "3px", background: a.color, flexShrink: 0, marginTop: "4px" }} />
             <div>
               <div style={{ display: "flex", gap: "8px", marginBottom: "4px", alignItems: "center" }}>
                 <span style={{ fontSize: "11px", fontWeight: 600, color: a.color, textTransform: "uppercase" }}>{a.category}</span>
-                <span style={{ fontSize: "11px", color: "#A89888" }}>{a.readTime}</span>
+                <span style={{ fontSize: "11px", color: "#999999" }}>{a.readTime}</span>
               </div>
               <h3 style={{ fontFamily: ff, fontSize: "16px", fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3 }}>{a.title}</h3>
-              <p style={{ fontSize: "13px", color: "#6B5B4F", margin: "0 0 6px", lineHeight: 1.5 }}>{a.excerpt.substring(0, 120)}...</p>
-              <div style={{ fontSize: "12px", color: "#A89888" }}>{a.date}</div>
+              <p style={{ fontSize: "13px", color: "#6B6B6B", margin: "0 0 6px", lineHeight: 1.5 }}>{a.excerpt.substring(0, 120)}...</p>
+              <div style={{ fontSize: "12px", color: "#999999" }}>{a.date}</div>
             </div>
           </Link>
         ))}

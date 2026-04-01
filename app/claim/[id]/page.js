@@ -65,7 +65,7 @@ export default function ClaimProfilePage() {
   if (!professional) {
     return (
       <div style={{ textAlign: "center", padding: "80px 20px" }}>
-        <h1 style={{ fontFamily: FONTS.heading, fontSize: "24px" }}>Professional not found</h1>
+        <h1 style={{ fontFamily: FONTS.body, fontSize: "24px" }}>Professional not found</h1>
         <Link href="/professionals" style={{ color: COLORS.primary, fontWeight: 600, marginTop: "12px", display: "inline-block" }}>
           ← Back to professionals
         </Link>
@@ -99,7 +99,7 @@ export default function ClaimProfilePage() {
 
       {/* Page title */}
       <h1 style={{
-        fontFamily: FONTS.heading, fontSize: "28px", fontWeight: 700,
+        fontFamily: FONTS.body, fontSize: "28px", fontWeight: 700,
         margin: "0 0 6px", color: COLORS.text,
       }}>
         Claim Your Profile
@@ -111,7 +111,7 @@ export default function ClaimProfilePage() {
       {/* Current listing info */}
       <div style={{
         background: "white", borderRadius: "16px", padding: "24px",
-        border: "1px solid #EDE6DE", marginBottom: "20px",
+        border: "1px solid #E2DFD8", marginBottom: "20px",
       }}>
         <p style={{
           fontSize: "11px", fontWeight: 600, textTransform: "uppercase",
@@ -120,7 +120,7 @@ export default function ClaimProfilePage() {
           Your Current Listing
         </p>
         <h2 style={{
-          fontFamily: FONTS.heading, fontSize: "20px", fontWeight: 600,
+          fontFamily: FONTS.body, fontSize: "20px", fontWeight: 600,
           margin: "0 0 4px", color: COLORS.text,
         }}>
           {p.name}{p.title ? `, ${p.title}` : ""}
@@ -154,10 +154,10 @@ export default function ClaimProfilePage() {
       {/* What Premium Includes */}
       <div style={{
         background: "white", borderRadius: "16px", padding: "24px",
-        border: "1px solid #EDE6DE", marginBottom: "20px",
+        border: "1px solid #E2DFD8", marginBottom: "20px",
       }}>
         <h2 style={{
-          fontFamily: FONTS.heading, fontSize: "20px", fontWeight: 600,
+          fontFamily: FONTS.body, fontSize: "20px", fontWeight: 600,
           margin: "0 0 16px", color: COLORS.text,
         }}>
           What Premium Includes
@@ -167,11 +167,11 @@ export default function ClaimProfilePage() {
             <li key={i} style={{
               display: "flex", alignItems: "center", gap: "12px",
               padding: "10px 0",
-              borderBottom: i < premiumFeatures.length - 1 ? "1px solid #F5EDE4" : "none",
+              borderBottom: i < premiumFeatures.length - 1 ? "1px solid #F5F2EB" : "none",
             }}>
               <div style={{
                 width: "36px", height: "36px", borderRadius: "10px",
-                background: "#F5EDE4", display: "flex", alignItems: "center", justifyContent: "center",
+                background: "#F5F2EB", display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0,
               }}>
                 <feature.icon size={18} color={COLORS.textSecondary} />
@@ -191,7 +191,7 @@ export default function ClaimProfilePage() {
             Premium listing for just
           </span>
           <div style={{
-            fontFamily: FONTS.heading, fontSize: "36px", fontWeight: 700,
+            fontFamily: FONTS.body, fontSize: "36px", fontWeight: 700,
             color: COLORS.text, margin: "4px 0",
           }}>
             $29<span style={{ fontSize: "16px", fontWeight: 500, color: COLORS.textMuted }}>/month</span>
@@ -203,11 +203,11 @@ export default function ClaimProfilePage() {
       {submitted ? (
         <div style={{
           background: "white", borderRadius: "16px", padding: "40px 24px",
-          border: "1px solid #EDE6DE", textAlign: "center",
+          border: "1px solid #E2DFD8", textAlign: "center",
         }}>
           <CheckCircle size={48} color="#2E7D32" style={{ marginBottom: "16px" }} />
           <h2 style={{
-            fontFamily: FONTS.heading, fontSize: "22px", fontWeight: 600,
+            fontFamily: FONTS.body, fontSize: "22px", fontWeight: 600,
             margin: "0 0 10px", color: COLORS.text,
           }}>
             Claim Request Submitted!
@@ -232,10 +232,10 @@ export default function ClaimProfilePage() {
       ) : (
         <div style={{
           background: "white", borderRadius: "16px", padding: "24px",
-          border: "1px solid #EDE6DE",
+          border: "1px solid #E2DFD8",
         }}>
           <h2 style={{
-            fontFamily: FONTS.heading, fontSize: "20px", fontWeight: 600,
+            fontFamily: FONTS.body, fontSize: "20px", fontWeight: 600,
             margin: "0 0 16px", color: COLORS.text,
           }}>
             Claim This Profile
@@ -316,7 +316,7 @@ const labelStyle = {
 
 const inputStyle = {
   width: "100%", padding: "10px 14px", borderRadius: "10px",
-  border: "1px solid #E0D8CF", fontSize: "14px", fontFamily: FONTS.body,
+  border: "1px solid #E2DFD8", fontSize: "14px", fontFamily: FONTS.body,
   color: COLORS.text, background: "white", outline: "none",
   boxSizing: "border-box",
 };
