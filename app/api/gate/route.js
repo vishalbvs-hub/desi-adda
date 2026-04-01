@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 export async function POST(request) {
   const { password } = await request.json();
 
-  if (password === process.env.SITE_PASSWORD) {
+  const sitePassword = process.env.SITE_PASSWORD || "desiaddausa2026";
+  if (password === sitePassword) {
     const response = NextResponse.json({ ok: true });
     response.cookies.set("adda_access", "granted", {
       httpOnly: true,
