@@ -11,42 +11,46 @@ const SAFFRON = "#E8A317";
 
 const CATEGORIES = [
   { value: "all", label: "All" },
-  { value: "housing", label: "Housing & Roommates" },
-  { value: "jobs", label: "Jobs & Careers" },
-  { value: "buysell", label: "Buy/Sell/Trade" },
-  { value: "social", label: "Social & Networking" },
-  { value: "parents", label: "Parents & Families" },
-  { value: "language", label: "Language-Specific" },
-  { value: "students", label: "Students" },
+  { value: "Housing & Roommates", label: "Housing & Roommates" },
+  { value: "Jobs & Careers", label: "Jobs & Careers" },
+  { value: "Buy/Sell/Trade", label: "Buy/Sell/Trade" },
+  { value: "Social & Networking", label: "Social & Networking" },
+  { value: "Parents & Families", label: "Parents & Families" },
+  { value: "Language-Specific", label: "Language-Specific" },
+  { value: "Students", label: "Students" },
 ];
 
-const PLATFORMS = ["All", "WhatsApp", "Facebook", "Telegram", "Meetup", "Discord", "Website", "Other"];
+const PLATFORMS = ["All", "facebook", "whatsapp", "telegram", "meetup", "discord", "other"];
+const PLATFORM_LABELS = { facebook: "Facebook", whatsapp: "WhatsApp", telegram: "Telegram", meetup: "Meetup", discord: "Discord", other: "Website / Other" };
 const LANG_FILTER = ["All", "Telugu", "Hindi", "Tamil", "Gujarati", "Marathi", "Malayalam", "Kannada", "Bengali", "Punjabi", "Urdu", "Multi"];
 
 const PLATFORM_STYLES = {
-  WhatsApp: { color: "#25D366", bg: "#E8F8EE", icon: "\uD83D\uDCAC", border: "#25D366" },
-  Facebook: { color: "#1877F2", bg: "#E7F0FD", icon: "\uD83D\uDC65", border: "#1877F2" },
-  Telegram: { color: "#0088CC", bg: "#E3F2FD", icon: "\u2708\uFE0F", border: "#0088CC" },
-  Meetup: { color: "#ED1C40", bg: "#FDE8EC", icon: "\uD83E\uDD1D", border: "#ED1C40" },
-  Discord: { color: "#5865F2", bg: "#EDEEFE", icon: "\uD83C\uDFAE", border: "#5865F2" },
-  Website: { color: "#6B5B4F", bg: "#F5EDE4", icon: "\uD83C\uDF10", border: "#8A7968" },
-  Other: { color: "#8A7968", bg: "#F5EDE4", icon: "\uD83D\uDD17", border: "#8A7968" },
+  facebook: { color: "#1877F2", bg: "#E7F0FD", icon: "\uD83D\uDC65", border: "#1877F2" },
+  whatsapp: { color: "#25D366", bg: "#E8F8EE", icon: "\uD83D\uDCAC", border: "#25D366" },
+  telegram: { color: "#0088CC", bg: "#E3F2FD", icon: "\u2708\uFE0F", border: "#0088CC" },
+  meetup:   { color: "#ED1C40", bg: "#FDE8EC", icon: "\uD83E\uDD1D", border: "#ED1C40" },
+  discord:  { color: "#5865F2", bg: "#EDEEFE", icon: "\uD83C\uDFAE", border: "#5865F2" },
+  other:    { color: "#6B5B4F", bg: "#F5EDE4", icon: "\uD83C\uDF10", border: "#8A7968" },
 };
 
 const CAT_COLORS = {
-  housing: { bg: "#E8F5E9", color: "#2E7D32" },
-  jobs: { bg: "#E3F2FD", color: "#1565C0" },
-  buysell: { bg: "#FFF3E0", color: "#E65100" },
-  social: { bg: "#F3E5F5", color: "#7B1FA2" },
-  parents: { bg: "#FCE4EC", color: "#C2185B" },
-  language: { bg: "#FFF8E1", color: "#F57F17" },
-  students: { bg: "#E0F7FA", color: "#00838F" },
+  "Housing & Roommates": { bg: "#E8F5E9", color: "#2E7D32" },
+  "Jobs & Careers":      { bg: "#E3F2FD", color: "#1565C0" },
+  "Buy/Sell/Trade":      { bg: "#FFF3E0", color: "#E65100" },
+  "Social & Networking": { bg: "#F3E5F5", color: "#7B1FA2" },
+  "Parents & Families":  { bg: "#FCE4EC", color: "#C2185B" },
+  "Language-Specific":   { bg: "#FFF8E1", color: "#F57F17" },
+  "Students":            { bg: "#E0F7FA", color: "#00838F" },
 };
 
 function ctaLabel(platform) {
-  if (platform === "Facebook") return "View on Facebook";
-  if (platform === "Website") return "Visit site";
+  if (platform === "facebook") return "View on Facebook";
+  if (platform === "other") return "Visit site";
   return "Join";
+}
+
+function platformLabel(p) {
+  return PLATFORM_LABELS[p] || p;
 }
 
 export default function GroupsPage() {
@@ -70,10 +74,7 @@ function GroupsInner() {
   const filtered = groups.filter(g => {
     if (cat !== "all" && g.category !== cat) return false;
     if (platform !== "All" && g.platform !== platform) return false;
-    if (lang !== "All") {
-      if (!g.language) return false;
-      if (Array.isArray(g.language) ? !g.language.includes(lang) : g.language !== lang) return false;
-    }
+    if (lang !== "All" && g.language !== lang) return false;
     return true;
   });
 
@@ -124,7 +125,8 @@ function GroupsInner() {
         </div>
         <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
           <select value={platform} onChange={e => setPlatform(e.target.value)} style={selectStyle}>
-            {PLATFORMS.map(p => <option key={p} value={p}>{p === "All" ? "Platform" : p}</option>)}
+            <option value="All">Platform</option>
+            {PLATFORMS.filter(p => p !== "All").map(p => <option key={p} value={p}>{platformLabel(p)}</option>)}
           </select>
           <select value={lang} onChange={e => setLang(e.target.value)} style={selectStyle}>
             {LANG_FILTER.map(l => <option key={l} value={l}>{l === "All" ? "Language" : l}</option>)}
@@ -132,7 +134,7 @@ function GroupsInner() {
         </div>
 
         {/* WhatsApp notice */}
-        {(platform === "All" || platform === "WhatsApp") && (
+        {(platform === "All" || platform === "whatsapp") && (
           <p style={{ fontSize: "11px", color: "#A89888", margin: "0 0 16px", fontStyle: "italic" }}>
             WhatsApp links may expire. If a link doesn&apos;t work, use the Submit form to let us know.
           </p>
@@ -141,10 +143,9 @@ function GroupsInner() {
         {/* GROUP LISTINGS */}
         <div style={{ display: "grid", gap: "12px" }}>
           {filtered.map(g => {
-            const ps = PLATFORM_STYLES[g.platform] || PLATFORM_STYLES.Other;
+            const ps = PLATFORM_STYLES[g.platform] || PLATFORM_STYLES.other;
             const cc = CAT_COLORS[g.category] || { bg: "#F5EDE4", color: "#8A7968" };
-            const catLabel = CATEGORIES.find(c => c.value === g.category)?.label || g.category;
-            const langs = Array.isArray(g.language) ? g.language : (g.language ? [g.language] : []);
+            const langVal = g.language || "Multi";
 
             return (
               <div key={g.id} style={{
@@ -169,12 +170,14 @@ function GroupsInner() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* Badges */}
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
-                      <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 700, background: ps.bg, color: ps.color }}>{g.platform}</span>
-                      <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: cc.bg, color: cc.color }}>{catLabel}</span>
-                      {langs.filter(l => l !== "Multi").map(l => (
-                        <span key={l} style={{ padding: "2px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: `${SAFFRON}15`, color: SAFFRON }}>{l}</span>
-                      ))}
-                      {langs.includes("Multi") && <span style={{ padding: "2px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>Multi-language</span>}
+                      <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 700, background: ps.bg, color: ps.color }}>{platformLabel(g.platform)}</span>
+                      <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: cc.bg, color: cc.color }}>{g.category}</span>
+                      {langVal !== "Multi" && (
+                        <span style={{ padding: "2px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: `${SAFFRON}15`, color: SAFFRON }}>{langVal}</span>
+                      )}
+                      {langVal === "Multi" && (
+                        <span style={{ padding: "2px 7px", borderRadius: "999px", fontSize: "9px", fontWeight: 600, background: "#F5EDE4", color: "#8A7968" }}>Multi-language</span>
+                      )}
                     </div>
 
                     {/* Name */}
@@ -183,7 +186,7 @@ function GroupsInner() {
                     {/* Member count */}
                     {g.member_count && (
                       <p style={{ fontSize: "12px", color: "#8A7968", margin: "0 0 4px", display: "flex", alignItems: "center", gap: "4px" }}>
-                        <Users size={11} /> {g.member_count.toLocaleString()} {g.platform === "Facebook" ? "members" : g.platform === "Meetup" ? "members" : "participants"}
+                        <Users size={11} /> {g.member_count.toLocaleString()} members
                       </p>
                     )}
 
@@ -207,7 +210,7 @@ function GroupsInner() {
                       )}
                       {g.verified_date && (
                         <span style={{ fontSize: "10px", color: "#A89888" }}>
-                          Last verified: {new Date(g.verified_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                          Last verified: {new Date(g.verified_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                         </span>
                       )}
                     </div>
@@ -240,7 +243,7 @@ function GroupsInner() {
 /* ═══ SUBMIT GROUP FORM ═══ */
 function SubmitGroupForm({ onSuccess }) {
   const [form, setForm] = useState({
-    name: "", platform: "", invite_url: "", category: "", language: "", description: "", submitter_email: "",
+    name: "", platform: "", invite_url: "", category: "", language: "Multi", description: "", submitter_email: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -258,7 +261,7 @@ function SubmitGroupForm({ onSuccess }) {
       platform: form.platform,
       invite_url: form.invite_url,
       category: form.category,
-      language: form.language ? [form.language] : ["Multi"],
+      language: form.language || "Multi",
       description: form.description || null,
       is_active: false,
       verified_date: null,
@@ -298,7 +301,7 @@ function SubmitGroupForm({ onSuccess }) {
             <label style={labelStyle}>Platform *</label>
             <select required value={form.platform} onChange={update("platform")} style={{ ...inputStyle, cursor: "pointer" }}>
               <option value="">Select platform</option>
-              {PLATFORMS.filter(p => p !== "All").map(p => <option key={p} value={p}>{p}</option>)}
+              {PLATFORMS.filter(p => p !== "All").map(p => <option key={p} value={p}>{platformLabel(p)}</option>)}
             </select>
           </div>
           <div>
@@ -319,8 +322,7 @@ function SubmitGroupForm({ onSuccess }) {
           <div>
             <label style={labelStyle}>Language</label>
             <select value={form.language} onChange={update("language")} style={{ ...inputStyle, cursor: "pointer" }}>
-              <option value="">Multi-language</option>
-              {LANG_FILTER.filter(l => l !== "All").map(l => <option key={l} value={l}>{l}</option>)}
+              {LANG_FILTER.filter(l => l !== "All").map(l => <option key={l} value={l}>{l === "Multi" ? "Multi-language" : l}</option>)}
             </select>
           </div>
           <div>
