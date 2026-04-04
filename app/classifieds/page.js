@@ -92,17 +92,15 @@ function GroupsInner() {
 
   return (
     <div style={{ background: COLORS.bg, minHeight: "100vh" }}>
-      {/* HEADER */}
-      <div style={{ background: `linear-gradient(135deg, ${COLORS.text} 0%, #3E2F26 40%, #5A4435 100%)`, padding: "36px 20px 28px", textAlign: "center" }}>
-        <h1 style={{ fontFamily: ff, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, color: "white", margin: "0 0 6px" }}>
-          Find your <span style={{ color: ACCENT, fontStyle: "italic" }}>people</span>
-        </h1>
-        <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", margin: 0, fontFamily: fb, maxWidth: "560px", marginLeft: "auto", marginRight: "auto", lineHeight: 1.5 }}>
-          Every WhatsApp group, Facebook group, and online community for desi life in Metro Detroit — in one place.
+      {/* PAGE HEADER */}
+      <div style={{ maxWidth: "800px", margin: "0 auto", padding: "24px 20px" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: COLORS.text, margin: "0 0 4px" }}>Groups</h1>
+        <p style={{ fontSize: "14px", color: COLORS.textSecondary, margin: "0 0 16px" }}>
+          Every WhatsApp group, Facebook group, and online community for desi life in Metro Detroit.
         </p>
       </div>
 
-      <div style={{ maxWidth: "800px", margin: "0 auto", padding: "24px 20px" }}>
+      <div style={{ maxWidth: "800px", margin: "0 auto", padding: "0 20px 24px" }}>
         {/* TOP CTA */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
           <p style={{ fontSize: "14px", color: COLORS.textSecondary, margin: 0, fontFamily: fb }}>

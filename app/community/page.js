@@ -3,36 +3,23 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, ExternalLink, Users, MessageCircle, Globe, MapPin, Plus, Clock, Filter, CheckCircle } from "lucide-react";
+import { ExternalLink, Users, MessageCircle, Globe, MapPin, Plus, Clock, Filter, CheckCircle } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
-import ScrollingChips from "@/components/ScrollingChips";
 import ListingCard from "@/components/ListingCard";
 
 const fb = FONTS.body;
 const PAGE_SIZE = 20;
 
 const TABS = [
-  { id: "events", label: "Events", icon: "\u{1F389}" },
-  { id: "orgs", label: "Organizations", icon: "\u{1F465}" },
-  { id: "groups", label: "Groups", icon: "\u{1F4AC}" },
+  { id: "events", label: "Events" },
+  { id: "orgs", label: "Organizations" },
+  { id: "groups", label: "Groups" },
 ];
 
 const LANGUAGE_OPTIONS = ["All", "Telugu", "Tamil", "Gujarati", "Marathi", "Malayalam", "Kannada", "Bengali", "Punjabi", "Hindi", "Urdu", "Multi"];
 const TYPE_OPTIONS = ["All", "Cultural Association", "Professional Network", "Religious/Spiritual", "Service/Charity", "Sports/Recreation", "Student Organization", "Seniors Group", "Women's Group"];
 
-const CHIPS = [
-  { emoji: "\u{1F465}", text: "Telugu associations Detroit" },
-  { emoji: "\u{1F389}", text: "desi events this weekend" },
-  { emoji: "\u{1F4AC}", text: "WhatsApp groups for new arrivals" },
-  { emoji: "\u{1F6D5}", text: "Tamil Sangam Michigan" },
-  { emoji: "\u{1F483}", text: "garba night Metro Detroit" },
-  { emoji: "\u{1F465}", text: "Indian American organizations" },
-  { emoji: "\u{1F386}", text: "Diwali celebrations 2026" },
-  { emoji: "\u{1F4AC}", text: "desi parents WhatsApp group" },
-  { emoji: "\u{1F3A4}", text: "comedy shows near me" },
-  { emoji: "\u{1F465}", text: "Bengali association Metro Detroit" },
-];
 
 // Groups constants
 const GROUP_CATEGORIES = [
@@ -144,7 +131,6 @@ function CommunityInner() {
     });
   }, []);
 
-  const triggerChat = (q) => { window.dispatchEvent(new CustomEvent("askadda", { detail: q })); };
 
   // Derive unique cities from orgs data
   const cityOptions = useMemo(() => {
@@ -204,52 +190,25 @@ function CommunityInner() {
 
   return (
     <div style={{ background: COLORS.bg, minHeight: "100vh" }}>
-      {/* HERO */}
-      <section style={{
-        background: "linear-gradient(135deg, #1B3A26 0%, #2D5A3E 40%, #3E7A52 100%)",
-        minHeight: "300px", padding: "40px 20px 36px", textAlign: "center",
-        position: "relative", overflow: "hidden",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        <div style={{ position: "absolute", top: "10%", left: "6%", fontSize: "40px", opacity: 0.06 }}>{"\u{1F465}"}</div>
-        <div style={{ position: "absolute", top: "20%", right: "8%", fontSize: "50px", opacity: 0.05 }}>{"\u{1F389}"}</div>
-        <div style={{ position: "absolute", bottom: "15%", left: "12%", fontSize: "44px", opacity: 0.05 }}>{"\u{1F4AC}"}</div>
-        <div style={{ position: "absolute", bottom: "8%", right: "20%", fontSize: "36px", opacity: 0.04 }}>{"\u{1F91D}"}</div>
-        <div style={{ position: "absolute", top: "55%", left: "3%", fontSize: "38px", opacity: 0.04 }}>{"\u{1F3AD}"}</div>
+      {/* PAGE HEADER */}
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px 0" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>Community & Events</h1>
+        <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0 0 16px" }}>
+          {tab === "events" ? "Upcoming events from temples and community organizations" : tab === "orgs" ? "Community organizations across Metro Detroit" : "WhatsApp groups, Facebook groups, and online communities"}
+        </p>
 
-        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
-          {/* Tab Toggle */}
-          <div style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "20px", flexWrap: "wrap" }}>
-            {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{
-                padding: "10px 22px", borderRadius: "999px", fontSize: "14px", fontFamily: fb, fontWeight: 700, cursor: "pointer",
-                background: tab === t.id ? COLORS.accent : "rgba(255,255,255,0.1)",
-                color: tab === t.id ? "#1B3A26" : "rgba(255,255,255,0.6)",
-                border: tab === t.id ? `2px solid ${COLORS.accent}` : "2px solid rgba(255,255,255,0.2)",
-                transition: "all 0.3s", display: "flex", alignItems: "center", gap: "6px",
-              }}>{t.icon} {t.label}</button>
-            ))}
-          </div>
-
-          <h1 style={{ fontFamily: fb, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
-            Community <span style={{ color: COLORS.accent, fontStyle: "italic" }}>& Events</span>
-          </h1>
-          <p style={{ fontFamily: fb, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 24px", fontStyle: "italic" }}>
-            {tab === "orgs" ? "Cultural associations & organizations in Metro Detroit" : tab === "groups" ? "Connect with your community online" : "Everything happening in Detroit's desi community"}
-          </p>
-
-          {/* Search bar — chatbot for orgs, plain search for events */}
-          <form onSubmit={e => { e.preventDefault(); if (searchQuery.trim()) triggerChat(searchQuery); }} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A89888" }} />
-            <input value={searchQuery} onChange={e => { setSearchQuery(e.target.value); resetPagination(); }} placeholder={tab === "events" ? "Search events..." : tab === "groups" ? "Find a group..." : "Find a community organization..."}
-              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "14px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
-            <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: COLORS.accent, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>Ask Adda {"\u2728"}</button>
-          </form>
-          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
-            <ScrollingChips chips={CHIPS} onChipClick={(chip) => triggerChat(`${chip.emoji} ${chip.text}`)} variant="light" />
-          </div>
+        {/* Tab Toggle */}
+        <div style={{ display: "flex", gap: "6px", marginBottom: "0" }}>
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
+              padding: "8px 20px", borderRadius: "999px", fontSize: "13px", fontFamily: fb, fontWeight: 600, cursor: "pointer",
+              border: tab === t.id ? `2px solid ${COLORS.accent}` : `2px solid ${COLORS.border}`,
+              background: tab === t.id ? COLORS.accent : COLORS.surface,
+              color: tab === t.id ? COLORS.text : COLORS.textSecondary, transition: "all 0.2s",
+            }}>{t.label}</button>
+          ))}
         </div>
-      </section>
+      </div>
 
       {/* CONTENT */}
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "30px 20px" }}>

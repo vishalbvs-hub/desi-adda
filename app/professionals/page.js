@@ -2,14 +2,12 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Phone, Globe, Languages, Search, UserCheck } from "lucide-react";
+import { MapPin, Phone, Globe, Languages, UserCheck } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { fetchProfessionals } from "@/lib/data";
 import { professionalSlug } from "@/lib/slugify";
-import ScrollingChips from "@/components/ScrollingChips";
 
 const ff = FONTS.body;
-const fb = FONTS.body;
 const SAFFRON = COLORS.accent;
 
 const SPECIALTY_TYPES = [
@@ -168,202 +166,11 @@ function ProfessionalsPageInner() {
 
   return (
     <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
-      {/* HERO */}
-      <section
-        style={{
-          background:
-            "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)",
-          minHeight: "280px",
-          padding: "40px 20px 36px",
-          textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: "10%",
-            left: "6%",
-            fontSize: "40px",
-            opacity: 0.05,
-            transform: "rotate(-12deg)",
-          }}
-        >
-          {"\u{1FA7A}"}
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            top: "20%",
-            right: "8%",
-            fontSize: "50px",
-            opacity: 0.04,
-            transform: "rotate(15deg)",
-          }}
-        >
-          {"\u{2696}\uFE0F"}
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            bottom: "15%",
-            left: "12%",
-            fontSize: "44px",
-            opacity: 0.05,
-          }}
-        >
-          {"\u{1F4CB}"}
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            right: "5%",
-            fontSize: "38px",
-            opacity: 0.04,
-          }}
-        >
-          {"\u{1F3E1}"}
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            bottom: "8%",
-            right: "20%",
-            fontSize: "36px",
-            opacity: 0.04,
-          }}
-        >
-          {"\u{1F4B0}"}
-        </div>
-
-        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
-          <h1
-            style={{
-              fontFamily: ff,
-              fontSize: "clamp(32px, 5vw, 48px)",
-              fontWeight: 700,
-              color: "white",
-              lineHeight: 1.1,
-              margin: "0 0 8px",
-            }}
-          >
-            Desi{" "}
-            <span style={{ color: SAFFRON, fontStyle: "italic" }}>
-              Professionals
-            </span>
-          </h1>
-          <p
-            style={{
-              fontFamily: ff,
-              fontSize: "clamp(14px, 2vw, 18px)",
-              fontWeight: 300,
-              color: "rgba(255,255,255,0.6)",
-              margin: "0 0 24px",
-              fontStyle: "italic",
-            }}
-          >
-            Doctors, attorneys, CPAs, realtors & advisors in Metro Detroit
-          </p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const v = document.getElementById("pro-search").value;
-              if (v.trim()) {
-                window.dispatchEvent(
-                  new CustomEvent("askadda", { detail: v })
-                );
-                document.getElementById("pro-search").value = "";
-              }
-            }}
-            style={{
-              maxWidth: "560px",
-              margin: "0 auto",
-              position: "relative",
-            }}
-          >
-            <Search
-              size={18}
-              style={{
-                position: "absolute",
-                left: "16px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#999999",
-              }}
-            />
-            <input
-              id="pro-search"
-              placeholder="Find a doctor, lawyer, CPA..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "14px 150px 14px 44px",
-                borderRadius: "10px",
-                border: "none",
-                fontSize: "15px",
-                fontFamily: fb,
-                background: "white",
-                boxShadow: "0 6px 24px rgba(0,0,0,0.2)",
-                boxSizing: "border-box",
-                outline: "none",
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                position: "absolute",
-                right: "5px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: SAFFRON,
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                padding: "10px 20px",
-                fontFamily: fb,
-                fontWeight: 600,
-                fontSize: "13px",
-                cursor: "pointer",
-              }}
-            >
-              Ask Adda {"\u2728"}
-            </button>
-          </form>
-          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
-            <ScrollingChips
-              chips={[
-                { emoji: "\u{1FA7A}", text: "Telugu doctor near Troy" },
-                { emoji: "\u{1F9B7}", text: "Indian dentist Southfield" },
-                { emoji: "\u{2696}\uFE0F", text: "immigration lawyer H1B" },
-                { emoji: "\u{1F4CB}", text: "NRI tax CPA filing" },
-                { emoji: "\u{1F3E1}", text: "desi realtor Novi" },
-                { emoji: "\u{1F6E1}\uFE0F", text: "Indian insurance agent" },
-                { emoji: "\u{1F4B0}", text: "financial advisor retirement" },
-                {
-                  emoji: "\u{1F441}\uFE0F",
-                  text: "Indian optometrist Canton",
-                },
-                { emoji: "\u{1FA7A}", text: "cardiologist Metro Detroit" },
-                { emoji: "\u{2696}\uFE0F", text: "family law attorney" },
-              ]}
-              onChipClick={(chip) =>
-                window.dispatchEvent(
-                  new CustomEvent("askadda", {
-                    detail: `${chip.emoji} ${chip.text}`,
-                  })
-                )
-              }
-              variant="light"
-            />
-          </div>
-        </div>
-      </section>
+      {/* PAGE HEADER */}
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px 0" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>Professionals & Services</h1>
+        <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0" }}>Doctors, attorneys, CPAs, realtors & advisors in Metro Detroit</p>
+      </div>
 
       {/* FILTER BAR */}
       <div

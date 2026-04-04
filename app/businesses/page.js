@@ -1,33 +1,18 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, X, MapPin, Map, List } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { fetchAllData } from "@/lib/data";
 import { useApp } from "@/lib/context";
 import ListingCard from "@/components/ListingCard";
-import ScrollingChips from "@/components/ScrollingChips";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 const ff = FONTS.body;
 const fb = FONTS.body;
 const SAFFRON = COLORS.accent;
-
-const CHIPS = [
-  { emoji: "\u{1F35B}", text: "best biryani in Troy" },
-  { emoji: "\u{1F958}", text: "Indian grocery near Canton" },
-  { emoji: "\u{1F490}", text: "mehndi artist for wedding" },
-  { emoji: "\u{1F485}", text: "eyebrow threading Novi" },
-  { emoji: "\u{1F3DB}\uFE0F", text: "banquet hall for 300 guests" },
-  { emoji: "\u{1F6D5}", text: "Telugu temple near me" },
-  { emoji: "\u{1F957}", text: "vegetarian restaurant Farmington" },
-  { emoji: "\u{1F9D8}", text: "yoga classes Metro Detroit" },
-  { emoji: "\u{1F370}", text: "Indian bakery or sweets shop" },
-  { emoji: "\u{1F3A4}", text: "DJ for sangeet night" },
-];
 
 const CAT_TABS = [
   { id: "all", label: "All", emoji: "\u{2728}" },
@@ -270,47 +255,13 @@ function BusinessesPageInner() {
   const subs = currentCat?.subs || [];
   const toggleSub = (s) => setActiveSubs(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
 
-  const triggerChat = (q) => { window.dispatchEvent(new CustomEvent("askadda", { detail: q })); };
-
   return (
     <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
-      {/* HERO */}
-      <section style={{
-        background: "linear-gradient(135deg, #1A1A1A 0%, #4A3728 40%, #6B4D35 100%)",
-        minHeight: "280px", padding: "40px 20px 36px", textAlign: "center",
-        position: "relative", overflow: "hidden",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        <div style={{ position: "absolute", top: "8%", left: "6%", fontSize: "40px", opacity: 0.05, transform: "rotate(-12deg)" }}>{"\u{1F3EA}"}</div>
-        <div style={{ position: "absolute", top: "20%", right: "8%", fontSize: "50px", opacity: 0.04, transform: "rotate(15deg)" }}>{"\u{1F35B}"}</div>
-        <div style={{ position: "absolute", bottom: "15%", left: "12%", fontSize: "44px", opacity: 0.05, transform: "rotate(20deg)" }}>{"\u{1F6D5}"}</div>
-        <div style={{ position: "absolute", top: "50%", right: "5%", fontSize: "38px", opacity: 0.04, transform: "rotate(-18deg)" }}>{"\u{1F490}"}</div>
-        <div style={{ position: "absolute", bottom: "8%", right: "20%", fontSize: "36px", opacity: 0.04, transform: "rotate(10deg)" }}>{"\u{1F958}"}</div>
-        <div style={{ position: "absolute", top: "10%", left: "35%", fontSize: "32px", opacity: 0.04, transform: "rotate(25deg)" }}>{"\u{1F485}"}</div>
-
-        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
-          <h1 style={{ fontFamily: ff, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
-            Local <span style={{ color: SAFFRON, fontStyle: "italic" }}>Businesses</span>
-          </h1>
-          <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 24px", fontStyle: "italic" }}>
-            {listings.length}+ listings across Metro Detroit
-          </p>
-
-          {/* Search bar */}
-          <form onSubmit={e => { e.preventDefault(); if (searchQuery.trim()) triggerChat(searchQuery); }} style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}>
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#999999" }} />
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search businesses... biryani, threading, banquet hall..."
-              style={{ width: "100%", padding: "14px 150px 14px 44px", borderRadius: "10px", border: "none", fontSize: "15px", fontFamily: fb, background: "white", boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none" }} />
-            <button type="submit" style={{ position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)", background: SAFFRON, color: "white", border: "none", borderRadius: "10px", padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>
-              Ask Adda {"\u2728"}
-            </button>
-          </form>
-          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
-            <ScrollingChips chips={CHIPS} onChipClick={(chip) => triggerChat(`${chip.emoji} ${chip.text}`)} variant="light" />
-          </div>
-        </div>
-      </section>
+      {/* PAGE HEADER */}
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px 0" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>Local Businesses</h1>
+        <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0" }}>{listings.length}+ listings across Metro Detroit</p>
+      </div>
 
       {/* CATEGORY TABS */}
       <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px", overflowX: "auto", scrollbarWidth: "none" }}>

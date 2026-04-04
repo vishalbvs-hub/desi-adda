@@ -1,11 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, MapPin, Phone, Star, ChevronDown } from "lucide-react";
+import { MapPin, Phone, Star, ChevronDown } from "lucide-react";
 import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 import ListingCard from "@/components/ListingCard";
-import ScrollingChips from "@/components/ScrollingChips";
 
 const ff = FONTS.body;
 const fb = FONTS.body;
@@ -46,19 +45,6 @@ const SORT_OPTIONS = [
   { id: "az", label: "A-Z" },
 ];
 
-const CHIPS = [
-  { emoji: "💐", text: "mehndi artist near Troy" },
-  { emoji: "🏛️", text: "banquet hall for 300 guests" },
-  { emoji: "📷", text: "Indian wedding photographer" },
-  { emoji: "🍽️", text: "desi catering for reception" },
-  { emoji: "🎶", text: "DJ for sangeet night" },
-  { emoji: "💄", text: "bridal makeup artist" },
-  { emoji: "🎨", text: "mandap and decor setup" },
-  { emoji: "🏛️", text: "outdoor wedding venue Michigan" },
-  { emoji: "📹", text: "Indian wedding videographer" },
-  { emoji: "🎉", text: "event planner for desi wedding" },
-];
-
 function weightedScore(item) {
   const r = item.rating || 0;
   const n = item.reviews || 0;
@@ -82,10 +68,6 @@ export default function EventPlanningPage() {
       setVenues((h.data || []).map((r) => ({ ...r, _type: "hall" })));
     });
   }, []);
-
-  const triggerChat = (q) => {
-    window.dispatchEvent(new CustomEvent("askadda", { detail: q }));
-  };
 
   if (!vendors || !venues) {
     return (
@@ -142,65 +124,11 @@ export default function EventPlanningPage() {
 
   return (
     <div style={{ background: "#F5F2EB", minHeight: "100vh" }}>
-      {/* HERO */}
-      <section
-        style={{
-          background: "linear-gradient(135deg, #4A1942 0%, #6B2569 40%, #8E3090 100%)",
-          minHeight: "300px", padding: "40px 20px 36px", textAlign: "center",
-          position: "relative", overflow: "hidden",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}
-      >
-        <div style={{ position: "absolute", top: "8%", left: "5%", fontSize: "44px", opacity: 0.06, transform: "rotate(-12deg)" }}>💐</div>
-        <div style={{ position: "absolute", top: "15%", right: "8%", fontSize: "50px", opacity: 0.05, transform: "rotate(15deg)" }}>🏛️</div>
-        <div style={{ position: "absolute", bottom: "20%", left: "10%", fontSize: "42px", opacity: 0.05 }}>📷</div>
-        <div style={{ position: "absolute", top: "50%", right: "5%", fontSize: "46px", opacity: 0.05 }}>🍽️</div>
-        <div style={{ position: "absolute", bottom: "8%", right: "20%", fontSize: "38px", opacity: 0.04 }}>🎶</div>
-        <div style={{ position: "absolute", top: "65%", left: "3%", fontSize: "36px", opacity: 0.04 }}>💄</div>
-        <div style={{ position: "absolute", bottom: "25%", left: "40%", fontSize: "34px", opacity: 0.04 }}>💍</div>
-
-        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
-          <h1 style={{ fontFamily: ff, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, color: "white", lineHeight: 1.1, margin: "0 0 8px" }}>
-            Event <span style={{ color: SAFFRON, fontStyle: "italic" }}>Planning</span>
-          </h1>
-          <p style={{ fontFamily: ff, fontSize: "clamp(14px, 2vw, 18px)", fontWeight: 300, color: "rgba(255,255,255,0.6)", margin: "0 0 24px", fontStyle: "italic" }}>
-            Wedding vendors, venues, catering & everything for your celebration
-          </p>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (searchQuery.trim()) triggerChat(searchQuery);
-            }}
-            style={{ maxWidth: "560px", margin: "0 auto", position: "relative" }}
-          >
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#999999" }} />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Find a vendor, venue, caterer..."
-              style={{
-                width: "100%", padding: "14px 150px 14px 44px", borderRadius: "10px",
-                border: "none", fontSize: "15px", fontFamily: fb, background: "white",
-                boxShadow: "0 6px 24px rgba(0,0,0,0.2)", boxSizing: "border-box", outline: "none",
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                position: "absolute", right: "5px", top: "50%", transform: "translateY(-50%)",
-                background: SAFFRON, color: "white", border: "none", borderRadius: "10px",
-                padding: "10px 20px", fontFamily: fb, fontWeight: 600, fontSize: "13px", cursor: "pointer",
-              }}
-            >
-              Ask Adda ✨
-            </button>
-          </form>
-          <div style={{ maxWidth: "600px", margin: "14px auto 0" }}>
-            <ScrollingChips chips={CHIPS} onChipClick={(chip) => triggerChat(`${chip.emoji} ${chip.text}`)} variant="light" />
-          </div>
-        </div>
-      </section>
+      {/* PAGE HEADER */}
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px 0" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>Event Planning</h1>
+        <p style={{ fontSize: "14px", color: "#6B6B6B", margin: "0" }}>Wedding vendors, venues, catering & everything for your celebration</p>
+      </div>
 
       {/* FILTER TABS */}
       <div style={{ background: "white", borderBottom: "1px solid #E2DFD8", padding: "12px 20px", overflowX: "auto" }}>
