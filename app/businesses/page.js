@@ -15,14 +15,14 @@ const fb = FONTS.body;
 const SAFFRON = COLORS.accent;
 
 const CAT_TABS = [
-  { id: "all", label: "All", emoji: "\u{2728}" },
-  { id: "food", label: "Restaurants", emoji: "\u{1F35B}" },
-  { id: "grocery", label: "Groceries", emoji: "\u{1F958}" },
-  { id: "sweets", label: "Sweets & Bakery", emoji: "\u{1F370}" },
-  { id: "beauty", label: "Beauty", emoji: "\u{1F485}" },
-  { id: "wellness", label: "Wellness", emoji: "\u{1F9D8}" },
-  { id: "family", label: "Kids & Education", emoji: "\u{1F3A8}" },
-  { id: "services", label: "Services", emoji: "\u{1F4BC}" },
+  { id: "all", label: "All" },
+  { id: "food", label: "Restaurants" },
+  { id: "grocery", label: "Groceries" },
+  { id: "sweets", label: "Sweets & Bakery" },
+  { id: "beauty", label: "Beauty" },
+  { id: "wellness", label: "Wellness" },
+  { id: "family", label: "Kids & Education" },
+  { id: "services", label: "Services" },
 ];
 
 export default function BusinessesPage() {
@@ -273,7 +273,7 @@ function BusinessesPageInner() {
               background: activeCat === tab.id ? SAFFRON : "white",
               color: activeCat === tab.id ? "#1A1A1A" : COLORS.textMuted,
               transition: "all 0.25s", display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap",
-            }}>{tab.emoji} {tab.label}</button>
+            }}>{tab.label}</button>
           ))}
         </div>
       </div>
