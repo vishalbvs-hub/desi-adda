@@ -6,6 +6,8 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import NewsletterOverlay from "@/components/NewsletterOverlay";
 import AskAdda from "@/components/AskAdda";
+import GlobalSearch from "@/components/GlobalSearch";
+import FestivalStrip from "@/components/FestivalStrip";
 
 export const metadata = {
   title: "Desi Adda — Your Desi Life in Detroit",
@@ -31,6 +33,8 @@ export default async function RootLayout({ children }) {
             <NewsletterOverlay />
             <TopBar />
             <Nav />
+            <GlobalSearch />
+            <FestivalStrip />
             {children}
             <Footer />
             <AskAdda />
