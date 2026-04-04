@@ -21,7 +21,7 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
-  const isAuthed = cookieStore.get("adda_access")?.value === "granted";
+  const isAuthed = cookieStore.get("site-access")?.value === "granted";
 
   return (
     <html lang="en">

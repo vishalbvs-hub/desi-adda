@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function GatePage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +20,9 @@ export default function GatePage() {
     });
 
     if (res.ok) {
-      window.location.reload();
+      // Use window.location to force a full page load (not client-side nav)
+      // so middleware re-evaluates the cookie
+      window.location.href = "/";
     } else {
       setError(true);
       setLoading(false);

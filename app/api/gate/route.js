@@ -6,7 +6,7 @@ export async function POST(request) {
   const sitePassword = process.env.SITE_PASSWORD || "desiaddausa2026";
   if (password === sitePassword) {
     const response = NextResponse.json({ ok: true });
-    response.cookies.set("adda_access", "granted", {
+    response.cookies.set("site-access", "granted", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
