@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FONTS, COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
 
 function daysFromNow(dateStr) {
@@ -38,19 +37,25 @@ export default function FestivalStrip() {
   if (events.length === 0) return null;
 
   return (
-    <div style={{
-      background: COLORS.primary, padding: "7px 20px",
-      overflow: "hidden", whiteSpace: "nowrap",
-    }}>
-      <div style={{
-        maxWidth: "1200px", margin: "0 auto",
-        display: "flex", gap: "20px", alignItems: "center",
-        fontSize: "12px", fontFamily: FONTS.body, fontWeight: 500,
-        color: "#F5F2EB",
-      }}>
+    <div
+      style={{
+        background: "var(--brand-secondary)",
+        padding: "8px 20px",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1200px", margin: "0 auto",
+          display: "flex", gap: "20px", alignItems: "center",
+          fontSize: "12px", fontWeight: 500,
+          color: "var(--text-inverse)",
+        }}
+      >
         {events.map((ev, i) => (
           <span key={`${ev.event_date}-${i}`} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            {i > 0 && <span style={{ color: "rgba(245,242,235,0.4)" }}>&middot;</span>}
+            {i > 0 && <span style={{ color: "rgba(253,251,247,0.5)" }}>&middot;</span>}
             {formatEvent(ev)}
           </span>
         ))}

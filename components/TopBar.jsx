@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { MapPin, ChevronDown } from "lucide-react";
-import { METROS, FONTS, COLORS } from "@/lib/constants";
+import { METROS } from "@/lib/constants";
 import { useApp } from "@/lib/context";
 
 export default function TopBar() {
@@ -18,41 +18,69 @@ export default function TopBar() {
   }, []);
 
   return (
-    <div style={{
-      background: COLORS.surface, borderBottom: `1px solid ${COLORS.border}`, padding: "6px 20px",
-      display: "flex", alignItems: "center", justifyContent: "flex-start",
-      fontSize: "12px",
-    }}>
-      <div ref={metroRef} style={{ position: "relative" }}>
-        <button onClick={() => setMetroOpen(!metroOpen)} style={{
-          display: "flex", alignItems: "center", gap: "4px", background: "none",
-          border: `1px solid ${COLORS.border}`, borderRadius: "6px", padding: "4px 10px",
-          cursor: "pointer", fontFamily: FONTS.body, fontSize: "12px",
-          fontWeight: 500, color: COLORS.textSecondary,
-        }}>
-          <MapPin size={12} color={COLORS.primary} /> {metro} <ChevronDown size={11} />
-        </button>
-        {metroOpen && (
-          <div style={{
-            position: "absolute", top: "100%", left: 0, background: "white",
-            border: `1px solid ${COLORS.border}`, borderRadius: "8px",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.1)", zIndex: 200,
-            minWidth: "200px", padding: "4px 0", marginTop: "4px",
-          }}>
-            {METROS.map(m => (
-              <button key={m} onClick={() => { setMetro(m); setMetroOpen(false); }} style={{
-                display: "block", width: "100%", textAlign: "left", padding: "7px 14px",
-                background: m === metro ? `${COLORS.primary}10` : "transparent", border: "none",
-                cursor: m === "Detroit / Michigan" ? "pointer" : "default",
-                fontFamily: FONTS.body, fontSize: "13px",
-                color: m === "Detroit / Michigan" ? COLORS.text : COLORS.textFaint,
-                fontWeight: m === metro ? 600 : 400,
-              }}>
-                {m} {m !== "Detroit / Michigan" && <span style={{ fontSize: "11px", opacity: 0.5 }}>soon</span>}
-              </button>
-            ))}
-          </div>
-        )}
+    <div
+      style={{
+        background: "var(--bg-header)",
+        padding: "6px 20px",
+        fontSize: "12px",
+        color: "var(--text-inverse)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
+      <div style={{ maxWidth: "1200px", margin: "0 auto", display: "flex", alignItems: "center" }}>
+        <div ref={metroRef} style={{ position: "relative" }}>
+          <button
+            onClick={() => setMetroOpen(!metroOpen)}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              background: "transparent",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "var(--radius-pill)",
+              padding: "4px 12px",
+              cursor: "pointer",
+              fontSize: "12px", fontWeight: 500,
+              color: "var(--text-inverse)",
+              fontFamily: "inherit",
+            }}
+          >
+            <MapPin size={12} style={{ color: "var(--brand-primary)" }} /> {metro} <ChevronDown size={11} />
+          </button>
+          {metroOpen && (
+            <div
+              style={{
+                position: "absolute", top: "100%", left: 0, marginTop: "6px",
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-md)",
+                zIndex: 200, minWidth: "220px", padding: "4px 0",
+              }}
+            >
+              {METROS.map(m => {
+                const active = m === metro;
+                const available = m === "Detroit / Michigan";
+                return (
+                  <button
+                    key={m}
+                    onClick={() => { if (available) { setMetro(m); setMetroOpen(false); } }}
+                    style={{
+                      display: "block", width: "100%", textAlign: "left",
+                      padding: "8px 14px",
+                      background: active ? "var(--pill-butter-bg)" : "transparent",
+                      border: "none",
+                      cursor: available ? "pointer" : "default",
+                      fontFamily: "inherit",
+                      fontSize: "13px",
+                      color: available ? "var(--text-primary)" : "var(--text-muted)",
+                      fontWeight: active ? 500 : 400,
+                    }}
+                  >
+                    {m} {!available && <span style={{ fontSize: "11px", opacity: 0.6 }}>soon</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
