@@ -1,20 +1,72 @@
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+@import "tailwindcss";
 
 :root {
-  --color-bg: #F5F2EB;
-  --color-primary: #2D5A3D;
-  --color-primary-hover: #234A31;
-  --color-accent: #C4943D;
-  --color-danger: #C44D3D;
-  --color-text: #1A1A1A;
-  --color-text-secondary: #6B6B6B;
-  --color-text-muted: #999999;
-  --color-text-faint: #BBBBBB;
-  --color-border: #E2DFD8;
-  --color-border-light: #ECEAE4;
-  --color-surface: #FFFFFF;
-  --color-card-bg: #FFFFFF;
-  --font-family: 'Source Sans 3', system-ui, sans-serif;
+  /* Brand */
+  --brand-primary: #E8881C;
+  --brand-primary-hover: #D07614;
+  --brand-secondary: #0B7A75;
+  --brand-secondary-hover: #096862;
+
+  /* Surfaces */
+  --bg-page: #FDFBF7;
+  --bg-surface: #FFFFFF;
+  --bg-header: #1A1A1A;
+  --bg-inverse: #1A1A1A;
+
+  /* Text */
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+  --text-muted: #8A8A8A;
+  --text-inverse: #FDFBF7;
+
+  /* Borders */
+  --border-subtle: rgba(26, 26, 26, 0.1);
+  --border-default: rgba(26, 26, 26, 0.15);
+
+  /* Pastel pills */
+  --pill-blush-bg: #FCE7E0;
+  --pill-blush-text: #7A2E0E;
+  --pill-mint-bg: #D4F1E9;
+  --pill-mint-text: #0B3A33;
+  --pill-lilac-bg: #E8E1F5;
+  --pill-lilac-text: #3C2E6B;
+  --pill-butter-bg: #FDF2CC;
+  --pill-butter-text: #6B5D08;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+}
+
+@theme inline {
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-hover: var(--brand-secondary-hover);
+
+  --color-surface-page: var(--bg-page);
+  --color-surface-card: var(--bg-surface);
+  --color-surface-header: var(--bg-header);
+
+  --color-ink-primary: var(--text-primary);
+  --color-ink-secondary: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-inverse: var(--text-inverse);
+
+  --color-pill-blush-bg: var(--pill-blush-bg);
+  --color-pill-blush-text: var(--pill-blush-text);
+  --color-pill-mint-bg: var(--pill-mint-bg);
+  --color-pill-mint-text: var(--pill-mint-text);
+  --color-pill-lilac-bg: var(--pill-lilac-bg);
+  --color-pill-lilac-text: var(--pill-lilac-text);
+  --color-pill-butter-bg: var(--pill-butter-bg);
+  --color-pill-butter-text: var(--pill-butter-text);
+
+  --radius-pill: 999px;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
 * {
@@ -24,9 +76,9 @@
 }
 
 body {
-  font-family: var(--font-family);
-  background: var(--color-bg);
-  color: var(--color-text);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.5;
   font-size: 14px;
@@ -37,12 +89,10 @@ a {
   text-decoration: none;
 }
 
-/* Hide scrollbars on nav overflow */
 nav div::-webkit-scrollbar {
   display: none;
 }
 
-/* Smooth scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #C8C4BD; border-radius: 999px; }

@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { AppProvider } from "@/lib/context";
 import TopBar from "@/components/TopBar";
@@ -8,6 +9,13 @@ import NewsletterOverlay from "@/components/NewsletterOverlay";
 import AskAdda from "@/components/AskAdda";
 import GlobalSearch from "@/components/GlobalSearch";
 import FestivalStrip from "@/components/FestivalStrip";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500"],
+  variable: "--font-inter",
+});
 
 export const metadata = {
   title: "Desi Adda — Your Desi Life in Detroit",
@@ -26,7 +34,7 @@ export default async function RootLayout({ children }) {
   const isAuthed = cookieStore.get("site-access")?.value === "granted";
 
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
         {isAuthed ? (
           <AppProvider>
