@@ -3,9 +3,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Coffee, ShoppingCart, Landmark, Briefcase, Home as HomeIcon,
-  Calendar, Music, Film, Star, Bookmark,
+  Calendar, Music, Film,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import EventCard from "@/components/cards/EventCard";
+import RestaurantCard from "@/components/cards/RestaurantCard";
+import OrgCard from "@/components/cards/OrgCard";
 
 const CATEGORIES = [
   { label: "Restaurants", href: "/businesses?tab=restaurants", bg: "var(--pill-blush-bg)", stroke: "var(--pill-blush-text)", Icon: Coffee },
@@ -18,31 +21,12 @@ const CATEGORIES = [
   { label: "Movies", href: "/entertainment?tab=watch", bg: "var(--pill-lilac-bg)", stroke: "var(--pill-lilac-text)", Icon: Film },
 ];
 
-const PILL_SET = [
-  { bg: "var(--pill-blush-bg)", text: "var(--pill-blush-text)" },
-  { bg: "var(--pill-mint-bg)", text: "var(--pill-mint-text)" },
-  { bg: "var(--pill-butter-bg)", text: "var(--pill-butter-text)" },
-  { bg: "var(--pill-lilac-bg)", text: "var(--pill-lilac-text)" },
+const PILL_BGS = [
+  "var(--pill-blush-bg)",
+  "var(--pill-mint-bg)",
+  "var(--pill-butter-bg)",
+  "var(--pill-lilac-bg)",
 ];
-
-function formatEventDate(dateStr) {
-  const d = new Date(dateStr + "T00:00:00");
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diff = Math.round((d - today) / 86400000);
-  const day = d.toLocaleDateString("en-US", { weekday: "short" });
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Tomorrow";
-  if (diff < 7) return day;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-function initialsFor(name) {
-  if (!name) return "??";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 export default function HomePage() {
   const [events, setEvents] = useState([]);
@@ -71,8 +55,8 @@ export default function HomePage() {
         .order("event_date", { ascending: false }).limit(3),
     ]).then(([te, ce, rest, orgRes, rec]) => {
       const unified = [
-        ...(te.data || []).map(e => ({ id: e.id, name: e.event_name, date: e.event_date, org: e.temples?.name, slug: e.temples?.slug ? `/temples/${e.temples.slug}` : null, _type: "temple" })),
-        ...(ce.data || []).map(e => ({ id: e.id, name: e.event_name, date: e.event_date, org: e.community_networking?.name, slug: e.community_networking?.slug ? `/community/${e.community_networking.slug}` : null, _type: "community" })),
+        ...(te.data || []).map(e => ({ id: e.id, name: e.event_name, date: e.event_date, org_name: e.temples?.name, org_slug: e.temples?.slug, _type: "temple" })),
+        ...(ce.data || []).map(e => ({ id: e.id, name: e.event_name, date: e.event_date, org_name: e.community_networking?.name, org_slug: e.community_networking?.slug, _type: "community" })),
       ].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 6);
       setEvents(unified);
       setRestaurants(rest.data || []);
@@ -208,41 +192,67 @@ export default function HomePage() {
       </section>
 
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        {/* ═══ THIS WEEKEND ═══ */}
         {events.length > 0 && (
           <SectionRow title="This weekend" href="/community?tab=events">
             {events.slice(0, 3).map((ev, i) => (
-              <InlineEventCard key={`${ev._type}-${ev.id}`} ev={ev} pill={PILL_SET[i % PILL_SET.length]} />
+              <EventCard
+                key={`${ev._type}-${ev.id}`}
+                id={ev.id}
+                name={ev.name}
+                date={ev.date}
+                org_name={ev.org_name}
+                href={ev.org_slug ? (ev._type === "temple" ? `/temples/${ev.org_slug}` : `/community/${ev.org_slug}`) : "/community?tab=events"}
+                accent_bg={PILL_BGS[i % PILL_BGS.length]}
+              />
             ))}
           </SectionRow>
         )}
 
-        {/* ═══ TRENDING RESTAURANTS ═══ */}
         {restaurants.length > 0 && (
           <SectionRow title="Trending restaurants in Troy" href="/businesses?tab=restaurants&city=Troy">
             {restaurants.slice(0, 3).map(r => (
-              <InlineRestaurantCard key={r.id} biz={r} />
+              <RestaurantCard
+                key={r.id}
+                id={r.id}
+                name={r.name}
+                cuisine={r.cuisine_type}
+                city={r.city}
+                rating={r.rating}
+                image_url={r.photos?.[0]}
+                href={r.slug ? `/restaurants/${r.slug}` : "/businesses"}
+              />
             ))}
           </SectionRow>
         )}
 
-        {/* ═══ ORGANIZATIONS TO SAVE ═══ */}
         {orgs.length > 0 && (
           <SectionRow title="Organizations to save" href="/community?tab=orgs">
-            {orgs.slice(0, 3).map((org, i) => (
-              <InlineOrgCard key={org.id} org={org} pill={PILL_SET[i % PILL_SET.length]} />
+            {orgs.slice(0, 3).map(org => (
+              <OrgCard
+                key={org.id}
+                id={org.id}
+                name={org.name}
+                city={org.city}
+                href={`/community/${org.slug}`}
+              />
             ))}
           </SectionRow>
         )}
 
-        {/* ═══ NEWSLETTER BANNER ═══ */}
         <NewsletterBanner />
 
-        {/* ═══ RECENT NEWS ═══ */}
         {recaps.length > 0 && (
           <SectionRow title="Recent news" href="/news?tab=recaps">
             {recaps.slice(0, 3).map(r => (
-              <InlineNewsCard key={r.slug} rec={r} />
+              <EventCard
+                key={r.slug}
+                name={r.title}
+                date={r.event_date}
+                org_name={r.summary ? r.summary.slice(0, 60) : null}
+                image_url={r.cover_image}
+                href={`/news/recaps/${r.slug}`}
+                accent_bg="var(--pill-lilac-bg)"
+              />
             ))}
           </SectionRow>
         )}
@@ -288,211 +298,6 @@ function SectionRow({ title, href, children }) {
         {children}
       </div>
     </section>
-  );
-}
-
-function InlineEventCard({ ev, pill }) {
-  const dateLabel = formatEventDate(ev.date);
-  return (
-    <Link
-      href={ev.slug || "/community?tab=events"}
-      style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: "var(--radius-lg)",
-        overflow: "hidden", textDecoration: "none", color: "inherit",
-        display: "flex", flexDirection: "column",
-      }}
-    >
-      <div
-        style={{
-          position: "relative", height: "140px",
-          background: pill.bg,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute", bottom: "10px", left: "10px",
-            background: "var(--bg-surface)",
-            color: "var(--text-primary)",
-            fontSize: "11px", fontWeight: 500,
-            padding: "4px 10px",
-            borderRadius: "var(--radius-pill)",
-          }}
-        >
-          {dateLabel}
-        </div>
-      </div>
-      <div style={{ padding: "12px 14px" }}>
-        <div
-          style={{
-            fontSize: "14px", fontWeight: 500, color: "var(--text-primary)",
-            lineHeight: 1.3,
-            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {ev.name}
-        </div>
-        {ev.org && (
-          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-            {ev.org}
-          </div>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-function InlineRestaurantCard({ biz }) {
-  const photo = biz.photos?.[0];
-  return (
-    <Link
-      href={biz.slug ? `/restaurants/${biz.slug}` : "/businesses"}
-      style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: "var(--radius-lg)",
-        overflow: "hidden", textDecoration: "none", color: "inherit",
-        display: "flex", flexDirection: "column",
-      }}
-    >
-      <div style={{ position: "relative", height: "120px", background: "var(--pill-butter-bg)" }}>
-        {photo && (
-          <img
-            src={photo} alt={biz.name} loading="lazy"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        )}
-        {biz.rating && (
-          <div
-            style={{
-              position: "absolute", top: "10px", left: "10px",
-              background: "var(--bg-surface)", color: "var(--text-primary)",
-              fontSize: "11px", fontWeight: 500,
-              padding: "4px 10px", borderRadius: "var(--radius-pill)",
-              display: "inline-flex", alignItems: "center", gap: "4px",
-            }}
-          >
-            <Star size={11} fill="var(--brand-primary)" color="var(--brand-primary)" />
-            {biz.rating}
-          </div>
-        )}
-      </div>
-      <div style={{ padding: "12px 14px" }}>
-        <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>
-          {biz.name}
-        </div>
-        <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-          {[biz.cuisine_type, biz.city].filter(Boolean).join(" · ")}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function InlineOrgCard({ org, pill }) {
-  return (
-    <Link
-      href={`/community/${org.slug}`}
-      style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: "var(--radius-lg)",
-        padding: "18px 14px",
-        textDecoration: "none", color: "inherit",
-        display: "flex", flexDirection: "column", alignItems: "center",
-        textAlign: "center",
-      }}
-    >
-      <div
-        style={{
-          width: "48px", height: "48px", borderRadius: "50%",
-          background: pill.bg, color: pill.text,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "15px", fontWeight: 500,
-          marginBottom: "10px",
-        }}
-      >
-        {initialsFor(org.name)}
-      </div>
-      <div
-        style={{
-          fontSize: "13px", fontWeight: 500, color: "var(--text-primary)",
-          lineHeight: 1.3, marginBottom: "4px",
-          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-        }}
-      >
-        {org.name}
-      </div>
-      {org.city && (
-        <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginBottom: "12px" }}>
-          {org.city}
-        </div>
-      )}
-      <span
-        style={{
-          display: "inline-flex", alignItems: "center", gap: "4px",
-          background: "transparent",
-          border: "1px solid var(--brand-primary)",
-          color: "var(--brand-primary)",
-          padding: "6px 14px",
-          borderRadius: "var(--radius-pill)",
-          fontSize: "12px", fontWeight: 500,
-        }}
-      >
-        <Bookmark size={12} /> Save
-      </span>
-    </Link>
-  );
-}
-
-function InlineNewsCard({ rec }) {
-  return (
-    <Link
-      href={`/news/recaps/${rec.slug}`}
-      style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: "var(--radius-lg)",
-        overflow: "hidden", textDecoration: "none", color: "inherit",
-        display: "flex", flexDirection: "column",
-      }}
-    >
-      <div style={{ position: "relative", height: "140px", background: "var(--pill-lilac-bg)" }}>
-        {rec.cover_image && (
-          <img
-            src={rec.cover_image} alt={rec.title} loading="lazy"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        )}
-      </div>
-      <div style={{ padding: "12px 14px" }}>
-        <div
-          style={{
-            fontSize: "14px", fontWeight: 500, color: "var(--text-primary)",
-            lineHeight: 1.3,
-            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {rec.title}
-        </div>
-        {rec.summary && (
-          <div
-            style={{
-              fontSize: "12px", color: "var(--text-secondary)",
-              marginTop: "4px", lineHeight: 1.5,
-              display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {rec.summary}
-          </div>
-        )}
-      </div>
-    </Link>
   );
 }
 
